@@ -1,21 +1,21 @@
 {
- "rows": [
-  {
-   "age": 1,
-   "name": "A"
-  },
-  {
-   "age": 4,
-   "name": "B"
-  },
-  {
-   "age": 8,
-   "name": "C"
-  }
- ],
- "schema": [
-  "name",
-  "age"
- ],
- "test": "test"
+	"rows": [
+		{
+			"age": 1,
+			"name": "A"
+		},
+		{
+			"age": 4,
+			"name": "B"
+		},
+		{
+			"age": 8,
+			"name": "C"
+		}
+	],
+	"schema": [
+		"name",
+		"age"
+	],
+	"test": "test"
 }

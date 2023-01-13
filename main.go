@@ -160,7 +160,7 @@ func record(direct string, database map[string]interface{}, value string, locati
 
 	database[direct] = value
 
-	jsonData, _ := json.MarshalIndent(data, "", "\t")
+	jsonData, _ := json.MarshalIndent(database, "", "\t")
 	file, _ := os.Create("databases/" + location + "/database.json")
 	defer file.Close()
 	file.Write(jsonData)
