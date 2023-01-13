@@ -27,13 +27,21 @@ type settings struct {
 	Port string `json:"port"`
 }
 
+//type input struct {
+//	PassW  string `json:"password"`
+//	Dbname string `json:"dbname"`
+//	Loc    string `json:"location"`
+//	Act    string `json:"action"`
+//	Value  string `json:"value"`
+//}
+
 func main() {
 	file, _ := ioutil.ReadFile("settings.json")
 	var set settings
 	json.Unmarshal(file, &set)
 
 	http.HandleFunc("/ws", datahandler)
-	log.Println("Server started on :8080")
+	log.Println("Server started on -> " + set.Addr + ":" + set.Port)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -58,48 +66,16 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		if msg["password"] == confdata.Key {
 			direct := msg["location"].(string)
+			action := msg["action"].(string)
+			fmt.Print(action, "\n")
 
-			if direct == "" {
-				ws.WriteJSON(database)
-
-			} else {
-
-				parts := strings.Split(strings.TrimSpace(direct), "->")
-
-				if len(parts) == 1 {
-					data := database[direct]
-					ws.WriteJSON(data)
-
-				} else {
-
-					//map[string]interface{} -> Json Array
-					//[]interfance{} -> Json List
-
-					data := database[parts[0]]
-					parts = parts[1:]
-
-					for _, value := range parts {
-
-						x := reflect.TypeOf(data)
-
-						if x.Kind() == reflect.Map { //map[string]interface{}
-							data = data.(map[string]interface{})[value]
-						} else if x.Kind() == reflect.Slice { //[]interfance{} -> Json List
-							i, err := strconv.Atoi(value)
-							if err != nil {
-								fmt.Println(err)
-							} else {
-								data = data.([]interface{})[i]
-							}
-						}
-					}
-
-					ws.WriteJSON(data)
-
-				}
-
+			if action == "retrieve" {
+				data := retrieve(direct, database)
+				ws.WriteJSON(data)
+			} else if action == "append" {
+				data := record(direct, database, msg["value"].string)
+				ws.WriteJSON(data)
 			}
-
 		}
 	}
 }
@@ -135,4 +111,51 @@ func djson(floc string) map[string]interface{} {
 
 	// Access the data
 	return jsonData
+}
+
+// Types of Actions
+func retrieve(direct string, database map[string]interface{}) interface{} {
+	if direct == "" {
+		return database
+
+	} else {
+
+		parts := strings.Split(strings.TrimSpace(direct), "->")
+
+		if len(parts) == 1 {
+			data := database[direct]
+			return data
+
+		} else {
+
+			//map[string]interface{} -> Json Array
+			//[]interfance{} -> Json List
+
+			data := database[parts[0]]
+			parts = parts[1:]
+
+			for _, value := range parts {
+
+				x := reflect.TypeOf(data)
+
+				if x.Kind() == reflect.Map { //map[string]interface{}
+					data = data.(map[string]interface{})[value]
+				} else if x.Kind() == reflect.Slice { //[]interfance{} -> Json List
+					i, err := strconv.Atoi(value)
+					if err != nil {
+						fmt.Println(err)
+					} else {
+						data = data.([]interface{})[i]
+					}
+				}
+			}
+			return data
+		}
+	}
+}
+
+func record(direct string, database map[string]interface{}, value string) {
+	if direct == "" {
+
+	}
 }
