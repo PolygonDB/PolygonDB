@@ -22,10 +22,19 @@ type config struct {
 	Key  string `json:"key"`
 }
 
+type settings struct {
+	Addr string `json:"addr"`
+	Port string `json:"port"`
+}
+
 func main() {
+	file, _ := ioutil.ReadFile("settings.json")
+	var set settings
+	json.Unmarshal(file, &set)
+
 	http.HandleFunc("/ws", datahandler)
 	log.Println("Server started on :8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
 // data handler
