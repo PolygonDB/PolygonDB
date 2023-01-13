@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -72,9 +73,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			if action == "retrieve" {
 				data := retrieve(direct, database)
 				ws.WriteJSON(data)
-			} else if action == "append" {
-				data := record(direct, database, msg["value"].(string))
-				ws.WriteJSON(data)
+			} else if action == "record" {
+				state2 := record(direct, database, msg["value"].(string), dbfilename)
+				msg["success"] = state2
+				ws.WriteJSON(msg)
 			}
 		}
 	}
@@ -154,8 +156,13 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 	}
 }
 
-func record(direct string, database map[string]interface{}, value string) interface{} {
-	if direct == "" {
-		fmt.Print("test")
-	}
+func record(direct string, database map[string]interface{}, value string, location string) string {
+
+	database[direct] = value
+
+	jsonData, _ := json.MarshalIndent(data, "", "\t")
+	file, _ := os.Create("databases/" + location + "/database.json")
+	defer file.Close()
+	file.Write(jsonData)
+	return "Finish!"
 }
