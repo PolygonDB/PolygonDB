@@ -73,7 +73,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				data := retrieve(direct, database)
 				ws.WriteJSON(data)
 			} else if action == "append" {
-				data := record(direct, database, msg["value"].string)
+				data := record(direct, database, msg["value"].(string))
 				ws.WriteJSON(data)
 			}
 		}
@@ -154,8 +154,8 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 	}
 }
 
-func record(direct string, database map[string]interface{}, value string) {
+func record(direct string, database map[string]interface{}, value string) interface{} {
 	if direct == "" {
-
+		fmt.Print("test")
 	}
 }
