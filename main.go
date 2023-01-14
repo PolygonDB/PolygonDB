@@ -158,6 +158,10 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 
 func record(direct string, database map[string]interface{}, value string, location string) string {
 
+	if value[0] == '[' && value[len(value)-1] == ']' {
+		fmt.Println("The first character is '['.")
+	}
+
 	database[direct] = value
 
 	jsonData, _ := json.MarshalIndent(database, "", "\t")
