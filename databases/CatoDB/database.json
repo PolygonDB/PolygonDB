@@ -1,8 +1,9 @@
 {
 	"mike": [
-		"name",
+		"test",
 		"age"
 	],
+	"mike2": 20,
 	"rows": [
 		{
 			"age": 1,

@@ -158,12 +158,17 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 
 func record(direct string, database map[string]interface{}, value string, location string) string {
 
-	if value[0] == '[' && value[len(value)-1] == ']' {
-		var interfaces []interface{}
+	if []byte(value)[0] == '[' && []byte(value)[len(value)-1] == ']' {
+		var interfaces []json.RawMessage
 		json.Unmarshal([]byte(value), &interfaces)
 		database[direct] = interfaces
-	} else {
+	} else if []byte(value)[0] == '"' && []byte(value)[len(value)-1] == '"' {
+		json.Unmarshal([]byte(value), &value)
 		database[direct] = value
+	} else {
+		var interfaces int
+		json.Unmarshal([]byte(value), &interfaces)
+		database[direct] = interfaces
 	}
 
 	jsonData, _ := json.MarshalIndent(database, "", "\t")
