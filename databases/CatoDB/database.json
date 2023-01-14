@@ -1,5 +1,8 @@
 {
-	"mike": "[\"name\",\"age\"]",
+	"mike": [
+		"name",
+		"age"
+	],
 	"rows": [
 		{
 			"age": 1,
