@@ -117,11 +117,15 @@ func djson(floc *string) map[string]interface{} {
 func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
 	jsonData, _ := json.Marshal(database)
-
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 
-	fmt.Println(jsonParsed.Path(*direct).String())
-	return jsonParsed.Path(*direct).String()
+	if *direct == "" {
+		return jsonParsed.String()
+	} else {
+
+		return jsonParsed.Path(*direct).String()
+	}
+
 }
 
 func record(direct *string, database *map[string]interface{}, value []byte, location string) string {
