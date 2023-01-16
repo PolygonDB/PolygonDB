@@ -1,4 +1,4 @@
-module JL/MercuryDB
+module JL/PolygonDB
 
 go 1.19
 
