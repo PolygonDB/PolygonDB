@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/Jeffail/gabs/v2"
@@ -36,7 +36,7 @@ type settings struct {
 //}
 
 func main() {
-	file, _ := ioutil.ReadFile("settings.json")
+	file, _ := os.ReadFile("settings.json")
 	var set settings
 	json.Unmarshal(file, &set)
 
@@ -82,7 +82,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 // Config and Database Parser
 func cjson(location *string) config {
-	file, err := ioutil.ReadFile("databases/" + *location + "/config.json")
+	file, err := os.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
@@ -97,7 +97,7 @@ func cjson(location *string) config {
 }
 
 func djson(floc *string) map[string]interface{} {
-	file, err := ioutil.ReadFile("databases/" + *floc + "/database.json")
+	file, err := os.ReadFile("databases/" + *floc + "/database.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
@@ -138,7 +138,7 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 	jsonParsed.SetP(val, *direct)
 
 	jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
-	ioutil.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
+	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
 
 	return "Finish!"
 }
