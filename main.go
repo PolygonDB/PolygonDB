@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -73,8 +74,12 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				ws.WriteJSON(data)
 			} else if action == "record" {
 				state2 := record(&direct, &database, []byte(msg["value"].(string)), dbfilename)
-				msg["success"] = state2
-				ws.WriteJSON(msg)
+				var finish map[string]interface{}
+				finish["success"] = state2
+				ws.WriteJSON(finish)
+			} else if action == "search" {
+				data := search(&direct, &database, []byte(msg["value"].(string)))
+				ws.WriteJSON(data)
 			}
 		}
 	}
@@ -145,6 +150,27 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
 
 	return "Finish!"
+}
+
+func search(direct *string, database *map[string]interface{}, value []byte) interface{} {
+	parts := strings.Split(string(value), ":")
+	var output interface{}
+
+	jsonData, _ := json.Marshal(database)
+	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+
+	it := jsonParsed.Path("rows").Children()
+	fmt.Print(it, "\n")
+	for _, user := range it {
+		name := user.Path(parts[0]).String()
+
+		if name == parts[1] {
+			output = user.Data()
+			break
+		}
+	}
+
+	return output
 }
 
 func UnmarshalJSONValue(data []byte) (interface{}, error) {
