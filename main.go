@@ -6,9 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -74,7 +72,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				data := retrieve(direct, database)
 				ws.WriteJSON(data)
 			} else if action == "record" {
-				state2 := record(direct, database, []byte(msg["value"].(string)), dbfilename)
+				state2 := record(direct, &database, []byte(msg["value"].(string)), dbfilename)
 				msg["success"] = state2
 				ws.WriteJSON(msg)
 			}
@@ -117,46 +115,16 @@ func djson(floc string) map[string]interface{} {
 
 // Types of Actions
 func retrieve(direct string, database map[string]interface{}) interface{} {
-	if direct == "" {
-		return database
+	jsonData, _ := json.Marshal(database)
 
-	} else {
+	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	fmt.Print(direct, "\n")
 
-		parts := strings.Split(strings.TrimSpace(direct), "->")
-
-		if len(parts) == 1 {
-			data := database[direct]
-			return data
-
-		} else {
-
-			//map[string]interface{} -> Json Array
-			//[]interfance{} -> Json List
-
-			data := database[parts[0]]
-			parts = parts[1:]
-
-			for _, value := range parts {
-
-				x := reflect.TypeOf(data)
-
-				if x.Kind() == reflect.Map { //map[string]interface{}
-					data = data.(map[string]interface{})[value]
-				} else if x.Kind() == reflect.Slice { //[]interfance{} -> Json List
-					i, err := strconv.Atoi(value)
-					if err != nil {
-						fmt.Println(err)
-					} else {
-						data = data.([]interface{})[i]
-					}
-				}
-			}
-			return data
-		}
-	}
+	fmt.Println(jsonParsed.Path(direct).String())
+	return jsonParsed.Path(direct).String()
 }
 
-func record(direct string, database map[string]interface{}, value []byte, location string) string {
+func record(direct string, database *map[string]interface{}, value []byte, location string) string {
 
 	val, err := UnmarshalJSONValue(value)
 	if err != nil {
