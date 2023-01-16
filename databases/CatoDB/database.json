@@ -1,27 +1,19 @@
 {
-	"mike": [
-		"test",
-		"age"
-	],
-	"mike2": 20,
 	"rows": [
 		{
-			"age": 20,
+			"age": 5,
 			"name": "A"
 		},
 		{
-			"age": 4,
+			"age": 20,
 			"name": "B"
 		},
 		{
-			"age": 8,
+			"age": 30,
 			"name": "C"
 		}
 	],
-	"rows-\u003e0-\u003eage": 2,
 	"schema": [
-		"name",
-		"age"
-	],
-	"test": "test"
+		"name"
+	]
 }

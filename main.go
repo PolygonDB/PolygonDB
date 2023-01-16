@@ -74,9 +74,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				ws.WriteJSON(data)
 			} else if action == "record" {
 				state2 := record(&direct, &database, []byte(msg["value"].(string)), dbfilename)
-				var finish map[string]interface{}
-				finish["success"] = state2
-				ws.WriteJSON(finish)
+				ws.WriteJSON("{Status: " + state2 + "}")
 			} else if action == "search" {
 				data := search(&direct, &database, []byte(msg["value"].(string)))
 				ws.WriteJSON(data)
@@ -149,7 +147,7 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 	jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
 
-	return "Finish!"
+	return "Success"
 }
 
 func search(direct *string, database *map[string]interface{}, value []byte) interface{} {
