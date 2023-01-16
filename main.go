@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -160,23 +159,6 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 
 func record(direct string, database map[string]interface{}, value string, location string) string {
 
-	bvs := []byte(value)[0]
-	bve := []byte(value)[len(value)-1]
-
-	if bvs == '[' && bve == ']' { //Lists
-		var interfaces []json.RawMessage
-		json.Unmarshal([]byte(value), &interfaces)
-		database[direct] = interfaces
-
-	} else if bvs == '"' && bve == '"' { //String
-		json.Unmarshal([]byte(value), &value)
-		database[direct] = value
-	} else { //int
-		var interfaces int
-		json.Unmarshal([]byte(value), &interfaces)
-		database[direct] = interfaces
-	}
-
 	parts := strings.Split(strings.TrimSpace(direct), "->")
 
 	if len(parts) == 1 {
@@ -198,7 +180,7 @@ func record(direct string, database map[string]interface{}, value string, locati
 			if err != nil {
 				target = target + "." + value
 			} else {
-				target = target + "[" + value + "]"
+				target = target + "." + value
 			}
 		}
 		fmt.Print(database, "\n")
@@ -206,21 +188,16 @@ func record(direct string, database map[string]interface{}, value string, locati
 		jsonString := string(jsonData)
 
 		jsonParsed, _ := gabs.ParseJSON([]byte(jsonString))
+		fmt.Print(target, "\n")
+
+		jsonParsed.SetP(2, target)
 		fmt.Print(jsonParsed, "\n")
+		fmt.Println(jsonParsed.Path(target).String())
 
-		fmt.Println(jsonParsed.Path("rows.0").String())
-
-		jsonParsed, err := gabs.ParseJSON([]byte(`{"array":[{"value":1},{"value":2},{"value":3}]}`))
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(jsonParsed.Path("array.1.value").String())
+		jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
+		ioutil.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
 
 	}
 
-	jsonData, _ := json.MarshalIndent(database, "", "\t")
-	file, _ := os.Create("databases/" + location + "/database.json")
-	defer file.Close()
-	file.Write(jsonData)
 	return "Finish!"
 }
