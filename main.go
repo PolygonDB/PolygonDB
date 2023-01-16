@@ -61,8 +61,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		dbfilename, _ := msg["dbname"].(string) //name of database
-		var confdata config = cjson(dbfilename)
-		var database map[string]interface{} = djson(dbfilename)
+		var confdata config = cjson(&dbfilename)
+		var database map[string]interface{} = djson(&dbfilename)
 
 		if msg["password"] == confdata.Key {
 			direct := msg["location"].(string)
@@ -81,8 +81,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Config and Database Parser
-func cjson(location string) config {
-	file, err := ioutil.ReadFile("databases/" + location + "/config.json")
+func cjson(location *string) config {
+	file, err := ioutil.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
@@ -96,8 +96,8 @@ func cjson(location string) config {
 	return jsonData
 }
 
-func djson(floc string) map[string]interface{} {
-	file, err := ioutil.ReadFile("databases/" + floc + "/database.json")
+func djson(floc *string) map[string]interface{} {
+	file, err := ioutil.ReadFile("databases/" + *floc + "/database.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
