@@ -69,10 +69,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action := msg["action"].(string)
 
 			if action == "retrieve" {
-				data := retrieve(direct, database)
+				data := retrieve(&direct, &database)
 				ws.WriteJSON(data)
 			} else if action == "record" {
-				state2 := record(direct, &database, []byte(msg["value"].(string)), dbfilename)
+				state2 := record(&direct, &database, []byte(msg["value"].(string)), dbfilename)
 				msg["success"] = state2
 				ws.WriteJSON(msg)
 			}
@@ -114,17 +114,17 @@ func djson(floc string) map[string]interface{} {
 }
 
 // Types of Actions
-func retrieve(direct string, database map[string]interface{}) interface{} {
+func retrieve(direct *string, database *map[string]interface{}) interface{} {
+
 	jsonData, _ := json.Marshal(database)
 
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
-	fmt.Print(direct, "\n")
 
-	fmt.Println(jsonParsed.Path(direct).String())
-	return jsonParsed.Path(direct).String()
+	fmt.Println(jsonParsed.Path(*direct).String())
+	return jsonParsed.Path(*direct).String()
 }
 
-func record(direct string, database *map[string]interface{}, value []byte, location string) string {
+func record(direct *string, database *map[string]interface{}, value []byte, location string) string {
 
 	val, err := UnmarshalJSONValue(value)
 	if err != nil {
@@ -135,11 +135,7 @@ func record(direct string, database *map[string]interface{}, value []byte, locat
 	jsonData, _ := json.Marshal(database)
 
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
-	fmt.Print(direct, "\n")
-
-	jsonParsed.SetP(val, direct)
-	fmt.Print(jsonParsed, "\n")
-	fmt.Println(jsonParsed.Path(direct).String())
+	jsonParsed.SetP(val, *direct)
 
 	jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	ioutil.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
