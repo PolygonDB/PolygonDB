@@ -69,7 +69,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		if msg["password"] == confdata.Key {
 			direct := msg["location"].(string)
 			action := msg["action"].(string)
-			fmt.Print(action, "\n")
 
 			if action == "retrieve" {
 				data := retrieve(direct, database)
@@ -159,45 +158,61 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 
 func record(direct string, database map[string]interface{}, value string, location string) string {
 
-	parts := strings.Split(strings.TrimSpace(direct), "->")
-
-	if len(parts) == 1 {
-		fmt.Print("write...")
-
-	} else {
-
-		//map[string]interface{} -> Json Array
-		//[]interfance{} -> Json List
-
-		//data := database[parts[0]]
-		target := parts[0]
-		parts = parts[1:]
-
-		for _, value := range parts {
-
-			_, err := strconv.Atoi(value)
-
-			if err != nil {
-				target = target + "." + value
-			} else {
-				target = target + "." + value
-			}
-		}
-		fmt.Print(database, "\n")
-		jsonData, _ := json.Marshal(database)
-		jsonString := string(jsonData)
-
-		jsonParsed, _ := gabs.ParseJSON([]byte(jsonString))
-		fmt.Print(target, "\n")
-
-		jsonParsed.SetP(2, target)
-		fmt.Print(jsonParsed, "\n")
-		fmt.Println(jsonParsed.Path(target).String())
-
-		jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
-		ioutil.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
-
+	var data JSONValue
+	if err := json.Unmarshal([]byte(value), &data); err != nil {
+		fmt.Println(err)
 	}
 
+	fmt.Print(database, "\n")
+	jsonData, _ := json.Marshal(database)
+
+	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	fmt.Print(direct, "\n")
+
+	jsonParsed.SetP(20, direct)
+	fmt.Print(jsonParsed, "\n")
+	fmt.Println(jsonParsed.Path(direct).String())
+
+	jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
+	ioutil.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
+
 	return "Finish!"
+}
+
+type JSONValue struct {
+	Value interface{}
+}
+
+func (jv *JSONValue) UnmarshalJSON(data []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	switch vv := v.(type) {
+	case string:
+		if vv[0] == '"' {
+			jv.Value = vv[1 : len(vv)-1]
+		} else {
+			i, err := strconv.Atoi(vv)
+			if err != nil {
+				jv.Value = vv
+			} else {
+				jv.Value = i
+			}
+		}
+	case float64:
+		jv.Value = int(vv)
+	case []interface{}:
+		var res []int
+		for _, val := range vv {
+			res = append(res, int(val.(float64)))
+		}
+		jv.Value = res
+	case map[string]interface{}:
+		jv.Value = vv
+	default:
+		jv.Value = v
+	}
+	return nil
 }
