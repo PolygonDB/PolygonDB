@@ -74,7 +74,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				data := retrieve(direct, database)
 				ws.WriteJSON(data)
 			} else if action == "record" {
-				state2 := record(direct, database, msg["value"].(string), dbfilename)
+				state2 := record(direct, database, []byte(msg["value"].(string)), dbfilename)
 				msg["success"] = state2
 				ws.WriteJSON(msg)
 			}
@@ -156,11 +156,11 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 	}
 }
 
-func record(direct string, database map[string]interface{}, value string, location string) string {
+func record(direct string, database map[string]interface{}, value []byte, location string) string {
 
-	var data JSONValue
-	if err := json.Unmarshal([]byte(value), &data); err != nil {
-		fmt.Println(err)
+	val, err := UnmarshalJSONValue(value)
+	if err != nil {
+		return "Failure"
 	}
 
 	fmt.Print(database, "\n")
@@ -169,7 +169,7 @@ func record(direct string, database map[string]interface{}, value string, locati
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 	fmt.Print(direct, "\n")
 
-	jsonParsed.SetP(20, direct)
+	jsonParsed.SetP(val, direct)
 	fmt.Print(jsonParsed, "\n")
 	fmt.Println(jsonParsed.Path(direct).String())
 
@@ -179,40 +179,34 @@ func record(direct string, database map[string]interface{}, value string, locati
 	return "Finish!"
 }
 
-type JSONValue struct {
-	Value interface{}
-}
-
-func (jv *JSONValue) UnmarshalJSON(data []byte) error {
+func UnmarshalJSONValue(data []byte) (interface{}, error) {
 	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+	var err error
+	if len(data) == 0 {
+		return nil, fmt.Errorf("json data is empty")
 	}
-
-	switch vv := v.(type) {
-	case string:
-		if vv[0] == '"' {
-			jv.Value = vv[1 : len(vv)-1]
-		} else {
-			i, err := strconv.Atoi(vv)
-			if err != nil {
-				jv.Value = vv
-			} else {
-				jv.Value = i
-			}
+	switch data[0] {
+	case '"':
+		if data[len(data)-1] != '"' {
+			return nil, fmt.Errorf("json string is not properly formatted")
 		}
-	case float64:
-		jv.Value = int(vv)
-	case []interface{}:
-		var res []int
-		for _, val := range vv {
-			res = append(res, int(val.(float64)))
+		v = string(data[1 : len(data)-1])
+	case '{':
+		if data[len(data)-1] != '}' {
+			return nil, fmt.Errorf("json object is not properly formatted")
 		}
-		jv.Value = res
-	case map[string]interface{}:
-		jv.Value = vv
+		err = json.Unmarshal(data, &v)
+	case '[':
+		if data[len(data)-1] != ']' {
+			return nil, fmt.Errorf("json array is not properly formatted")
+		}
+		err = json.Unmarshal(data, &v)
 	default:
-		jv.Value = v
+		i, e := strconv.Atoi(string(data))
+		if e != nil {
+			return nil, fmt.Errorf("unable to parse json data")
+		}
+		v = i
 	}
-	return nil
+	return v, err
 }
