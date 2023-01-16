@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Jeffail/gabs/v2"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -158,17 +160,62 @@ func retrieve(direct string, database map[string]interface{}) interface{} {
 
 func record(direct string, database map[string]interface{}, value string, location string) string {
 
-	if []byte(value)[0] == '[' && []byte(value)[len(value)-1] == ']' {
+	bvs := []byte(value)[0]
+	bve := []byte(value)[len(value)-1]
+
+	if bvs == '[' && bve == ']' { //Lists
 		var interfaces []json.RawMessage
 		json.Unmarshal([]byte(value), &interfaces)
 		database[direct] = interfaces
-	} else if []byte(value)[0] == '"' && []byte(value)[len(value)-1] == '"' {
+
+	} else if bvs == '"' && bve == '"' { //String
 		json.Unmarshal([]byte(value), &value)
 		database[direct] = value
-	} else {
+	} else { //int
 		var interfaces int
 		json.Unmarshal([]byte(value), &interfaces)
 		database[direct] = interfaces
+	}
+
+	parts := strings.Split(strings.TrimSpace(direct), "->")
+
+	if len(parts) == 1 {
+		fmt.Print("write...")
+
+	} else {
+
+		//map[string]interface{} -> Json Array
+		//[]interfance{} -> Json List
+
+		//data := database[parts[0]]
+		target := parts[0]
+		parts = parts[1:]
+
+		for _, value := range parts {
+
+			_, err := strconv.Atoi(value)
+
+			if err != nil {
+				target = target + "." + value
+			} else {
+				target = target + "[" + value + "]"
+			}
+		}
+		fmt.Print(database, "\n")
+		jsonData, _ := json.Marshal(database)
+		jsonString := string(jsonData)
+
+		jsonParsed, _ := gabs.ParseJSON([]byte(jsonString))
+		fmt.Print(jsonParsed, "\n")
+
+		fmt.Println(jsonParsed.Path("rows.0").String())
+
+		jsonParsed, err := gabs.ParseJSON([]byte(`{"array":[{"value":1},{"value":2},{"value":3}]}`))
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(jsonParsed.Path("array.1.value").String())
+
 	}
 
 	jsonData, _ := json.MarshalIndent(database, "", "\t")
