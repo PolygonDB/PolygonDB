@@ -75,20 +75,18 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		direct := msg["location"].(string)
 		action := msg["action"].(string)
-		value := []byte(msg["value"].(string))
 
 		if action == "retrieve" {
 			data := retrieve(&direct, &database)
 			ws.WriteJSON(data)
 		} else if action == "record" {
 
-			state2 := record(&direct, &database, &value, &dbfilename)
+			state2 := record(&direct, &database, []byte(msg["value"].(string)), &dbfilename)
 			ws.WriteJSON("{Status: " + state2 + "}")
 		} else if action == "search" {
-			data := search(&direct, &database, &value)
+			data := search(&direct, &database, []byte(msg["value"].(string)))
 			ws.WriteJSON(data)
 		}
-		defer ByteNil(&value)
 		defer StrNil(&action)
 		defer StrNil(&direct)
 	}
@@ -132,9 +130,9 @@ func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
 }
 
-func record(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
+func record(direct *string, database *map[string]interface{}, value []byte, location *string) string {
 
-	val, err := UnmarshalJSONValue(*value)
+	val, err := UnmarshalJSONValue(value)
 	if err != nil {
 		return "Failure"
 	}
@@ -149,8 +147,8 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	return "Success"
 }
 
-func search(direct *string, database *map[string]interface{}, value *[]byte) interface{} {
-	parts := strings.Split(string(*value), ":")
+func search(direct *string, database *map[string]interface{}, value []byte) interface{} {
+	parts := strings.Split(string(value), ":")
 	var output interface{}
 
 	jsonParsed := parsedata(*database)
