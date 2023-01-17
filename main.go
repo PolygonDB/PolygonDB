@@ -62,9 +62,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		dbfilename, _ := msg["dbname"].(string) //name of database
-		var confdata config = cjson(&dbfilename)
-		var database map[string]interface{} = djson(&dbfilename)
+		var confdata config
+		var database map[string]interface{}
+		dbfilename := msg["dbname"].(string)
+		cd(&dbfilename, &confdata, &database)
 
 		if msg["password"] == confdata.Key {
 			direct := msg["location"].(string)
@@ -74,7 +75,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				data := retrieve(&direct, &database)
 				ws.WriteJSON(data)
 			} else if action == "record" {
-				state2 := record(&direct, &database, []byte(msg["value"].(string)), dbfilename)
+				state2 := record(&direct, &database, []byte(msg["value"].(string)), &dbfilename)
 				ws.WriteJSON("{Status: " + state2 + "}")
 			} else if action == "search" {
 				data := search(&direct, &database, []byte(msg["value"].(string)))
@@ -84,37 +85,28 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Config and Database Parser
-func cjson(location *string) config {
+func cd(location *string, jsonData *config, database *map[string]interface{}) {
 	file, err := os.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
 
 	// Unmarshal the JSON data into a variable
-	var jsonData config
 	err = json.Unmarshal(file, &jsonData)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
 	}
-	return jsonData
-}
 
-func djson(floc *string) map[string]interface{} {
-	file, err := os.ReadFile("databases/" + *floc + "/database.json")
+	file, err = os.ReadFile("databases/" + *location + "/database.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 	}
 
 	// Unmarshal the JSON data into a variable
-	var jsonData map[string]interface{}
-	err = json.Unmarshal(file, &jsonData)
+	err = json.Unmarshal(file, &database)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
 	}
-
-	// Access the data
-	return jsonData
 }
 
 // Types of Actions
@@ -130,7 +122,7 @@ func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
 }
 
-func record(direct *string, database *map[string]interface{}, value []byte, location string) string {
+func record(direct *string, database *map[string]interface{}, value []byte, location *string) string {
 
 	val, err := UnmarshalJSONValue(value)
 	if err != nil {
@@ -142,7 +134,7 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 	go Nilify(&val)
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
-	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
+	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
 
 	return "Success"
 }
