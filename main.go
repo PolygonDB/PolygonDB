@@ -37,6 +37,7 @@ type settings struct {
 //}
 
 func main() {
+
 	file, _ := os.ReadFile("settings.json")
 	var set settings
 	json.Unmarshal(file, &set)
@@ -119,13 +120,11 @@ func djson(floc *string) map[string]interface{} {
 // Types of Actions
 func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
-	jsonData, _ := json.Marshal(database)
-	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	jsonParsed := parsedata(*database)
 
 	if *direct == "" {
 		return jsonParsed.String()
 	} else {
-
 		return jsonParsed.Path(*direct).String()
 	}
 
@@ -138,12 +137,10 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 		return "Failure"
 	}
 
-	jsonData, _ := json.Marshal(*database)
-
-	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	jsonParsed := parsedata(*database)
 	jsonParsed.SetP(val, *direct)
 
-	jsonData, _ = json.MarshalIndent(jsonParsed.Data(), "", "\t")
+	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
 
 	return "Success"
@@ -156,7 +153,6 @@ func search(direct *string, database *map[string]interface{}, value []byte) inte
 	jsonParsed := parsedata(*database)
 
 	it := jsonParsed.Path("rows").Children()
-	go Nilify(&jsonParsed)
 	for _, user := range it {
 		name := user.Path(parts[0]).String()
 
@@ -203,12 +199,11 @@ func UnmarshalJSONValue(data []byte) (interface{}, error) {
 
 func parsedata(database interface{}) gabs.Container {
 	jsonData, _ := json.Marshal(database)
+	go Nilify(&database)
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 	return *jsonParsed
 }
 
-func Nilify(v interface{}) {
-	if value, ok := v.(*interface{}); ok {
-		*value = nil
-	}
+func Nilify(v *interface{}) {
+	*v = nil
 }
