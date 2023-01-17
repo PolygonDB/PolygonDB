@@ -139,6 +139,7 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 
 	jsonParsed := parsedata(*database)
 	jsonParsed.SetP(val, *direct)
+	go Nilify(&val)
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+location+"/database.json", jsonData, 0644)
