@@ -61,11 +61,13 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		if msg == nil {
 			break
 		}
+		defer DBNil(&msg)
 
 		var confdata config
 		var database map[string]interface{}
 		dbfilename := msg["dbname"].(string)
 		cd(&dbfilename, &confdata, &database)
+		defer DBNil(&database)
 
 		if msg["password"] != confdata.Key {
 			ws.WriteJSON("{Status: Password Error.}")
@@ -201,5 +203,9 @@ func parsedata(database interface{}) gabs.Container {
 }
 
 func Nilify(v *interface{}) {
+	*v = nil
+}
+
+func DBNil(v *map[string]interface{}) {
 	*v = nil
 }
