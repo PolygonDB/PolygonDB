@@ -42,7 +42,7 @@ func main() {
 	json.Unmarshal(file, &set)
 
 	http.HandleFunc("/ws", datahandler)
-	log.Println("Server started on -> " + set.Addr + ":" + set.Port)
+	fmt.Print("Server started on -> " + set.Addr + ":" + set.Port)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -138,7 +138,7 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 		return "Failure"
 	}
 
-	jsonData, _ := json.Marshal(database)
+	jsonData, _ := json.Marshal(*database)
 
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 	jsonParsed.SetP(val, *direct)
@@ -153,10 +153,10 @@ func search(direct *string, database *map[string]interface{}, value []byte) inte
 	parts := strings.Split(string(value), ":")
 	var output interface{}
 
-	jsonData, _ := json.Marshal(database)
-	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	jsonParsed := parsedata(*database)
 
 	it := jsonParsed.Path("rows").Children()
+	go Nilify(&jsonParsed)
 	for _, user := range it {
 		name := user.Path(parts[0]).String()
 
@@ -199,4 +199,16 @@ func UnmarshalJSONValue(data []byte) (interface{}, error) {
 		v = i
 	}
 	return v, err
+}
+
+func parsedata(database interface{}) gabs.Container {
+	jsonData, _ := json.Marshal(database)
+	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
+	return *jsonParsed
+}
+
+func Nilify(v interface{}) {
+	if value, ok := v.(*interface{}); ok {
+		*value = nil
+	}
 }
