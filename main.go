@@ -138,7 +138,6 @@ func record(direct *string, database *map[string]interface{}, value []byte, loca
 		return "Failure"
 	}
 
-	fmt.Print(database, "\n")
 	jsonData, _ := json.Marshal(database)
 
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
@@ -158,7 +157,6 @@ func search(direct *string, database *map[string]interface{}, value []byte) inte
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 
 	it := jsonParsed.Path("rows").Children()
-	fmt.Print(it, "\n")
 	for _, user := range it {
 		name := user.Path(parts[0]).String()
 
