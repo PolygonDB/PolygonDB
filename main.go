@@ -75,16 +75,16 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		direct := msg["location"].(string)
 		action := msg["action"].(string)
-		value := []byte(msg["value"].(string))
 
 		if action == "retrieve" {
 			data := retrieve(&direct, &database)
 			ws.WriteJSON(data)
 		} else if action == "record" {
-
+			value := []byte(msg["value"].(string))
 			state2 := record(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + state2 + "}")
 		} else if action == "search" {
+			value := []byte(msg["value"].(string))
 			data := search(&direct, &database, &value)
 			ws.WriteJSON(data)
 		}
