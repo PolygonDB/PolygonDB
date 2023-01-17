@@ -67,24 +67,27 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		dbfilename := msg["dbname"].(string)
 		cd(&dbfilename, &confdata, &database)
 
-		if msg["password"] == confdata.Key {
-			direct := msg["location"].(string)
-			action := msg["action"].(string)
+		if msg["password"] != confdata.Key {
+			ws.WriteJSON("{Status: Password Error.}")
+		}
 
-			if action == "retrieve" {
-				data := retrieve(&direct, &database)
-				ws.WriteJSON(data)
-			} else if action == "record" {
-				state2 := record(&direct, &database, []byte(msg["value"].(string)), &dbfilename)
-				ws.WriteJSON("{Status: " + state2 + "}")
-			} else if action == "search" {
-				data := search(&direct, &database, []byte(msg["value"].(string)))
-				ws.WriteJSON(data)
-			}
+		direct := msg["location"].(string)
+		action := msg["action"].(string)
+
+		if action == "retrieve" {
+			data := retrieve(&direct, &database)
+			ws.WriteJSON(data)
+		} else if action == "record" {
+			state2 := record(&direct, &database, []byte(msg["value"].(string)), &dbfilename)
+			ws.WriteJSON("{Status: " + state2 + "}")
+		} else if action == "search" {
+			data := search(&direct, &database, []byte(msg["value"].(string)))
+			ws.WriteJSON(data)
 		}
 	}
 }
 
+// Config and Database Getting
 func cd(location *string, jsonData *config, database *map[string]interface{}) {
 	file, err := os.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
