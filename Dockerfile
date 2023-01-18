@@ -1,1 +1,1 @@
-FROM ghcr.io/pterodactyl/yolks:debian
+FROM ghcr.io/parkervcp/yolks:debian
