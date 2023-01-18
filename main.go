@@ -19,8 +19,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type config struct {
-	Path string `json:"path"`
-	Key  string `json:"key"`
+	Key string `json:"key"`
 }
 
 type settings struct {
@@ -71,6 +70,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		if msg["password"] != confdata.Key {
 			ws.WriteJSON("{Status: Password Error.}")
+			continue
 		}
 
 		direct := msg["location"].(string)
