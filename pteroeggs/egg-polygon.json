@@ -10,7 +10,7 @@
     "description": "Polygon Database Ptero Egg.",
     "features": null,
     "docker_images": {
-        "ghcr.io\/jewishlewish\/polygondb:sha-24f43e4": "ghcr.io\/jewishlewish\/polygondb:sha-24f43e4"
+        "ghcr.io\/jewishlewish\/polygon:latest": "ghcr.io\/jewishlewish\/polygon:latest"
     },
     "file_denylist": [],
     "startup": ".\/PolygonDB",
