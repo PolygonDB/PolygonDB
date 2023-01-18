@@ -1,0 +1,31 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2023-01-18T13:55:37-05:00",
+    "name": "Polygon",
+    "author": "lenny@lunes.host",
+    "description": "Polygon Database Ptero Egg.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io\/jewishlewish\/polygondb:sha-24f43e4": "ghcr.io\/jewishlewish\/polygondb:sha-24f43e4"
+    },
+    "file_denylist": [],
+    "startup": ".\/PolygonDB",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"change this part\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# golang generic package\r\nif [ ! -d \/mnt\/server\/ ]; then\r\nmkdir -p \/mnt\/server\/\r\nfi\r\ncd \/mnt\/server\r\ncurl -o main.go https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/main.go\r\ncurl -o go.mod https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.mod\r\ncurl -o go.sum https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.sum\r\ngo get\r\ngo build\r\nrm -f main.go\r\nrm -f go.mod\r\nrm -f go.sum\r\ncurl -o settings.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/settings.json\r\nmkdir -p databases\r\nmkdir -p databases\/ExampleDB\r\ncd databases\/ExampleDB\r\ncurl -o config.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/config.json\r\ncurl -o database.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/database.json\r\ncd \/mnt\/server",
+            "container": "golang:1.19",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": []
+}
