@@ -1,7 +1,7 @@
 FROM golang:latest
 
-WORKDIR /app
-COPY . .
+COPY main.go go.mod go.sum /app/
+COPY databases /app/databases
 
 RUN go build -o main .
 
