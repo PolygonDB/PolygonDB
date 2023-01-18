@@ -21,6 +21,6 @@ jobs:
     - name: Build and push Docker image
       run: |
         docker build -t my-go-image .
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GITHUB_ACTOR }}" --password-stdin
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u _json_key --password-stdin < ${{ secrets.GITHUB_JSON_KEY }}
         docker tag my-go-image ghcr.io/${{ secrets.GITHUB_REPOSITORY }}:${{ github.ref }}
         docker push ghcr.io/${{ secrets.GITHUB_REPOSITORY }}:${{ github.ref }}
