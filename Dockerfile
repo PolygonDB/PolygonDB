@@ -1,1 +1,2 @@
-FROM ghcr.io/parkervcp/yolks:debian
+FROM debian
+
