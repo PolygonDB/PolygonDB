@@ -74,4 +74,4 @@ print(json.loads(ws.recv())) # {'age': 30, 'name': 'C'}```
 # Companies that uses PolygonDB
 ![Discord Banner 2](https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2)
 
-Sidenote, if you want your server ot be on here then open an issue. 
+Sidenote, if you want your server to be on here then open an issue. 

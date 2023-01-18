@@ -1,10 +1,10 @@
 {
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
     "meta": {
-        "version": "v1.0.0",
+        "version": "v1.0.1",
         "update_url": null
     },
-    "exported_at": "2023-01-18T13:55:37-05:00",
+    "exported_at": "2023-01-18T16:38:50-05:00",
     "name": "Polygon",
     "author": "lenny@lunes.host",
     "description": "Polygon Database Ptero Egg.",
@@ -22,7 +22,7 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n# golang generic package\r\nif [ ! -d \/mnt\/server\/ ]; then\r\nmkdir -p \/mnt\/server\/\r\nfi\r\ncd \/mnt\/server\r\ncurl -o main.go https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/main.go\r\ncurl -o go.mod https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.mod\r\ncurl -o go.sum https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.sum\r\ngo get\r\ngo build\r\nrm -f main.go\r\nrm -f go.mod\r\nrm -f go.sum\r\ncurl -o settings.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/settings.json\r\nmkdir -p databases\r\nmkdir -p databases\/ExampleDB\r\ncd databases\/ExampleDB\r\ncurl -o config.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/config.json\r\ncurl -o database.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/database.json\r\ncd \/mnt\/server",
+            "script": "#!\/bin\/bash\r\n# golang generic package\r\nif [ ! -d \/mnt\/server\/ ]; then\r\nmkdir -p \/mnt\/server\/\r\nfi\r\ncd \/mnt\/server\r\ncurl -o main.go https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/main.go\r\ncurl -o go.mod https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.mod\r\ncurl -o go.sum https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/go.sum\r\ngo get\r\ngo build\r\nrm -f main.go\r\nrm -f go.mod\r\nrm -f go.sum\r\n#settings.json file\r\nif [ ! -f \/mnt\/server\/settings.json ]; then\r\ncurl -o settings.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/settings.json\r\nfi\r\n#database folder\r\nif [ ! -d \/mnt\/server\/databases ]; then\r\nmkdir -p databases\r\nmkdir -p databases\/ExampleDB\r\ncd databases\/ExampleDB\r\ncurl -o config.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/config.json\r\ncurl -o database.json https:\/\/raw.githubusercontent.com\/JewishLewish\/PolygonDB\/main\/databases\/CatoDB\/database.json\r\nfi\r\ncd \/mnt\/server",
             "container": "golang:1.19",
             "entrypoint": "bash"
         }
