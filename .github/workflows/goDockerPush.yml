@@ -48,5 +48,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/polygondb/polygon
+            ghcr.io/jewishlewish/polygon
           labels: ${{ steps.meta.outputs.labels }}
