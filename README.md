@@ -72,6 +72,10 @@ print(json.loads(ws.recv())) # {'age': 30, 'name': 'C'}```
 ```
 
 # Companies that uses PolygonDB
-![Discord Banner 2](https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2)
 
-Sidenote, if you want your server to be on here then open an issue. 
+<div style="display: flex; justify-content: center;">
+	<img src="https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2" alt="Discord Banner 2"/>
+	<img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
+</div>
+
+Sidenote, if you want your server to be on here then open a pull request. 
