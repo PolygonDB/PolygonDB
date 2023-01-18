@@ -57,7 +57,7 @@ ws.send(json.dumps(
         'value':'5'
     }
 ))
-print(json.loads(ws.recv())) # {'action': 'record', 'dbname': 'CatoDB', 'location': 'rows.0.age', 'password': 'Bussy23', 'success': 'Finish!', 'value': '5'}
+print(json.loads(ws.recv())) # {Status: Success}
 
 ws.send(json.dumps(
     {

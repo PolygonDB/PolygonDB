@@ -65,11 +65,14 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		var confdata config
 		var database map[string]interface{}
 		dbfilename := msg["dbname"].(string)
-		cd(&dbfilename, &confdata, &database)
+		er := cd(&dbfilename, &confdata, &database)
+		if er != nil {
+			ws.WriteJSON("{Error: " + er.Error() + ".}")
+		}
 		defer DBNil(&database)
 
 		if msg["password"] != confdata.Key {
-			ws.WriteJSON("{Status: Password Error.}")
+			ws.WriteJSON("{Error: Password Error.}")
 			continue
 		}
 
@@ -94,28 +97,34 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Config and Database Getting
-func cd(location *string, jsonData *config, database *map[string]interface{}) {
+func cd(location *string, jsonData *config, database *map[string]interface{}) error {
 	file, err := os.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
+		return err
 	}
 
 	// Unmarshal the JSON data into a variable
 	err = json.Unmarshal(file, &jsonData)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
+		return err
 	}
 
 	file, err = os.ReadFile("databases/" + *location + "/database.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
+		return err
 	}
 
 	// Unmarshal the JSON data into a variable
 	err = json.Unmarshal(file, &database)
 	if err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
+		return err
 	}
+
+	return nil
 }
 
 // Types of Actions
