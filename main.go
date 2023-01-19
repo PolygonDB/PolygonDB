@@ -90,6 +90,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			value := []byte(msg["value"].(string))
 			data := search(&direct, &database, &value)
 			ws.WriteJSON(data)
+		} else if action == "append" {
+			fmt.Print("appending...")
+			value := []byte(msg["value"].(string))
+			data := append(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON(data)
 		}
 		defer StrNil(&action)
 		defer StrNil(&direct)
@@ -176,6 +181,20 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 	}
 
 	return output
+}
+
+func append(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
+
+	jsonParsed := parsedata(*database)
+
+	jsonValueParsed, _ := gabs.ParseJSON(*value)
+	jsonParsed.ArrayAppendP(jsonValueParsed.Data(), *direct)
+
+	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
+
+	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
+
+	return "Success"
 }
 
 func UnmarshalJSONValue(data []byte) (interface{}, error) {
