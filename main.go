@@ -169,16 +169,17 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 func search(direct *string, database *map[string]interface{}, value *[]byte) interface{} {
 	parts := strings.Split(string(*value), ":")
 	var output interface{}
+	output = "Hello world"
 	go ByteNil(value)
 
 	jsonParsed := parsedata(*database)
 
 	it := jsonParsed.Path(*direct).Children()
-	for _, user := range it {
+	for i, user := range it {
 		name := user.Path(parts[0]).String()
 
 		if name == parts[1] {
-			output = user.Data()
+			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			break
 		}
 	}
