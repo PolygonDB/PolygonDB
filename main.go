@@ -170,7 +170,7 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 
 	jsonParsed := parsedata(*database)
 
-	it := jsonParsed.Path("rows").Children()
+	it := jsonParsed.Path(*direct).Children()
 	for _, user := range it {
 		name := user.Path(parts[0]).String()
 
