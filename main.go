@@ -154,7 +154,10 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	go ByteNil(value)
 
 	jsonParsed := parsedata(*database)
-	jsonParsed.SetP(val, *direct)
+	_, er := jsonParsed.SetP(&val, *direct)
+	if er != nil {
+		return "Failure"
+	}
 	go Nilify(&val)
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
@@ -188,7 +191,10 @@ func append(direct *string, database *map[string]interface{}, value *[]byte, loc
 	jsonParsed := parsedata(*database)
 
 	jsonValueParsed, _ := gabs.ParseJSON(*value)
-	jsonParsed.ArrayAppendP(jsonValueParsed.Data(), *direct)
+	er := jsonParsed.ArrayAppendP(jsonValueParsed.Data(), *direct)
+	if er != nil {
+		return "Failure!"
+	}
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 

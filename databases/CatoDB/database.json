@@ -19,5 +19,9 @@
 	],
 	"schema": [
 		"name"
-	]
+	],
+	"test": {
+		"age": 40,
+		"name": "D"
+	}
 }
