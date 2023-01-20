@@ -68,7 +68,7 @@ ws.send(json.dumps(
         'value':'age:30'
     }
 ))
-print(json.loads(ws.recv())) # {'age': 30, 'name': 'C'}```
+print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 ```
 
 # Companies that uses PolygonDB
