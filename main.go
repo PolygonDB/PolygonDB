@@ -105,27 +105,27 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
 	file, err := os.ReadFile("databases/" + *location + "/config.json")
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		go fmt.Println("Error reading file:", err)
 		return err
 	}
 
 	// Unmarshal the JSON data into a variable
 	err = json.Unmarshal(file, &jsonData)
 	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
+		go fmt.Println("Error unmarshalling JSON:", err)
 		return err
 	}
 
 	file, err = os.ReadFile("databases/" + *location + "/database.json")
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		go fmt.Println("Error reading file:", err)
 		return err
 	}
 
 	// Unmarshal the JSON data into a variable
 	err = json.Unmarshal(file, &database)
 	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
+		go fmt.Println("Error unmarshalling JSON:", err)
 		return err
 	}
 
