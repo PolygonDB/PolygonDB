@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -98,6 +99,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer StrNil(&action)
 		defer StrNil(&direct)
+		runtime.GC()
 	}
 }
 
