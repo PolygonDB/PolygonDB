@@ -1,6 +1,8 @@
-# PolygonDB
-Polygon Database is a portable Database System that allows users to repurpose unused and small servers into databases
+![Frame 1](https://user-images.githubusercontent.com/65754609/213882280-367ceb95-600c-4998-b4cb-c1fd914a89b4.png)
+![Frame 2](https://user-images.githubusercontent.com/65754609/213882292-b5c2f635-a86e-4f38-b88e-962679120926.png)
 
+# Details about Project
+Wiki: https://github.com/JewishLewish/PolygonDB/wiki
 
 # Usage
 Adjust databases/name-of-server/config.json
