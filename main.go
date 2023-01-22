@@ -97,9 +97,9 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			data := append(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + data + "}")
 		}
-		defer StrNil(&action)
-		defer StrNil(&direct)
-		runtime.GC()
+		action = ""
+		direct = ""
+		defer runtime.GC()
 	}
 }
 
