@@ -92,7 +92,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			data := search(&direct, &database, &value)
 			ws.WriteJSON(data)
 		} else if action == "append" {
-			fmt.Print("appending...")
 			value := []byte(msg["value"].(string))
 			data := append(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + data + "}")
@@ -250,10 +249,12 @@ func parsedata(database interface{}) gabs.Container {
 
 func Nilify(v *interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func ByteNil(v *[]byte) {
