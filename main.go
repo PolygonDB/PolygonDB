@@ -39,7 +39,7 @@ func main() {
 	file, _ := os.ReadFile("settings.json")
 	var set settings
 	json.Unmarshal(file, &set)
-
+	go clean()
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -51,65 +51,68 @@ var connectionPool = sync.Pool{
 	},
 }
 
+func clean() {
+	for {
+		time.Sleep(5 * time.Second)
+		fmt.Print("Cleaning...")
+		runtime.GC()
+	}
+
+}
+
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
 	defer connectionPool.Put(ws)
+	defer runtime.GC()
 
 	ws, _ = upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
 
-	timeout := time.After(5 * time.Second)
-
 	for {
-		select {
-		case <-timeout:
-			runtime.GC()
-		default:
-			var msg map[string]interface{}
-			er := ws.ReadJSON(&msg)
-			if er != nil {
-				break
-			}
-			defer DBNil(&msg)
-
-			var confdata config
-			var database map[string]interface{}
-			dbfilename := msg["dbname"].(string)
-			er = cd(&dbfilename, &confdata, &database)
-			if er != nil {
-				ws.WriteJSON("{Error: " + er.Error() + ".}")
-			}
-			defer DBNil(&database)
-
-			if msg["password"] != confdata.Key {
-				ws.WriteJSON("{Error: Password Error.}")
-				continue
-			}
-
-			direct := msg["location"].(string)
-			action := msg["action"].(string)
-
-			if action == "retrieve" {
-				data := retrieve(&direct, &database)
-				ws.WriteJSON(data)
-			} else if action == "record" {
-				value := []byte(msg["value"].(string))
-				state2 := record(&direct, &database, &value, &dbfilename)
-				ws.WriteJSON("{Status: " + state2 + "}")
-			} else if action == "search" {
-				value := []byte(msg["value"].(string))
-				data := search(&direct, &database, &value)
-				ws.WriteJSON(data)
-			} else if action == "append" {
-				value := []byte(msg["value"].(string))
-				data := append(&direct, &database, &value, &dbfilename)
-				ws.WriteJSON("{Status: " + data + "}")
-			}
-			action = ""
-			direct = ""
-			msg = nil
+		var msg map[string]interface{}
+		ws.ReadJSON(&msg)
+		if msg == nil {
+			break
 		}
+		defer DBNil(&msg)
+
+		var confdata config
+		var database map[string]interface{}
+		dbfilename := msg["dbname"].(string)
+		er := cd(&dbfilename, &confdata, &database)
+		if er != nil {
+			ws.WriteJSON("{Error: " + er.Error() + ".}")
+		}
+		defer DBNil(&database)
+
+		if msg["password"] != confdata.Key {
+			ws.WriteJSON("{Error: Password Error.}")
+			continue
+		}
+
+		direct := msg["location"].(string)
+		action := msg["action"].(string)
+
+		if action == "retrieve" {
+			data := retrieve(&direct, &database)
+			ws.WriteJSON(data)
+		} else if action == "record" {
+			value := []byte(msg["value"].(string))
+			state2 := record(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + state2 + "}")
+		} else if action == "search" {
+			value := []byte(msg["value"].(string))
+			data := search(&direct, &database, &value)
+			ws.WriteJSON(data)
+		} else if action == "append" {
+			value := []byte(msg["value"].(string))
+			data := append(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + data + "}")
+		}
+		action = ""
+		direct = ""
+		msg = nil
 	}
 }
 
