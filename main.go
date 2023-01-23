@@ -67,8 +67,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			runtime.GC()
 		default:
 			var msg map[string]interface{}
-			ws.ReadJSON(&msg)
-			if msg == nil {
+			er := ws.ReadJSON(&msg)
+			if er != nil {
 				break
 			}
 			defer DBNil(&msg)
@@ -76,7 +76,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			var confdata config
 			var database map[string]interface{}
 			dbfilename := msg["dbname"].(string)
-			er := cd(&dbfilename, &confdata, &database)
+			er = cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
 			}
