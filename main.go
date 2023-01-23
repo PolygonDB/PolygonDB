@@ -54,7 +54,6 @@ var connectionPool = sync.Pool{
 func clean() {
 	for {
 		time.Sleep(5 * time.Second)
-		fmt.Print("Cleaning...")
 		runtime.GC()
 	}
 
