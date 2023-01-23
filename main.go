@@ -63,6 +63,8 @@ func clean() {
 var confdata config
 var database map[string]interface{}
 var msg map[string]interface{}
+var direct string
+var action string
 
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
@@ -92,8 +94,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		direct := msg["location"].(string)
-		action := msg["action"].(string)
+		direct = msg["location"].(string)
+		action = msg["action"].(string)
 
 		if action == "retrieve" {
 			data := retrieve(&direct, &database)
