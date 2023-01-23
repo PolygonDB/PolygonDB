@@ -65,12 +65,12 @@ var database map[string]interface{}
 var msg map[string]interface{}
 var direct string
 var action string
+var value []byte
 
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
 	defer connectionPool.Put(ws)
-	defer runtime.GC()
 
 	ws, _ = upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
@@ -101,15 +101,15 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			data := retrieve(&direct, &database)
 			ws.WriteJSON(data)
 		} else if action == "record" {
-			value := []byte(msg["value"].(string))
+			value = []byte(msg["value"].(string))
 			state2 := record(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + state2 + "}")
 		} else if action == "search" {
-			value := []byte(msg["value"].(string))
+			value = []byte(msg["value"].(string))
 			data := search(&direct, &database, &value)
 			ws.WriteJSON(data)
 		} else if action == "append" {
-			value := []byte(msg["value"].(string))
+			value = []byte(msg["value"].(string))
 			data := append(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + data + "}")
 		}
