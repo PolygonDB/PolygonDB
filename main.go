@@ -84,14 +84,12 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		if msg == nil {
 			break
 		}
-		defer DBNil(&msg)
 
 		dbfilename = msg["dbname"].(string)
 		er := cd(&dbfilename, &confdata, &database)
 		if er != nil {
 			ws.WriteJSON("{Error: " + er.Error() + ".}")
 		}
-		defer DBNil(&database)
 
 		if msg["password"] != confdata.Key {
 			ws.WriteJSON("{Error: Password Error.}")
