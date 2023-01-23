@@ -3,21 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/Jeffail/gabs/v2"
 
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
+var upgrader = websocket.Upgrader{}
 
 type config struct {
 	Key string `json:"key"`
@@ -37,7 +35,6 @@ type settings struct {
 //}
 
 func main() {
-
 	file, _ := os.ReadFile("settings.json")
 	var set settings
 	json.Unmarshal(file, &set)
@@ -47,12 +44,19 @@ func main() {
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
+var connectionPool = sync.Pool{
+	New: func() interface{} {
+		return &websocket.Conn{}
+	},
+}
+
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ws := connectionPool.Get().(*websocket.Conn)
+	defer connectionPool.Put(ws)
+	defer runtime.GC()
+
+	ws, _ = upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
 
 	for {
@@ -98,7 +102,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 		action = ""
 		direct = ""
-		defer runtime.GC()
+		go DBNil(&msg)
 	}
 }
 
