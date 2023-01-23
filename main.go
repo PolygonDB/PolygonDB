@@ -1,5 +1,9 @@
 package main
 
+/*
+#include <stdlib.h>
+*/
+import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -101,19 +105,20 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		if action == "retrieve" {
 			data = retrieve(&direct, &database)
 			ws.WriteJSON(data)
-		} else if action == "record" {
+		} else {
 			value = []byte(msg["value"].(string))
-			state = record(&direct, &database, &value, &dbfilename)
-			ws.WriteJSON("{Status: " + state + "}")
-		} else if action == "search" {
-			value = []byte(msg["value"].(string))
-			data = search(&direct, &database, &value)
-			ws.WriteJSON(data)
-		} else if action == "append" {
-			value = []byte(msg["value"].(string))
-			state = append(&direct, &database, &value, &dbfilename)
-			ws.WriteJSON("{Status: " + state + "}")
+			if action == "record" {
+				state = record(&direct, &database, &value, &dbfilename)
+				ws.WriteJSON("{Status: " + state + "}")
+			} else if action == "search" {
+				data = search(&direct, &database, &value)
+				ws.WriteJSON(data)
+			} else if action == "append" {
+				state = append(&direct, &database, &value, &dbfilename)
+				ws.WriteJSON("{Status: " + state + "}")
+			}
 		}
+
 		action = ""
 		direct = ""
 		msg = nil
@@ -191,8 +196,8 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 func search(direct *string, database *map[string]interface{}, value *[]byte) interface{} {
 	parts := strings.Split(string(*value), ":")
+
 	var output interface{}
-	output = "Hello world"
 	go ByteNil(value)
 
 	jsonParsed := parsedata(*database)
