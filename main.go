@@ -27,22 +27,22 @@ type settings struct {
 	Port string `json:"port"`
 }
 
-//type input struct {
-//	PassW  string `json:"password"`
-//	Dbname string `json:"dbname"`
-//	Loc    string `json:"location"`
-//	Act    string `json:"action"`
-//	Value  string `json:"value"`
-//}
-
+// main
 func main() {
-	file, _ := os.ReadFile("settings.json")
+
 	var set settings
-	json.Unmarshal(file, &set)
+	portgrab(&set)
+
 	go clean()
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
+}
+
+func portgrab(set *settings) {
+	file, _ := os.ReadFile("settings.json")
+	json.Unmarshal(file, &set)
+	file = nil
 }
 
 var connectionPool = sync.Pool{
@@ -60,6 +60,7 @@ func clean() {
 
 }
 
+// Using Global Variables, since users will request a lot of data, these variables can be used to prevent constant repititon and hurting the Go Lang's GC
 var confdata config
 var database map[string]interface{}
 var msg map[string]interface{}
