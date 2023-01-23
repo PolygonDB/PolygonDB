@@ -60,6 +60,10 @@ func clean() {
 
 }
 
+var confdata config
+var database map[string]interface{}
+var msg map[string]interface{}
+
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
@@ -70,15 +74,12 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		var msg map[string]interface{}
 		ws.ReadJSON(&msg)
 		if msg == nil {
 			break
 		}
 		defer DBNil(&msg)
 
-		var confdata config
-		var database map[string]interface{}
 		dbfilename := msg["dbname"].(string)
 		er := cd(&dbfilename, &confdata, &database)
 		if er != nil {
@@ -113,6 +114,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		action = ""
 		direct = ""
 		msg = nil
+		dbfilename = ""
 	}
 }
 
