@@ -66,6 +66,9 @@ var msg map[string]interface{}
 var direct string
 var action string
 var value []byte
+var dbfilename string
+var state string
+var data interface{}
 
 // data handler
 func datahandler(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +85,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer DBNil(&msg)
 
-		dbfilename := msg["dbname"].(string)
+		dbfilename = msg["dbname"].(string)
 		er := cd(&dbfilename, &confdata, &database)
 		if er != nil {
 			ws.WriteJSON("{Error: " + er.Error() + ".}")
@@ -98,20 +101,20 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		action = msg["action"].(string)
 
 		if action == "retrieve" {
-			data := retrieve(&direct, &database)
+			data = retrieve(&direct, &database)
 			ws.WriteJSON(data)
 		} else if action == "record" {
 			value = []byte(msg["value"].(string))
-			state2 := record(&direct, &database, &value, &dbfilename)
-			ws.WriteJSON("{Status: " + state2 + "}")
+			state = record(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + state + "}")
 		} else if action == "search" {
 			value = []byte(msg["value"].(string))
-			data := search(&direct, &database, &value)
+			data = search(&direct, &database, &value)
 			ws.WriteJSON(data)
 		} else if action == "append" {
 			value = []byte(msg["value"].(string))
-			data := append(&direct, &database, &value, &dbfilename)
-			ws.WriteJSON("{Status: " + data + "}")
+			state = append(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + state + "}")
 		}
 		action = ""
 		direct = ""
