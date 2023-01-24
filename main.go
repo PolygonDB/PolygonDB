@@ -64,7 +64,6 @@ func clean() {
 }
 
 // data handler
-var msg map[string]interface{}
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
