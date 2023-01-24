@@ -265,7 +265,7 @@ func UnmarshalJSONValue(data []byte) (interface{}, error) {
 	default:
 		i, e := strconv.Atoi(string(data))
 		if e != nil {
-			v = string(data[1 : len(data)-1])
+			v = string(data)
 			return v, err
 		}
 		v = i
