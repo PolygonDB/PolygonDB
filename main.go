@@ -63,18 +63,9 @@ func clean() {
 
 }
 
-// Using Global Variables, since users will request a lot of data, these variables can be used to prevent constant repititon and hurting the Go Lang's GC
-var confdata config
-var database map[string]interface{}
-var msg map[string]interface{}
-var direct string
-var action string
-var value []byte
-var dbfilename string
-var state string
-var data interface{}
-
 // data handler
+var msg map[string]interface{}
+
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
 	defer connectionPool.Put(ws)
@@ -88,41 +79,54 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		dbfilename = msg["dbname"].(string)
-		er := cd(&dbfilename, &confdata, &database)
-		if er != nil {
-			ws.WriteJSON("{Error: " + er.Error() + ".}")
-		}
-
-		if msg["password"] != confdata.Key {
-			ws.WriteJSON("{Error: Password Error.}")
-			continue
-		}
-
-		direct = msg["location"].(string)
-		action = msg["action"].(string)
-
-		if action == "retrieve" {
-			data = retrieve(&direct, &database)
-			ws.WriteJSON(data)
-		} else {
-			value = []byte(msg["value"].(string))
-			if action == "record" {
-				state = record(&direct, &database, &value, &dbfilename)
-				ws.WriteJSON("{Status: " + state + "}")
-			} else if action == "search" {
-				data = search(&direct, &database, &value)
-				ws.WriteJSON(data)
-			} else if action == "append" {
-				state = append(&direct, &database, &value, &dbfilename)
-				ws.WriteJSON("{Status: " + state + "}")
+		process := func(msg map[string]interface{}) {
+			var confdata config
+			var database map[string]interface{}
+			var direct string
+			var action string
+			var value []byte
+			var dbfilename string
+			var state string
+			var data interface{}
+			dbfilename = msg["dbname"].(string)
+			er := cd(&dbfilename, &confdata, &database)
+			if er != nil {
+				ws.WriteJSON("{Error: " + er.Error() + ".}")
 			}
+
+			if msg["password"] != confdata.Key {
+				ws.WriteJSON("{Error: Password Error.}")
+				return
+			}
+
+			direct = msg["location"].(string)
+			action = msg["action"].(string)
+
+			if action == "retrieve" {
+				data = retrieve(&direct, &database)
+				ws.WriteJSON(data)
+			} else {
+				value = []byte(msg["value"].(string))
+				if action == "record" {
+					state = record(&direct, &database, &value, &dbfilename)
+					ws.WriteJSON("{Status: " + state + "}")
+				} else if action == "search" {
+					data = search(&direct, &database, &value)
+					ws.WriteJSON(data)
+				} else if action == "append" {
+					state = append(&direct, &database, &value, &dbfilename)
+					ws.WriteJSON("{Status: " + state + "}")
+				}
+				value = nil
+			}
+
+			action = ""
+			direct = ""
+			msg = nil
+			dbfilename = ""
 		}
 
-		action = ""
-		direct = ""
-		msg = nil
-		dbfilename = ""
+		process(msg)
 	}
 }
 
