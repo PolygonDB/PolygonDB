@@ -265,7 +265,8 @@ func UnmarshalJSONValue(data []byte) (interface{}, error) {
 	default:
 		i, e := strconv.Atoi(string(data))
 		if e != nil {
-			return nil, fmt.Errorf("unable to parse json data")
+			v = string(data[1 : len(data)-1])
+			return v, err
 		}
 		v = i
 	}
