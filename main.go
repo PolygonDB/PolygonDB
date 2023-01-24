@@ -20,7 +20,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	EnableCompression: true,
+}
 
 type config struct {
 	Key string `json:"key"`
@@ -88,6 +90,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			var dbfilename string
 			var state string
 			var data interface{}
+
 			dbfilename = (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
