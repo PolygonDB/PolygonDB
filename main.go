@@ -74,6 +74,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
+		var msg map[string]interface{}
 		ws.ReadJSON(&msg)
 		if msg == nil {
 			break
@@ -127,6 +128,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		process(msg)
+		msg = nil
 	}
 }
 
