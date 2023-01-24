@@ -95,6 +95,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
+				return
 			}
 
 			if (*msg)["password"] != confdata.Key {
