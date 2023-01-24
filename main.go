@@ -185,14 +185,14 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 	val, err := UnmarshalJSONValue(*value)
 	if err != nil {
-		return "Failure"
+		return "Failure. Value cannot be unmarshal to json."
 	}
 	go ByteNil(value)
 
 	jsonParsed := parsedata(*database)
 	_, er := jsonParsed.SetP(&val, *direct)
 	if er != nil {
-		return "Failure"
+		return "Failure. Value cannot be placed into database."
 	}
 	go Nilify(&val)
 
