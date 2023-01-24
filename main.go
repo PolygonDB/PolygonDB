@@ -79,7 +79,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		process := func(msg map[string]interface{}) {
+		process := func(msg *map[string]interface{}) {
 			var confdata config
 			var database map[string]interface{}
 			var direct string
@@ -88,25 +88,25 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			var dbfilename string
 			var state string
 			var data interface{}
-			dbfilename = msg["dbname"].(string)
+			dbfilename = (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
 			}
 
-			if msg["password"] != confdata.Key {
+			if (*msg)["password"] != confdata.Key {
 				ws.WriteJSON("{Error: Password Error.}")
 				return
 			}
 
-			direct = msg["location"].(string)
-			action = msg["action"].(string)
+			direct = (*msg)["location"].(string)
+			action = (*msg)["action"].(string)
 
 			if action == "retrieve" {
 				data = retrieve(&direct, &database)
 				ws.WriteJSON(data)
 			} else {
-				value = []byte(msg["value"].(string))
+				value = []byte((*msg)["value"].(string))
 				if action == "record" {
 					state = record(&direct, &database, &value, &dbfilename)
 					ws.WriteJSON("{Status: " + state + "}")
@@ -122,11 +122,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 			action = ""
 			direct = ""
-			msg = nil
 			dbfilename = ""
 		}
 
-		process(msg)
+		process(&msg)
 		msg = nil
 	}
 }
