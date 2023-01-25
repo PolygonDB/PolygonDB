@@ -131,23 +131,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 		cdone := make(chan bool)
 		ddone := make(chan bool)
 
-		conf := func(done chan bool, err *error) {
-			var file []byte
-			file, *err = os.ReadFile("databases/" + *location + "/config.json")
-			if *err != nil {
-				go fmt.Println("Error reading file:", err)
-				done <- true
-			}
-			// Unmarshal the JSON data into a variable
-			*err = json.Unmarshal(file, &jsonData)
-			if *err != nil {
-				go fmt.Println("Error unmarshalling Config JSON:", err)
-				done <- true
-			}
-			done <- true
-		}
-
-		go conf(cdone, &conferr)
+		go conf(cdone, &conferr, &*location, &*jsonData)
 		go data(ddone, &dataerr, &*location, &*database)
 
 		<-cdone
@@ -174,6 +158,20 @@ func data(done chan bool, err *error, location *string, database *map[string]int
 	*err = json.Unmarshal(file, &database)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
+	}
+	done <- true
+}
+
+func conf(done chan bool, err *error, location *string, jsonData *config) {
+	var file []byte
+	file, *err = os.ReadFile("databases/" + *location + "/config.json")
+	if *err != nil {
+		go fmt.Println("Error reading file:", err)
+	}
+	// Unmarshal the JSON data for config
+	*err = json.Unmarshal(file, &jsonData)
+	if *err != nil {
+		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
 	done <- true
 }
