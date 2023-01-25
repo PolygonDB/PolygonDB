@@ -64,11 +64,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
 	defer connectionPool.Put(ws)
 
-	var upgrader = websocket.Upgrader{
-		EnableCompression: true,
-	}
-	ws, _ = upgrader.Upgrade(w, r, nil)
-	go Nullify(&upgrader)
+	//var upgrader = websocket.Upgrader{
+	//	EnableCompression: true,
+	//}
+	//ws, _ = upgrader.Upgrade(w, r, nil)
+	//go Nullify(&upgrader)
 	defer ws.Close()
 
 	for {
