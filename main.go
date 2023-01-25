@@ -63,6 +63,7 @@ func clean() {
 }
 
 // data handler
+var msg map[string]interface{}
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws := connectionPool.Get().(*websocket.Conn)
@@ -73,7 +74,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		var msg map[string]interface{}
 		ws.ReadJSON(&msg)
 		if msg == nil {
 			break
@@ -86,8 +86,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			var action string
 			var value []byte
 			var dbfilename string
-			var state string
-			var data interface{}
 
 			dbfilename = (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
@@ -105,19 +103,19 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = (*msg)["action"].(string)
 
 			if action == "retrieve" {
-				data = retrieve(&direct, &database)
-				ws.WriteJSON(data)
+				output := retrieve(&direct, &database)
+				ws.WriteJSON(&output)
 			} else {
 				value = []byte((*msg)["value"].(string))
 				if action == "record" {
-					state = record(&direct, &database, &value, &dbfilename)
-					ws.WriteJSON("{Status: " + state + "}")
+					output := record(&direct, &database, &value, &dbfilename)
+					ws.WriteJSON("{Status: " + output + "}")
 				} else if action == "search" {
-					data = search(&direct, &database, &value)
-					ws.WriteJSON(data)
+					output := search(&direct, &database, &value)
+					ws.WriteJSON(&output)
 				} else if action == "append" {
-					state = append(&direct, &database, &value, &dbfilename)
-					ws.WriteJSON("{Status: " + state + "}")
+					output := append(&direct, &database, &value, &dbfilename)
+					ws.WriteJSON("{Status: " + output + "}")
 				}
 				value = nil
 			}
