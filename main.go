@@ -122,6 +122,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = ""
 			direct = ""
 			dbfilename = ""
+			database = nil
 		}
 
 		process(&msg)
@@ -193,6 +194,8 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
+	jsonData = nil
+	location = nil
 
 	return "Success"
 }
