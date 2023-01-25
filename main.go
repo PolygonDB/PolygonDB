@@ -1,17 +1,15 @@
 package main
 
-/*
-#include <stdlib.h>
-*/
-import "C"
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -37,7 +35,7 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	//go clean()
+	go clean()
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -55,12 +53,12 @@ var connectionPool = sync.Pool{
 	},
 }
 
-//func clean() {
-//	for {
-//		time.Sleep(5 * time.Second)
-//		runtime.GC()
-//	}
-//}
+func clean() {
+	for {
+		time.Sleep(5 * time.Second)
+		runtime.GC()
+	}
+}
 
 // data handler
 
@@ -279,6 +277,7 @@ func parsedata(database interface{}) gabs.Container {
 
 func Nilify(v *interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
