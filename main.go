@@ -300,7 +300,7 @@ func Nullify(ptr interface{}) {
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
-
+	//count is used to make sure that GC isn't constantly spammed
 	if count == 3 {
 		runtime.GC()
 	}
