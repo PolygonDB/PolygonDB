@@ -126,6 +126,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		process(&msg)
 		msg = nil
+		runtime.GC()
 	}
 }
 
@@ -277,7 +278,6 @@ func parsedata(database interface{}) gabs.Container {
 
 func Nilify(v *interface{}) {
 	*v = nil
-	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
