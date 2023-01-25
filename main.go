@@ -114,7 +114,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		process(&msg)
 		Nullify(&msg)
-		//Cleans up
+		runtime.GC()
 	}
 }
 
@@ -281,5 +281,4 @@ func Nullify(ptr interface{}) {
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
-	runtime.GC()
 }
