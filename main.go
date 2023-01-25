@@ -197,6 +197,7 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
+
 	jsonData = nil
 	location = nil
 
@@ -291,6 +292,7 @@ func parsedata(database interface{}) gabs.Container {
 // Nilifiers, help clean up any unused memory
 func Nilify(v *interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
