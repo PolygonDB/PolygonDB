@@ -195,13 +195,13 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	}
 
 	jsonParsed := parsedata(&database)
-	_, er := jsonParsed.SetP(&val, *direct)
-	if er != nil {
+	_, err = jsonParsed.SetP(&val, *direct)
+	if err != nil {
 		return "Failure. Value cannot be placed into database."
 	}
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
-	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
+	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
 
 	return "Success"
 }
@@ -284,7 +284,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 
 // parses database
 func parsedata(database interface{}) gabs.Container {
-	jsonData, _ := json.Marshal(database)
+	jsonData, _ := json.Marshal(&database)
 	go Nullify(&database)
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 	return *jsonParsed
