@@ -122,11 +122,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = ""
 			direct = ""
 			dbfilename = ""
+			runtime.GC()
 		}
 
 		process(&msg)
 		msg = nil
-		runtime.GC()
 	}
 }
 
