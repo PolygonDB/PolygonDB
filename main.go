@@ -54,8 +54,8 @@ func portgrab(set *settings) {
 var msg map[string]interface{}
 var upgrader = websocket.Upgrader{
 	EnableCompression: true,
-	ReadBufferSize:    512,
-	WriteBufferSize:   512,
+	ReadBufferSize:    0,
+	WriteBufferSize:   0,
 }
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
