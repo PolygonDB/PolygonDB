@@ -137,12 +137,11 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 	err := new(error)
 	*file, *err = os.ReadFile("databases/" + *location + "/config.json")
 	if *err != nil {
-		go fmt.Println("Error reading file:", err)
 		return *err
 	}
 
 	// Unmarshal the JSON data into a variable
-	*err = json.Unmarshal(*file, &jsonData)
+	*err = json.Unmarshal(*file, &*jsonData)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling JSON:", err)
 		return *err
@@ -150,12 +149,11 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 
 	*file, *err = os.ReadFile("databases/" + *location + "/database.json")
 	if *err != nil {
-		go fmt.Println("Error reading file:", err)
 		return *err
 	}
 
 	// Unmarshal the JSON data into a variable
-	*err = json.Unmarshal(*file, &database)
+	*err = json.Unmarshal(*file, &*database)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling JSON:", err)
 		return *err
