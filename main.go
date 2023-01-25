@@ -84,11 +84,14 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		process := func(msg *map[string]interface{}) {
 			var confdata config
 			var database map[string]interface{}
+			var direct string
+			var action string
 			var value []byte
+			var dbfilename string
 			var state string
 			var data interface{}
 
-			dbfilename := (*msg)["dbname"].(string)
+			dbfilename = (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
@@ -100,8 +103,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			direct := (*msg)["location"].(string)
-			action := (*msg)["action"].(string)
+			direct = (*msg)["location"].(string)
+			action = (*msg)["action"].(string)
 
 			if action == "retrieve" {
 				data = retrieve(&direct, &database)
@@ -137,6 +140,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 	err := new(error)
 	*file, *err = os.ReadFile("databases/" + *location + "/config.json")
 	if *err != nil {
+		go fmt.Println("Error reading file:", err)
 		return *err
 	}
 
@@ -149,6 +153,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 
 	*file, *err = os.ReadFile("databases/" + *location + "/database.json")
 	if *err != nil {
+		go fmt.Println("Error reading file:", err)
 		return *err
 	}
 
