@@ -56,7 +56,7 @@ var connectionPool = sync.Pool{
 func clean() {
 	for {
 		time.Sleep(5 * time.Second)
-		runtime.GC()
+		go runtime.GC()
 	}
 }
 
@@ -122,7 +122,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = ""
 			direct = ""
 			dbfilename = ""
-			go runtime.GC()
 		}
 
 		process(&msg)
