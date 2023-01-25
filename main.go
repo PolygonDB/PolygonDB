@@ -142,7 +142,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 	// Unmarshal the JSON data into a variable
 	*err = json.Unmarshal(*file, &jsonData)
 	if *err != nil {
-		go fmt.Println("Error unmarshalling JSON:", err)
+		go fmt.Println("Error unmarshalling JSON:", err, "Content:", string(*file))
 		return *err
 	}
 
