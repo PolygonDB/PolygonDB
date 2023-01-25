@@ -84,14 +84,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		process := func(msg *map[string]interface{}) {
 			var confdata config
 			var database map[string]interface{}
-			var direct string
-			var action string
 			var value []byte
-			var dbfilename string
 			var state string
 			var data interface{}
 
-			dbfilename = (*msg)["dbname"].(string)
+			dbfilename := (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
@@ -103,8 +100,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			direct = (*msg)["location"].(string)
-			action = (*msg)["action"].(string)
+			direct := (*msg)["location"].(string)
+			action := (*msg)["action"].(string)
 
 			if action == "retrieve" {
 				data = retrieve(&direct, &database)
