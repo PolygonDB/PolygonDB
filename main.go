@@ -291,6 +291,7 @@ func parsedata(database interface{}) gabs.Container {
 // Nilifiers, help clean up any unused memory
 func Nilify(v *interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
