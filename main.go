@@ -72,6 +72,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
+		//Reads input
 		var msg map[string]interface{}
 		ws.ReadJSON(&msg)
 		if msg == nil {
