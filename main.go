@@ -121,44 +121,51 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 // Config and Database Getting
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
 	file := new([]byte)
-	err := new(error)
-	done := make(chan bool)
+	var conferr error
+	var dataerr error
+	cdone := make(chan bool)
+	ddone := make(chan bool)
 
-	conf := func(done chan bool, err *error) error {
+	conf := func(done chan bool, err *error) {
 		*file, *err = os.ReadFile("databases/" + *location + "/config.json")
 		if *err != nil {
 			go fmt.Println("Error reading file:", err)
 			done <- true
-			return *err
 		}
-
 		// Unmarshal the JSON data into a variable
 		*err = json.Unmarshal(*file, &jsonData)
 		if *err != nil {
 			go fmt.Println("Error unmarshalling Config JSON:", err)
 			done <- true
-			return *err
 		}
 		done <- true
-		return nil
-	}
-	go conf(done, &*err)
-
-	*file, *err = os.ReadFile("databases/" + *location + "/database.json")
-	if *err != nil {
-		go fmt.Println("Error reading file:", err)
-		return *err
 	}
 
-	// Unmarshal the JSON data into a variable
-	*err = json.Unmarshal(*file, &database)
-	if *err != nil {
-		go fmt.Println("Error unmarshalling Database JSON:", err)
-		return *err
+	data := func(done chan bool, err *error) {
+		*file, *err = os.ReadFile("databases/" + *location + "/database.json")
+		if *err != nil {
+			go fmt.Println("Error reading file:", err)
+		}
+
+		// Unmarshal the JSON data into a variable
+		*err = json.Unmarshal(*file, &database)
+		if *err != nil {
+			go fmt.Println("Error unmarshalling Database JSON:", err)
+		}
+		done <- true
+	}
+	go conf(cdone, &conferr)
+	go data(ddone, &dataerr)
+
+	<-cdone
+	if conferr != nil {
+		return conferr
+	}
+	<-ddone
+	if dataerr != nil {
+		return dataerr
 	}
 	file = nil
-	<-done
-
 	return nil
 }
 
