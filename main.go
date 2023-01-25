@@ -122,7 +122,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = ""
 			direct = ""
 			dbfilename = ""
-			runtime.GC()
 		}
 
 		process(&msg)
@@ -278,6 +277,7 @@ func parsedata(database interface{}) gabs.Container {
 
 func Nilify(v *interface{}) {
 	*v = nil
+	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
