@@ -171,7 +171,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 // Types of Actions
 func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
-	jsonParsed := parsedata(*database)
+	jsonParsed := parsedata(&*database)
 
 	if *direct == "" {
 		return jsonParsed.String()
@@ -187,9 +187,9 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
-	go ByteNil(value)
+	go ByteNil(&*value)
 
-	jsonParsed := parsedata(*database)
+	jsonParsed := parsedata(&*database)
 	_, er := jsonParsed.SetP(&val, *direct)
 	if er != nil {
 		return "Failure. Value cannot be placed into database."
