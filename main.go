@@ -305,5 +305,6 @@ func Nullify(ptr interface{}) {
 	//count is used to make sure that GC isn't constantly spammed
 	if count == 3 {
 		runtime.GC()
+		count = 0
 	}
 }
