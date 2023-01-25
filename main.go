@@ -123,40 +123,43 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 // Config and Database Getting
 // Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
+	if _, err := os.Stat("databases/" + *location); !os.IsExist(err) {
+		return err
+	} else {
+		var conferr error
+		var dataerr error
+		cdone := make(chan bool)
+		ddone := make(chan bool)
 
-	var conferr error
-	var dataerr error
-	cdone := make(chan bool)
-	ddone := make(chan bool)
-
-	conf := func(done chan bool, err *error) {
-		var file []byte
-		file, *err = os.ReadFile("databases/" + *location + "/config.json")
-		if *err != nil {
-			go fmt.Println("Error reading file:", err)
+		conf := func(done chan bool, err *error) {
+			var file []byte
+			file, *err = os.ReadFile("databases/" + *location + "/config.json")
+			if *err != nil {
+				go fmt.Println("Error reading file:", err)
+				done <- true
+			}
+			// Unmarshal the JSON data into a variable
+			*err = json.Unmarshal(file, &jsonData)
+			if *err != nil {
+				go fmt.Println("Error unmarshalling Config JSON:", err)
+				done <- true
+			}
 			done <- true
 		}
-		// Unmarshal the JSON data into a variable
-		*err = json.Unmarshal(file, &jsonData)
-		if *err != nil {
-			go fmt.Println("Error unmarshalling Config JSON:", err)
-			done <- true
+
+		go conf(cdone, &conferr)
+		go data(ddone, &dataerr, &*location, &*database)
+
+		<-cdone
+		if conferr != nil {
+			return conferr
 		}
-		done <- true
+		<-ddone
+		if dataerr != nil {
+			return dataerr
+		}
+		return nil
 	}
-
-	go conf(cdone, &conferr)
-	go data(ddone, &dataerr, &*location, &*database)
-
-	<-cdone
-	if conferr != nil {
-		return conferr
-	}
-	<-ddone
-	if dataerr != nil {
-		return dataerr
-	}
-	return nil
 }
 
 // This gets the database file
