@@ -132,6 +132,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		process(&msg)
 		Nullify(&msg)
+		//Cleans up
 	}
 }
 
