@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -186,14 +187,14 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
-	go ByteNil(&*value)
+	go Nullify(&value)
 
-	jsonParsed := parsedata(&*database)
+	jsonParsed := parsedata(&database)
 	_, er := jsonParsed.SetP(&val, *direct)
 	if er != nil {
 		return "Failure. Value cannot be placed into database."
 	}
-	go Nilify(&val)
+	go Nullify(&val)
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
@@ -208,7 +209,7 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 	parts := strings.Split(string(*value), ":")
 
 	var output interface{}
-	go ByteNil(value)
+	go Nullify(&value)
 
 	jsonParsed := parsedata(*database)
 
@@ -233,7 +234,7 @@ func append(direct *string, database *map[string]interface{}, value *[]byte, loc
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
-	go ByteNil(&*value)
+	go Nullify(&value)
 
 	er := jsonParsed.ArrayAppendP(val, *direct)
 	if er != nil {
@@ -284,7 +285,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 // parses database
 func parsedata(database interface{}) gabs.Container {
 	jsonData, _ := json.Marshal(database)
-	go Nilify(&database)
+	go Nullify(&database)
 	jsonParsed, _ := gabs.ParseJSON([]byte(string(jsonData)))
 	return *jsonParsed
 }
@@ -299,10 +300,10 @@ func DBNil(v *map[string]interface{}) {
 	*v = nil
 }
 
-func ByteNil(v *[]byte) {
-	*v = nil
-}
-
-func StrNil(v *string) {
-	*v = ""
+func Nullify(ptr interface{}) {
+	val := reflect.ValueOf(ptr)
+	if val.Kind() == reflect.Ptr {
+		val.Elem().Set(reflect.Zero(val.Elem().Type()))
+	}
+	runtime.GC()
 }
