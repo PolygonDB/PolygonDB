@@ -282,12 +282,10 @@ func parsedata(database interface{}) gabs.Container {
 
 func Nilify(v *interface{}) {
 	*v = nil
-	runtime.GC()
 }
 
 func DBNil(v *map[string]interface{}) {
 	*v = nil
-	runtime.GC()
 }
 
 func ByteNil(v *[]byte) {
