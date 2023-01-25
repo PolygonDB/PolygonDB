@@ -39,7 +39,7 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	//go clean()
+	go clean()
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
