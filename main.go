@@ -223,8 +223,13 @@ func append(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 	jsonParsed := parsedata(*database)
 
-	jsonValueParsed, _ := gabs.ParseJSON(*value)
-	er := jsonParsed.ArrayAppendP(jsonValueParsed.Data(), *direct)
+	val, err := UnmarshalJSONValue(&*value)
+	if err != nil {
+		return "Failure. Value cannot be unmarshal to json."
+	}
+	go ByteNil(&*value)
+
+	er := jsonParsed.ArrayAppendP(val, *direct)
 	if er != nil {
 		return "Failure!"
 	}
