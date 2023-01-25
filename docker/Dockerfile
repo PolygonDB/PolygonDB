@@ -1,4 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH ghcr.io/pterodactyl/yolks:alpine
+FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
 
 LABEL       author="Michael Parker" maintainer="parker@pterodactyl.io"
 
