@@ -1,4 +1,4 @@
-name: Docker push2
+name: Alpine Push
 
 on:
   push:
