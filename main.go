@@ -125,7 +125,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			action = ""
 			direct = ""
 			dbfilename = ""
-			database = nil
+			Nullify(&database)
+			Nullify(&confdata)
 			msg = nil
 		}
 
@@ -163,7 +164,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 		return *err
 	}
-	*file = nil
+	Nullify(&file)
 
 	return nil
 }
@@ -199,8 +200,9 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
 
-	jsonData = nil
-	location = nil
+	Nullify(&jsonData)
+	Nullify(&location)
+	Nullify(&jsonParsed)
 
 	return "Success"
 }
@@ -290,16 +292,7 @@ func parsedata(database interface{}) gabs.Container {
 	return *jsonParsed
 }
 
-// Nilifiers, help clean up any unused memory
-func Nilify(v *interface{}) {
-	*v = nil
-	runtime.GC()
-}
-
-func DBNil(v *map[string]interface{}) {
-	*v = nil
-}
-
+// Nullify basically helps with the memory management when it comes to websockets
 func Nullify(ptr interface{}) {
 	val := reflect.ValueOf(ptr)
 	if val.Kind() == reflect.Ptr {
