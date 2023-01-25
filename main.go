@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -292,7 +291,6 @@ func parsedata(database interface{}) gabs.Container {
 // Nilifiers, help clean up any unused memory
 func Nilify(v *interface{}) {
 	*v = nil
-	debug.FreeOSMemory()
 }
 
 func DBNil(v *map[string]interface{}) {
