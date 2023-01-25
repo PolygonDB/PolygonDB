@@ -70,11 +70,14 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		process(&msg, ws)
+		process(&msg, &*ws)
 		Nullify(&msg)
 		runtime.GC()
 	}
 }
+
+// Processes the request
+// Once request is done, it cleans up out-of-scope variables
 func process(msg *map[string]interface{}, ws *websocket.Conn) {
 	var confdata config
 	var database map[string]interface{}
@@ -118,6 +121,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 }
 
 // Config and Database Getting
+// Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
 
 	var conferr error
@@ -155,6 +159,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 	return nil
 }
 
+// This gets the database file
 func data(done chan bool, err *error, location *string, database *map[string]interface{}) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/database.json")
