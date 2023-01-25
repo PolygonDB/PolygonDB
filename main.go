@@ -183,7 +183,7 @@ func retrieve(direct *string, database *map[string]interface{}) interface{} {
 
 func record(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
 
-	val, err := UnmarshalJSONValue(*value)
+	val, err := UnmarshalJSONValue(&*value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
@@ -240,32 +240,32 @@ func append(direct *string, database *map[string]interface{}, value *[]byte, loc
 	return "Success"
 }
 
-func UnmarshalJSONValue(data []byte) (interface{}, error) {
+func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 	var v interface{}
 	var err error
-	if len(data) == 0 {
+	if len(*data) == 0 {
 		return nil, fmt.Errorf("json data is empty")
 	}
-	switch data[0] {
+	switch (*data)[0] {
 	case '"':
-		if data[len(data)-1] != '"' {
+		if (*data)[len(*data)-1] != '"' {
 			return nil, fmt.Errorf("json string is not properly formatted")
 		}
-		v = string(data[1 : len(data)-1])
+		v = string((*data)[1 : len(*data)-1])
 	case '{':
-		if data[len(data)-1] != '}' {
+		if (*data)[len(*data)-1] != '}' {
 			return nil, fmt.Errorf("json object is not properly formatted")
 		}
-		err = json.Unmarshal(data, &v)
+		err = json.Unmarshal(*data, &v)
 	case '[':
-		if data[len(data)-1] != ']' {
+		if (*data)[len(*data)-1] != ']' {
 			return nil, fmt.Errorf("json array is not properly formatted")
 		}
-		err = json.Unmarshal(data, &v)
+		err = json.Unmarshal(*data, &v)
 	default:
-		i, e := strconv.Atoi(string(data))
+		i, e := strconv.Atoi(string(*data))
 		if e != nil {
-			v = string(data)
+			v = string(*data)
 			return v, err
 		}
 		v = i
