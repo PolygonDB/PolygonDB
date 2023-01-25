@@ -70,52 +70,51 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		process := func(msg *map[string]interface{}) {
-			var confdata config
-			var database map[string]interface{}
-
-			dbfilename := (*msg)["dbname"].(string)
-			er := cd(&dbfilename, &confdata, &database)
-			if er != nil {
-				ws.WriteJSON("{Error: " + er.Error() + ".}")
-				return
-			}
-
-			if (*msg)["password"] != confdata.Key {
-				ws.WriteJSON("{Error: Password Error.}")
-				return
-			}
-			go Nullify(&confdata)
-
-			direct := (*msg)["location"].(string)
-			action := (*msg)["action"].(string)
-
-			if action == "retrieve" {
-				output := retrieve(&direct, &database)
-				ws.WriteJSON(&output)
-			} else {
-				value := []byte((*msg)["value"].(string))
-				if action == "record" {
-					output := record(&direct, &database, &value, &dbfilename)
-					ws.WriteJSON("{Status: " + output + "}")
-				} else if action == "search" {
-					output := search(&direct, &database, &value)
-					ws.WriteJSON(&output)
-				} else if action == "append" {
-					output := append(&direct, &database, &value, &dbfilename)
-					ws.WriteJSON("{Status: " + output + "}")
-				}
-				Nullify(&value)
-			}
-
-			//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-			Nullify(&database)
-		}
-
-		process(&msg)
+		process(&msg, ws)
 		Nullify(&msg)
 		runtime.GC()
 	}
+}
+func process(msg *map[string]interface{}, ws *websocket.Conn) {
+	var confdata config
+	var database map[string]interface{}
+
+	dbfilename := (*msg)["dbname"].(string)
+	er := cd(&dbfilename, &confdata, &database)
+	if er != nil {
+		ws.WriteJSON("{Error: " + er.Error() + ".}")
+		return
+	}
+
+	if (*msg)["password"] != confdata.Key {
+		ws.WriteJSON("{Error: Password Error.}")
+		return
+	}
+	go Nullify(&confdata)
+
+	direct := (*msg)["location"].(string)
+	action := (*msg)["action"].(string)
+
+	if action == "retrieve" {
+		output := retrieve(&direct, &database)
+		ws.WriteJSON(&output)
+	} else {
+		value := []byte((*msg)["value"].(string))
+		if action == "record" {
+			output := record(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + output + "}")
+		} else if action == "search" {
+			output := search(&direct, &database, &value)
+			ws.WriteJSON(&output)
+		} else if action == "append" {
+			output := append(&direct, &database, &value, &dbfilename)
+			ws.WriteJSON("{Status: " + output + "}")
+		}
+		Nullify(&value)
+	}
+
+	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
+	Nullify(&database)
 }
 
 // Config and Database Getting
