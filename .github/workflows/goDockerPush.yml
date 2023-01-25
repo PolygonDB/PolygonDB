@@ -1,7 +1,7 @@
 name: Docker push
 
 on:
-  release:
+  push:
     types: [created, edited]
     branches:
       - main

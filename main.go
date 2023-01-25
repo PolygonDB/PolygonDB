@@ -127,11 +127,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			dbfilename = ""
 			Nullify(&database)
 			Nullify(&confdata)
-			msg = nil
 		}
 
 		process(&msg)
-		msg = nil
+		Nullify(&msg)
 	}
 }
 
@@ -293,10 +292,16 @@ func parsedata(database interface{}) gabs.Container {
 }
 
 // Nullify basically helps with the memory management when it comes to websockets
+var count int
+
 func Nullify(ptr interface{}) {
+	count++
 	val := reflect.ValueOf(ptr)
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
-	runtime.GC()
+
+	if count == 3 {
+		runtime.GC()
+	}
 }
