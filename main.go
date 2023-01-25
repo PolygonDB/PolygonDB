@@ -85,6 +85,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				ws.WriteJSON("{Error: Password Error.}")
 				return
 			}
+			go Nullify(&confdata)
 
 			direct := (*msg)["location"].(string)
 			action := (*msg)["action"].(string)
@@ -109,7 +110,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 			//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 			Nullify(&database)
-			Nullify(&confdata)
 		}
 
 		process(&msg)
@@ -162,7 +162,6 @@ func retrieve(direct *string, database *map[string]interface{}) interface{} {
 	} else {
 		return jsonParsed.Path(*direct).String()
 	}
-
 }
 
 func record(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
@@ -171,21 +170,15 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
-	go Nullify(&value)
 
 	jsonParsed := parsedata(&database)
 	_, er := jsonParsed.SetP(&val, *direct)
 	if er != nil {
 		return "Failure. Value cannot be placed into database."
 	}
-	go Nullify(&val)
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
-
-	Nullify(&jsonData)
-	Nullify(&location)
-	Nullify(&jsonParsed)
 
 	return "Success"
 }
@@ -194,7 +187,6 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 	parts := strings.Split(string(*value), ":")
 
 	var output interface{}
-	go Nullify(&value)
 
 	jsonParsed := parsedata(*database)
 
