@@ -120,20 +120,21 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 // Config and Database Getting
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
-	file := new([]byte)
+
 	var conferr error
 	var dataerr error
 	cdone := make(chan bool)
 	ddone := make(chan bool)
 
 	conf := func(done chan bool, err *error) {
-		*file, *err = os.ReadFile("databases/" + *location + "/config.json")
+		var file []byte
+		file, *err = os.ReadFile("databases/" + *location + "/config.json")
 		if *err != nil {
 			go fmt.Println("Error reading file:", err)
 			done <- true
 		}
 		// Unmarshal the JSON data into a variable
-		*err = json.Unmarshal(*file, &jsonData)
+		*err = json.Unmarshal(file, &jsonData)
 		if *err != nil {
 			go fmt.Println("Error unmarshalling Config JSON:", err)
 			done <- true
@@ -141,21 +142,8 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 		done <- true
 	}
 
-	data := func(done chan bool, err *error) {
-		*file, *err = os.ReadFile("databases/" + *location + "/database.json")
-		if *err != nil {
-			go fmt.Println("Error reading file:", err)
-		}
-
-		// Unmarshal the JSON data into a variable
-		*err = json.Unmarshal(*file, &database)
-		if *err != nil {
-			go fmt.Println("Error unmarshalling Database JSON:", err)
-		}
-		done <- true
-	}
 	go conf(cdone, &conferr)
-	go data(ddone, &dataerr)
+	go data(ddone, &dataerr, &*location, &*database)
 
 	<-cdone
 	if conferr != nil {
@@ -165,8 +153,22 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 	if dataerr != nil {
 		return dataerr
 	}
-	file = nil
 	return nil
+}
+
+func data(done chan bool, err *error, location *string, database *map[string]interface{}) {
+	var file []byte
+	file, *err = os.ReadFile("databases/" + *location + "/database.json")
+	if *err != nil {
+		go fmt.Println("Error reading file:", err)
+	}
+
+	// Unmarshal the JSON data into a variable
+	*err = json.Unmarshal(file, &database)
+	if *err != nil {
+		go fmt.Println("Error unmarshalling Database JSON:", err)
+	}
+	done <- true
 }
 
 // Types of Actions
