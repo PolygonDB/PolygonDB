@@ -1,7 +1,7 @@
 name: Docker push2
 
 on:
-  push:
+  release:
     branches:
       - main
 
@@ -44,7 +44,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: ./docker
+          context: ./docker/debian
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
