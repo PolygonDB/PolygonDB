@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -43,12 +42,6 @@ func portgrab(set *settings) {
 	file = nil
 }
 
-var connectionPool = sync.Pool{
-	New: func() interface{} {
-		return &websocket.Conn{}
-	},
-}
-
 // The GC doesn't work effectively for Websockets for a manual GC is used to help control memory
 //func clean() {
 //	for {
@@ -64,10 +57,8 @@ var upgrader = websocket.Upgrader{
 }
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
-	ws := connectionPool.Get().(*websocket.Conn)
-	defer connectionPool.Put(ws)
 
-	ws, _ = upgrader.Upgrade(w, r, nil)
+	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
 
 	for {
