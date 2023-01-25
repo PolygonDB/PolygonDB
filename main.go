@@ -53,6 +53,7 @@ var connectionPool = sync.Pool{
 	},
 }
 
+// The GC doesn't work effectively for Websockets for a manual GC is used to help control memory
 func clean() {
 	for {
 		time.Sleep(2 * time.Second)
@@ -119,10 +120,12 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				value = nil
 			}
 
+			//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 			action = ""
 			direct = ""
 			dbfilename = ""
 			database = nil
+			msg = nil
 		}
 
 		process(&msg)
@@ -243,6 +246,7 @@ func append(direct *string, database *map[string]interface{}, value *[]byte, loc
 	return "Success"
 }
 
+// Unmarhsals the value into an appropriate json input
 func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 	var v interface{}
 	var err error
@@ -276,6 +280,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 	return v, err
 }
 
+// parses database
 func parsedata(database interface{}) gabs.Container {
 	jsonData, _ := json.Marshal(database)
 	go Nilify(&database)
@@ -283,6 +288,7 @@ func parsedata(database interface{}) gabs.Container {
 	return *jsonParsed
 }
 
+// Nilifiers, help clean up any unused memory
 func Nilify(v *interface{}) {
 	*v = nil
 }
