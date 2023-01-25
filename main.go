@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -36,7 +35,7 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	go clean()
+	//go clean()
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -55,12 +54,12 @@ var connectionPool = sync.Pool{
 }
 
 // The GC doesn't work effectively for Websockets for a manual GC is used to help control memory
-func clean() {
-	for {
-		time.Sleep(2 * time.Second)
-		runtime.GC()
-	}
-}
+//func clean() {
+//	for {
+//		time.Sleep(2 * time.Second)
+//		runtime.GC()
+//	}
+//}
 
 // data handler
 var msg map[string]interface{}
@@ -82,12 +81,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		process := func(msg *map[string]interface{}) {
 			var confdata config
 			var database map[string]interface{}
-			var direct string
-			var action string
-			var value []byte
-			var dbfilename string
 
-			dbfilename = (*msg)["dbname"].(string)
+			dbfilename := (*msg)["dbname"].(string)
 			er := cd(&dbfilename, &confdata, &database)
 			if er != nil {
 				ws.WriteJSON("{Error: " + er.Error() + ".}")
@@ -99,14 +94,14 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			direct = (*msg)["location"].(string)
-			action = (*msg)["action"].(string)
+			direct := (*msg)["location"].(string)
+			action := (*msg)["action"].(string)
 
 			if action == "retrieve" {
 				output := retrieve(&direct, &database)
 				ws.WriteJSON(&output)
 			} else {
-				value = []byte((*msg)["value"].(string))
+				value := []byte((*msg)["value"].(string))
 				if action == "record" {
 					output := record(&direct, &database, &value, &dbfilename)
 					ws.WriteJSON("{Status: " + output + "}")
@@ -117,13 +112,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 					output := append(&direct, &database, &value, &dbfilename)
 					ws.WriteJSON("{Status: " + output + "}")
 				}
-				value = nil
+				Nullify(&value)
 			}
 
 			//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-			action = ""
-			direct = ""
-			dbfilename = ""
 			Nullify(&database)
 			Nullify(&confdata)
 		}
