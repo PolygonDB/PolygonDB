@@ -5,4 +5,4 @@ LABEL       author="Michael Parker" maintainer="parker@pterodactyl.io"
 LABEL       org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB"
 LABEL       org.opencontainers.image.licenses=MIT
 
-RUN         apt-get remove -y sqlite3
+RUN         apt-get clean
