@@ -283,7 +283,7 @@ func Nullify(ptr interface{}) {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
 	//count is used to make sure that GC isn't constantly spammed
-	if count == 2 {
+	if count > 2 {
 		runtime.GC()
 		count = 0
 	}
