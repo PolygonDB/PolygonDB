@@ -83,3 +83,8 @@ print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 <img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
 
 Sidenote, if you want your server to be on here then open a pull request. 
+
+# Modules (Makes Polygon Easier to Use)
+Javascript - https://github.com/NekaouMike/PloyConJS
+
+Feel free to make your own module for Polygon, I will put your github on here. 
