@@ -54,6 +54,8 @@ func portgrab(set *settings) {
 var msg map[string]interface{}
 var upgrader = websocket.Upgrader{
 	EnableCompression: true,
+	ReadBufferSize:    512,
+	WriteBufferSize:   512,
 }
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
@@ -274,17 +276,10 @@ func parsedata(database interface{}) gabs.Container {
 }
 
 // Nullify basically helps with the memory management when it comes to websockets
-var count int
-
 func Nullify(ptr interface{}) {
-	count++
 	val := reflect.ValueOf(ptr)
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
-	//count is used to make sure that GC isn't constantly spammed
-	if count > 2 {
-		runtime.GC()
-		count = 0
-	}
+	runtime.GC()
 }
