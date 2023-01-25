@@ -123,9 +123,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 // Config and Database Getting
 // Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
-	if _, err := os.Stat("databases/" + *location); !os.IsExist(err) {
-		return err
-	} else {
+	if _, err := os.Stat("databases/" + *location); os.IsExist(err) {
 		var conferr error
 		var dataerr error
 		cdone := make(chan bool)
@@ -143,6 +141,9 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 			return dataerr
 		}
 		return nil
+
+	} else {
+		return err
 	}
 }
 
