@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -70,7 +70,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		process(&msg, &*ws)
 		Nullify(&msg)
-		runtime.GC()
+		//runtime.GC()
 	}
 }
 
@@ -170,7 +170,7 @@ func conf(done chan bool, err *error, location *string, jsonData *config) {
 		go fmt.Println("Error reading file:", err)
 	}
 	// Unmarshal the JSON data for config
-	*err = json.Unmarshal(file, &jsonData)
+	*err = json.Unmarshal(*&file, &jsonData)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
@@ -294,7 +294,6 @@ func Nullify(ptr interface{}) {
 
 // Terminal Websocket
 func Terminal(w http.ResponseWriter, r *http.Request) {
-
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
 }
