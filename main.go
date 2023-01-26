@@ -80,7 +80,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 // Once request is done, it cleans up out-of-scope variables
 func process(msg *map[string]interface{}, ws *websocket.Conn) {
 	var confdata config
-	var database map[string]interface{}
+	var database gabs.Container
 
 	dbfilename := (*msg)["dbname"].(string)
 	er := cd(&dbfilename, &confdata, &database)
@@ -113,7 +113,6 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 			output := append(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
-		Nullify(&value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
@@ -122,8 +121,8 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 
 // Config and Database Getting
 // Uses Concurrency to speed up this process and more precised error handling
-func cd(location *string, jsonData *config, database *map[string]interface{}) error {
-	if _, err := os.Stat("path/to/file"); os.IsNotExist(err) {
+func cd(location *string, jsonData *config, database *gabs.Container) error {
+	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
 		var conferr error
 		var dataerr error
 		cdone := make(chan bool)
@@ -148,7 +147,7 @@ func cd(location *string, jsonData *config, database *map[string]interface{}) er
 }
 
 // This gets the database file
-func data(done chan bool, err *error, location *string, database *map[string]interface{}) {
+func data(done chan bool, err *error, location *string, database *gabs.Container) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/database.json")
 	if *err != nil {
@@ -156,10 +155,13 @@ func data(done chan bool, err *error, location *string, database *map[string]int
 	}
 
 	// Unmarshal the JSON data into a variable
-	*err = json.Unmarshal(file, &database)
+	var data interface{}
+	*err = json.Unmarshal(file, &data)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
+	*database = parsedata(&data)
+
 	done <- true
 }
 
@@ -174,13 +176,12 @@ func conf(done chan bool, err *error, location *string, jsonData *config) {
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
+
 	done <- true
 }
 
 // Types of Actions
-func retrieve(direct *string, database *map[string]interface{}) interface{} {
-
-	jsonParsed := parsedata(&*database)
+func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 
 	if *direct == "" {
 		return jsonParsed.String()
@@ -189,14 +190,13 @@ func retrieve(direct *string, database *map[string]interface{}) interface{} {
 	}
 }
 
-func record(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
+func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
 
 	val, err := UnmarshalJSONValue(&*value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
 
-	jsonParsed := parsedata(&database)
 	_, err = jsonParsed.SetP(&val, *direct)
 	if err != nil {
 		return "Failure. Value cannot be placed into database."
@@ -208,14 +208,12 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 	return "Success"
 }
 
-func search(direct *string, database *map[string]interface{}, value *[]byte) interface{} {
+func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
 	target, _ := UnmarshalJSONValue(&targ)
 
 	var output interface{}
-
-	jsonParsed := parsedata(*database)
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
@@ -228,9 +226,7 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 	return output
 }
 
-func append(direct *string, database *map[string]interface{}, value *[]byte, location *string) string {
-
-	jsonParsed := parsedata(*database)
+func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
 
 	val, err := UnmarshalJSONValue(&*value)
 	if err != nil {
