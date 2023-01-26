@@ -20,8 +20,10 @@ type config struct {
 }
 
 type settings struct {
-	Addr string `json:"addr"`
-	Port string `json:"port"`
+	Addr  string `json:"addr"`
+	Port  string `json:"port"`
+	Sbool bool   `json:"sysadmin"`
+	Spass string `json:"syspassawrd"`
 }
 
 // main
@@ -30,7 +32,10 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	//go clean()
+	if set.Sbool == true {
+		http.HandleFunc("/terminal", Terminal)
+	}
+
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -41,14 +46,6 @@ func portgrab(set *settings) {
 	json.Unmarshal(file, &set)
 	file = nil
 }
-
-// The GC doesn't work effectively for Websockets for a manual GC is used to help control memory
-//func clean() {
-//	for {
-//		time.Sleep(2 * time.Second)
-//		runtime.GC()
-//	}
-//}
 
 // data handler
 var msg map[string]interface{}
@@ -292,4 +289,11 @@ func Nullify(ptr interface{}) {
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
+}
+
+// Terminal
+func Terminal(w http.ResponseWriter, r *http.Request) {
+
+	ws, _ := upgrader.Upgrade(w, r, nil)
+	defer ws.Close()
 }

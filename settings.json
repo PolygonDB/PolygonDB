@@ -1,4 +1,6 @@
 {
     "addr":"localhost",
-    "port":"8000"
+    "port":"8000",
+    "sysadmin":false,
+    "syspassawrd":"Secure Password for System Database Admins"
 }
