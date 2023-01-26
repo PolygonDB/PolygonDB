@@ -7,6 +7,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -70,7 +71,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 		process(&msg, &*ws)
 		Nullify(&msg)
-		//runtime.GC()
+		runtime.GC()
 	}
 }
 
