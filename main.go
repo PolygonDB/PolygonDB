@@ -182,7 +182,6 @@ func conf(done chan bool, err *error, location *string, jsonData *config) {
 
 // Types of Actions
 func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
-
 	if *direct == "" {
 		return jsonParsed.String()
 	} else {
@@ -232,9 +231,8 @@ func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
-	go Nullify(&value)
 
-	er := jsonParsed.ArrayAppendP(val, *direct)
+	er := jsonParsed.ArrayAppendP(&val, *direct)
 	if er != nil {
 		return "Failure!"
 	}
