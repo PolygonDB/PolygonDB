@@ -123,7 +123,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 // Config and Database Getting
 // Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *map[string]interface{}) error {
-	if _, err := os.Stat("databases/" + *location); os.IsExist(err) {
+	if _, err := os.Stat("path/to/file"); os.IsNotExist(err) {
 		var conferr error
 		var dataerr error
 		cdone := make(chan bool)
@@ -210,6 +210,8 @@ func record(direct *string, database *map[string]interface{}, value *[]byte, loc
 
 func search(direct *string, database *map[string]interface{}, value *[]byte) interface{} {
 	parts := strings.Split(string(*value), ":")
+	targ := []byte(parts[1])
+	target, _ := UnmarshalJSONValue(&targ)
 
 	var output interface{}
 
@@ -217,9 +219,10 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
-		name := user.Path(parts[0]).String()
+		name := user.Path(parts[0]).Data()
+		fmt.Print(name)
 
-		if name == parts[1] {
+		if name == target {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			break
 		}
