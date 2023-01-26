@@ -156,7 +156,7 @@ func data(done chan bool, err *error, location *string, database *gabs.Container
 
 	// Unmarshal the JSON data into a variable
 	var data interface{}
-	*err = json.Unmarshal(file, &data)
+	*err = json.Unmarshal(*&file, &data)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
@@ -239,7 +239,7 @@ func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 
-	os.WriteFile("databases/"+*location+"/database.json", jsonData, 0644)
+	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
 
 	return "Success"
 }
