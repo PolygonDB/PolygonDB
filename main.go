@@ -22,8 +22,8 @@ type config struct {
 type settings struct {
 	Addr  string `json:"addr"`
 	Port  string `json:"port"`
-	Sbool bool   `json:"sysadmin"`
-	Spass string `json:"syspassawrd"`
+	Sbool bool   `json:"allow_remote_connections_sysadmin"`
+	Spass string `json:"system_remote_connection_password"`
 }
 
 // main
@@ -31,6 +31,8 @@ func main() {
 
 	var set settings
 	portgrab(&set)
+
+	go mainTerminal()
 
 	if set.Sbool == true {
 		http.HandleFunc("/terminal", Terminal)
@@ -291,9 +293,18 @@ func Nullify(ptr interface{}) {
 	}
 }
 
-// Terminal
+// Terminal Websocket
 func Terminal(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
+}
+
+// Terminal
+func mainTerminal() {
+	var input string
+	for {
+		fmt.Println("=> ")
+		fmt.Scanln(&input)
+	}
 }

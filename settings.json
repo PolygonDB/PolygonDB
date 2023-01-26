@@ -1,6 +1,6 @@
 {
     "addr":"localhost",
     "port":"8000",
-    "sysadmin":false,
-    "syspassawrd":"Secure Password for System Database Admins"
+    "allow_remote_connections_sysadmin":false,
+    "system_remote_connection_password":"Secure Password for System Database Admins"
 }
