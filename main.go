@@ -219,10 +219,7 @@ func search(direct *string, database *map[string]interface{}, value *[]byte) int
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
-		name := user.Path(parts[0]).Data()
-		fmt.Print(name)
-
-		if name == target {
+		if user.Path(parts[0]).Data() == target {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			break
 		}
