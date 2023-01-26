@@ -32,14 +32,13 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	go mainTerminal()
-
 	if set.Sbool == true {
 		http.HandleFunc("/terminal", Terminal)
 	}
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
+	go mainTerminal()
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -302,9 +301,36 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 
 // Terminal
 func mainTerminal() {
-	var input string
 	for {
-		fmt.Println("=> ")
-		fmt.Scanln(&input)
+		input := ""
+		arg1 := ""
+		arg2 := ""
+		fmt.Scanf("%s %s %s", &input, &arg1, &arg2)
+		if input == "create_database" { //create_database (name) (password)
+			if arg1 != "" && arg2 != "" {
+				datacreate(arg1, arg2)
+			} else {
+				fmt.Print("Database cannot be created. Proper command line: create_database name password \n")
+			}
+
+		}
 	}
+}
+
+func datacreate(name string, pass string) {
+	os.Mkdir("databases/"+name, os.ModePerm)
+
+	configf, _ := os.Create("databases/" + name + "/config.json")
+	conf := config{
+		Key: pass,
+	}
+	confJSON, _ := json.Marshal(conf)
+	configf.Write(confJSON)
+
+	configf.Close()
+
+	database, _ := os.Create("databases/" + name + "/database.json")
+	dataJSON, _ := json.Marshal("{Example: \"Hello world\"}")
+	database.Write(dataJSON)
+	database.Close()
 }
