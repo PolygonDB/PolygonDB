@@ -1,5 +1,10 @@
 package main
 
+/*
+#include <stdio.h>
+#include "sysadmin/sysadmin.c"
+*/
+import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -10,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -29,9 +35,6 @@ type settings struct {
 
 // main
 func main() {
-	x := "test"
-	Nullify(&x)
-	fmt.Print(x)
 
 	var set settings
 	portgrab(&set)
@@ -42,7 +45,7 @@ func main() {
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
-	go mainTerminal()
+	go mainTerm()
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -298,43 +301,50 @@ func Nullify(ptr interface{}) {
 }
 
 // Terminal Websocket
+var clients = make(map[*websocket.Conn]bool)
+
 func Terminal(w http.ResponseWriter, r *http.Request) {
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
-}
+	clients[ws] = true
 
-// Terminal
-func mainTerminal() {
 	for {
-		input := ""
-		arg1 := ""
-		arg2 := ""
-		fmt.Scanf("%s %s %s", &input, &arg1, &arg2)
-		if input == "create_database" { //create_database (name) (password)
-			if arg1 != "" && arg2 != "" {
-				datacreate(arg1, arg2)
-			} else {
-				fmt.Print("Database cannot be created. Proper command line: create_database name password \n")
-			}
-
+		var msg string
+		err := ws.ReadJSON(&msg)
+		if err != nil {
+			fmt.Println(err)
+			delete(clients, ws)
+			break
 		}
 	}
 }
 
-func datacreate(name string, pass string) {
-	os.Mkdir("databases/"+name, os.ModePerm)
+func webparse(ws websocket.Conn) {
+	_, message, _ := ws.ReadMessage()
+	var set settings
+	portgrab(&set)
 
-	configf, _ := os.Create("databases/" + name + "/config.json")
-	conf := config{
-		Key: pass,
+	fields := strings.Fields(string(*&message))
+
+	if fields[0] == set.Spass {
+		if fields[1] == "help" {
+			C.help()
+		}
 	}
-	confJSON, _ := json.Marshal(conf)
-	configf.Write(confJSON)
 
-	configf.Close()
+}
 
-	database, _ := os.Create("databases/" + name + "/database.json")
-	dataJSON, _ := json.Marshal("{Example: \"Hello world\"}")
-	database.Write(dataJSON)
-	database.Close()
+func mainTerm() {
+	for true {
+		x := C.term()
+		go sendtoclients(C.GoString(x))
+		defer C.free(unsafe.Pointer(x))
+	}
+}
+
+func sendtoclients(output string) {
+	fmt.Print(output)
+	for client := range clients {
+		client.WriteMessage(websocket.TextMessage, []byte(output))
+	}
 }

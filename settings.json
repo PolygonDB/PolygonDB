@@ -1,6 +1,6 @@
 {
     "addr":"localhost",
     "port":"6060",
-    "allow_remote_connections_sysadmin":false,
-    "system_remote_connection_password":"Secure Password for System Database Admins"
+    "allow_remote_connections_sysadmin":true,
+    "system_remote_connection_password":"Secure"
 }
