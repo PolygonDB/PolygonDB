@@ -6,6 +6,7 @@ package main
 */
 import "C"
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"unsafe"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -360,10 +360,21 @@ func webparse(ws websocket.Conn) {
 }
 
 func mainTerm() {
-	for true {
-		x := C.term()
-		sendtoclients(C.GoString(*&x))
-		C.free(unsafe.Pointer(x))
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		scanner.Scan()
+		parts := strings.Fields(scanner.Text())
+		if len(parts) == 0 {
+			continue
+		}
+
+		if parts[0] == "help" {
+			C.help()
+		} else if parts[0] == "create_database" {
+			C.datacreate(C.CString(parts[1]), C.CString(parts[2]))
+		}
+
+		Nullify(&parts)
 	}
 }
 

@@ -8,13 +8,14 @@
 #include <unistd.h>
 
 
-char* help(){
-    char* path = (char*) malloc(sizeof(char) * 256);
-    sprintf(path, "\n====Polygon Terminal====\nhelp\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\ncreate_database (name) (password)\t\ttest\n========================\n");
-    return path;
+void help(){
+    printf("====Polygon Terminal====\n");
+    printf("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n");
+    printf("create_database (name) (password)\t\tThis will create a database for you with name and password\n");
+    printf("========================\n");
 }
 
-char* datacreate(char *name, char *pass) {
+void datacreate(char *name, char *pass) {
 
     char path[50];
     sprintf(path, "databases/%s", name);
@@ -46,29 +47,6 @@ char* datacreate(char *name, char *pass) {
     fclose(cfile);
     fclose(dfile);
 
-    char* output = (char*) malloc(sizeof(char) * 32);
-    sprintf(output, "File has been created.\n");
-
-    return output;
-}
-
-char* term() {
-    char* result = "";
-
-    char input[256], arg1[256] = "", arg2[256] = "";
-    char input_line[256];
-    fgets(input_line, sizeof(input_line), stdin);
-    sscanf(input_line, "%s %s %s", input, arg1, arg2);
-
-    if (strcmp(input, "create_database") == 0) {
-        if (strlen(arg1) > 0 && strlen(arg2) > 0) {
-            result = datacreate(arg1, arg2);
-        } else {
-            printf("Database cannot be created. Proper command line: create_database name password \n");
-        }
-    } else if (strcmp(input, "help") == 0) {
-        result = help();
-    } 
-
-    return result;
+    //char* output = (char*) malloc(sizeof(char) * 32);
+    printf("File has been created.\n");
 }
