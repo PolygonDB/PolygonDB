@@ -14,11 +14,21 @@ char* help(){
     return path;
 }
 
-void datacreate(char *name, char *pass) {
+char* datacreate(char *name, char *pass) {
 
     char path[50];
     sprintf(path, "databases/%s", name);
-    mkdir(path, 0777);
+
+    #ifdef _WIN32
+        // Code for Windows
+        mkdir(path);
+    #elif defined __linux__
+        // Code for Linux
+        mkdir(path, mode);
+    #elif defined __APPLE__
+        // Code for MacOS
+        mkdir(path, mode);
+    #endif
 
     char conpath[50];
     sprintf(conpath, "databases/%s/config.json", name);
@@ -35,10 +45,13 @@ void datacreate(char *name, char *pass) {
 
     fclose(cfile);
     fclose(dfile);
+
+    char* output = "File has been created!";
+    return output;
 }
 
 char* term() {
-    char* result;
+    char* result = "";
 
     char input[256], arg1[256] = "", arg2[256] = "";
     char input_line[256];
@@ -47,13 +60,14 @@ char* term() {
 
     if (strcmp(input, "create_database") == 0) {
         if (strlen(arg1) > 0 && strlen(arg2) > 0) {
-            datacreate(arg1, arg2);
+            result = datacreate(arg1, arg2);
         } else {
             printf("Database cannot be created. Proper command line: create_database name password \n");
         }
     } else if (strcmp(input, "help") == 0) {
         result = help();
     } 
+    printf(result);
 
     return result;
 }
