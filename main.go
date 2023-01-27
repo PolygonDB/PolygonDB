@@ -29,6 +29,9 @@ type settings struct {
 
 // main
 func main() {
+	x := "test"
+	Nullify(&x)
+	fmt.Print(x)
 
 	var set settings
 	portgrab(&set)
@@ -127,8 +130,8 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		cdone := make(chan bool)
 		ddone := make(chan bool)
 
-		go conf(cdone, &conferr, &*location, &*jsonData)
-		go data(ddone, &dataerr, &*location, &*database)
+		go conf(&cdone, &conferr, &*location, &*jsonData)
+		go data(&ddone, &dataerr, &*location, &*database)
 
 		<-cdone
 		if conferr != nil {
@@ -146,7 +149,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 }
 
 // This gets the database file
-func data(done chan bool, err *error, location *string, database *gabs.Container) {
+func data(done *chan bool, err *error, location *string, database *gabs.Container) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/database.json")
 	if *err != nil {
@@ -159,12 +162,12 @@ func data(done chan bool, err *error, location *string, database *gabs.Container
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-	*database = parsedata(&data)
-
-	done <- true
+	*database = parsedata(*&data)
+	file = nil
+	*done <- true
 }
 
-func conf(done chan bool, err *error, location *string, jsonData *config) {
+func conf(done *chan bool, err *error, location *string, jsonData *config) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/config.json")
 	if *err != nil {
@@ -175,8 +178,9 @@ func conf(done chan bool, err *error, location *string, jsonData *config) {
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
+	file = nil
 
-	done <- true
+	*done <- true
 }
 
 // Types of Actions
@@ -280,14 +284,14 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 // parses database
 func parsedata(database interface{}) gabs.Container {
 	jsonData, _ := json.Marshal(&database)
-	go Nullify(&database)
+	Nullify(&database)
 	jsonParsed, _ := gabs.ParseJSON(*&jsonData)
 	return *jsonParsed
 }
 
 // Nullify basically helps with the memory management when it comes to websockets
 func Nullify(ptr interface{}) {
-	val := reflect.ValueOf(ptr)
+	val := reflect.ValueOf(*&ptr)
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
