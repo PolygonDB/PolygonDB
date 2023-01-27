@@ -67,7 +67,6 @@ char* term() {
     } else if (strcmp(input, "help") == 0) {
         result = help();
     } 
-    printf(result);
 
     return result;
 }
