@@ -125,7 +125,9 @@ func process(msg *input, ws *websocket.Conn) {
 		ws.WriteJSON("{Error: Password Error.}")
 		return
 	}
-	Nullify(&confdata)
+	defer Nullify(&confdata)
+	defer Nullify(&database)
+	defer Nullify(&msg)
 
 	//direct := (*msg)["location"].(string)
 	//action := (*msg)["action"].(string)
@@ -149,8 +151,6 @@ func process(msg *input, ws *websocket.Conn) {
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-	Nullify(&database)
-	Nullify(&msg)
 	runtime.GC()
 
 }
@@ -242,7 +242,7 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 		return "Failure. Value cannot be placed into database."
 	}
 
-	syncupdate(*jsonParsed, *&location)
+	syncupdate(jsonParsed, *&location)
 
 	return "Success"
 }
@@ -278,7 +278,7 @@ func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 		return "Failure!"
 	}
 
-	syncupdate(*jsonParsed, *&location)
+	syncupdate(jsonParsed, *&location)
 
 	return "Success"
 }
@@ -334,7 +334,7 @@ func Nullify(ptr interface{}) {
 }
 
 // Sync Update
-func syncupdate(jsonParsed gabs.Container, location *string) {
+func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
 	databases.Store(*location, jsonParsed.Data())
