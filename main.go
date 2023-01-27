@@ -93,7 +93,6 @@ func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		process(&msg.msg, msg.ws)
-		msg.ws = nil
 		runtime.GC()
 	}
 }
