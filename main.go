@@ -85,9 +85,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		queue <- wsMessage{ws: ws, msg: msg}
-		Nullify(&msg)
-
-		runtime.GC()
+		msg = nil
+		ws = nil
 	}
 }
 
@@ -95,6 +94,7 @@ func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		process(&msg.msg, msg.ws)
+		runtime.GC()
 	}
 }
 
