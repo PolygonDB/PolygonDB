@@ -161,12 +161,11 @@ func data(done *chan bool, err *error, location *string, database *gabs.Containe
 
 	// Unmarshal the JSON data into a variable
 	var data interface{}
-	*err = json.Unmarshal(*&file, *&data)
+	*err = json.Unmarshal(*&file, &data)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	*database = parsedata(*&data)
-	data = nil
 	file = nil
 	*done <- true
 }
