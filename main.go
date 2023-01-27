@@ -69,10 +69,18 @@ var upgrader = websocket.Upgrader{
 
 type wsMessage struct {
 	ws  *websocket.Conn
-	msg map[string]interface{}
+	msg input
 }
 
 var queue = make(chan wsMessage)
+
+type input struct {
+	Pass   string `json:"password"`
+	Dbname string `json:"dbname"`
+	Loc    string `json:"location"`
+	Act    string `json:"action"`
+	Val    string `json:"value"`
+}
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
@@ -81,9 +89,9 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		var msg map[string]interface{}
-		ws.ReadJSON(&msg)
-		if msg == nil {
+		var msg input
+		er := ws.ReadJSON(&msg)
+		if er != nil {
 			break
 		}
 		queue <- wsMessage{ws: ws, msg: msg}
@@ -101,39 +109,38 @@ func processQueue(queue chan wsMessage) {
 
 // Processes the request
 // Once request is done, it cleans up out-of-scope variables
-func process(msg *map[string]interface{}, ws *websocket.Conn) {
+func process(msg *input, ws *websocket.Conn) {
 
 	var confdata config
 	var database gabs.Container
 
-	dbfilename := (*msg)["dbname"].(string)
-	er := cd(&dbfilename, &confdata, &database)
+	er := cd(&msg.Dbname, &confdata, &database)
 	if er != nil {
 		ws.WriteJSON("{Error: " + er.Error() + ".}")
 		return
 	}
-	if (*msg)["password"] != confdata.Key {
+	if msg.Pass != confdata.Key {
 		ws.WriteJSON("{Error: Password Error.}")
 		return
 	}
 	Nullify(&confdata)
 
-	direct := (*msg)["location"].(string)
-	action := (*msg)["action"].(string)
+	//direct := (*msg)["location"].(string)
+	//action := (*msg)["action"].(string)
 
-	if action == "retrieve" {
-		output := retrieve(&direct, &database)
+	if msg.Act == "retrieve" {
+		output := retrieve(&msg.Loc, &database)
 		ws.WriteJSON(&output)
 	} else {
-		value := []byte((*msg)["value"].(string))
-		if action == "record" {
-			output := record(&direct, &database, &value, &dbfilename)
+		value := []byte(msg.Val)
+		if msg.Act == "record" {
+			output := record(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
-		} else if action == "search" {
-			output := search(&direct, &database, &value)
+		} else if msg.Act == "search" {
+			output := search(&msg.Loc, &database, &value)
 			ws.WriteJSON(&output)
-		} else if action == "append" {
-			output := append(&direct, &database, &value, &dbfilename)
+		} else if msg.Act == "append" {
+			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
 		Nullify(&value)
