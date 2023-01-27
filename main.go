@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -134,10 +136,12 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 			output := append(&direct, &database, &value, &dbfilename)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
+		Nullify(&value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 	Nullify(&database)
+	Nullify(&msg)
 	runtime.GC()
 
 }
@@ -173,37 +177,49 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 // This gets the database file
 func data(err *error, location *string, database *gabs.Container) {
-	var file []byte
-	file, *err = os.ReadFile("databases/" + *location + "/database.json")
+	var file *os.File
+	file, *err = os.Open("databases/" + *location + "/database.json")
 	if *err != nil {
 		go fmt.Println("Error reading file:", err)
 	}
+	defer file.Close()
 
 	// Unmarshal the JSON data into a variable
 	var data interface{}
-	*err = json.Unmarshal(*&file, &data)
+	*err = json.NewDecoder(file).Decode(&data)
+
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	*database = parsedata(&data)
 	databases.Store(*location, *&data)
 	data = nil
-	file = nil
 	//*done <- true
 }
 
 func conf(err *error, location *string, jsonData *config) {
-	var file []byte
-	file, *err = os.ReadFile("databases/" + *location + "/config.json")
+	var fd syscall.Handle
+	var target string = "databases/" + *location + "/config.json"
+	fd, *err = syscall.Open(target, syscall.O_RDONLY, 0)
 	if *err != nil {
-		go fmt.Println("Error reading file:", err)
+		log.Fatal(err)
 	}
+	defer syscall.Close(fd)
+
+	file := os.NewFile(uintptr(fd), target)
+	defer file.Close()
+	//file, *err = os.Open("databases/" + *location + "/config.json")
+	//if *err != nil {
+	//	go fmt.Println("Error reading file:", err)
+	//}
+	//defer file.Close()
+
 	// Unmarshal the JSON data for config
-	*err = json.Unmarshal(*&file, &jsonData)
+	*err = json.NewDecoder(os.NewFile(uintptr(fd), target)).Decode(&jsonData)
+	Nullify(file)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
-	file = nil
 }
 
 // Types of Actions
@@ -303,7 +319,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 }
 
 // parses database
-func parsedata(database interface{}) gabs.Container {
+func parsedata(database *interface{}) gabs.Container {
 	jsonData, _ := json.Marshal(&database)
 	Nullify(&database)
 	jsonParsed, _ := gabs.ParseJSON(*&jsonData)
