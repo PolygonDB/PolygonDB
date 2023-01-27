@@ -18,7 +18,7 @@ void datacreate(char *name, char *pass) {
 
     char path[50];
     sprintf(path, "databases/%s", name);
-    mkdir(path);
+    mkdir(path, 0777);
 
     char conpath[50];
     sprintf(conpath, "databases/%s/config.json", name);
