@@ -24,10 +24,10 @@ char* datacreate(char *name, char *pass) {
         mkdir(path);
     #elif defined __linux__
         // Code for Linux
-        mkdir(path, mode);
+        mkdir(path, 0777);
     #elif defined __APPLE__
         // Code for MacOS
-        mkdir(path, mode);
+        mkdir(path, 0777);
     #endif
 
     char conpath[50];
