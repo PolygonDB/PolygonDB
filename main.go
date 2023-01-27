@@ -288,7 +288,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 
 // parses database
 func parsedata(database interface{}) gabs.Container {
-	jsonData, _ := json.Marshal(*&database)
+	jsonData, _ := json.Marshal(&database)
 	Nullify(&database)
 	jsonParsed, _ := gabs.ParseJSON(*&jsonData)
 	return *jsonParsed
