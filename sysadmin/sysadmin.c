@@ -9,7 +9,7 @@
 
 
 char* help(){
-    char* path = (char*) malloc(sizeof(char) * 256);
+    char* path;
     sprintf(path, "\n====Polygon Terminal====\nhelp\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\ncreate_database (name) (password)\t\ttest\n========================\n");
     return path;
 }
