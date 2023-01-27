@@ -88,7 +88,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		//Reads input
 		var msg input
-		er := ws.ReadJSON(&msg)
+		er := json.NewDecoder(r.Body).Decode(&msg)
 		if er != nil {
 			break
 		}
