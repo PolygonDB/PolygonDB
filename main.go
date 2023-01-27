@@ -131,23 +131,19 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
 		var conferr error
 		var dataerr error
-		cdone := make(chan bool)
-		ddone := make(chan bool)
 
-		go conf(&cdone, &conferr, &*location, &*jsonData)
+		conf(&conferr, &*location, &*jsonData)
 
-		if value, ok := databases.Load(*location); ok {
-			*database = parsedata(*&value)
+		if value, ok := databases.Load(&*location); *&ok {
+			*database = parsedata(&value)
 			value = nil
 		} else {
-			data(&ddone, &dataerr, &*location, &*database)
+			data(&dataerr, &*location, &*database)
 		}
 
-		<-cdone
 		if conferr != nil {
 			return conferr
 		}
-		//<-ddone
 		if dataerr != nil {
 			return dataerr
 		}
@@ -159,7 +155,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 }
 
 // This gets the database file
-func data(done *chan bool, err *error, location *string, database *gabs.Container) {
+func data(err *error, location *string, database *gabs.Container) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/database.json")
 	if *err != nil {
@@ -172,14 +168,14 @@ func data(done *chan bool, err *error, location *string, database *gabs.Containe
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-	*database = parsedata(*&data)
+	*database = parsedata(&data)
 	databases.Store(*location, *&data)
 	data = nil
 	file = nil
 	//*done <- true
 }
 
-func conf(done *chan bool, err *error, location *string, jsonData *config) {
+func conf(err *error, location *string, jsonData *config) {
 	var file []byte
 	file, *err = os.ReadFile("databases/" + *location + "/config.json")
 	if *err != nil {
@@ -191,8 +187,6 @@ func conf(done *chan bool, err *error, location *string, jsonData *config) {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
 	file = nil
-
-	*done <- true
 }
 
 // Types of Actions
