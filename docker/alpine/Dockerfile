@@ -1,19 +1,19 @@
-FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
+FROM        --platform=$TARGETOS/$TARGETARCH golang:1.19.5 as build
 
-LABEL       author="JewishLewish/Lenny" maintainer="lenny@lunes.host"
-
-LABEL       org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB"
-LABEL       org.opencontainers.image.licenses=MIT
-
-RUN apk update && apk add --no-cache bash ca-certificates libc6-compat tzdata git
-RUN apk add --no-cache libstdc++
-RUN apk del --purge *-dev
-
-# Add user with no password, no login and home directory
 RUN adduser -D -h /home/container container 
 
 USER container
 ENV  HOME /home/container
 WORKDIR /home/container
 
-CMD ["/bin/bash"]
+COPY . .
+RUN go build
+
+
+FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
+
+USER container
+ENV  HOME /home/container
+WORKDIR /home/container
+
+CMD ["./PolygonDB"]

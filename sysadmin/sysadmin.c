@@ -48,6 +48,7 @@ char* datacreate(char *name, char *pass) {
 
     char* output = (char*) malloc(sizeof(char) * 32);
     sprintf(output, "File has been created.\n");
+
     return output;
 }
 

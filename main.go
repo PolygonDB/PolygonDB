@@ -85,7 +85,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		queue <- wsMessage{ws: ws, msg: msg}
-		msg = nil
+		Nullify(&msg)
 	}
 }
 
