@@ -9,7 +9,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -18,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -205,25 +203,15 @@ func data(err *error, location *string, database *gabs.Container) {
 }
 
 func conf(err *error, location *string, jsonData *config) {
-	var fd syscall.Handle
-	var target string = "databases/" + *location + "/config.json"
-	fd, *err = syscall.Open(target, syscall.O_RDONLY, 0)
+	var file *os.File
+	file, *err = os.Open("databases/" + *location + "/config.json")
 	if *err != nil {
-		log.Fatal(err)
+		go fmt.Println("Error reading file:", err)
 	}
-	defer syscall.Close(fd)
-
-	file := os.NewFile(uintptr(fd), target)
 	defer file.Close()
-	//file, *err = os.Open("databases/" + *location + "/config.json")
-	//if *err != nil {
-	//	go fmt.Println("Error reading file:", err)
-	//}
-	//defer file.Close()
 
 	// Unmarshal the JSON data for config
-	*err = json.NewDecoder(os.NewFile(uintptr(fd), target)).Decode(&jsonData)
-	Nullify(file)
+	*err = json.NewDecoder(file).Decode(&jsonData)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
