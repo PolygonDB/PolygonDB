@@ -91,7 +91,6 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 
 	dbfilename := (*msg)["dbname"].(string)
 	er := cd(&dbfilename, &confdata, &database)
-	fmt.Print(database)
 	if er != nil {
 		ws.WriteJSON("{Error: " + er.Error() + ".}")
 		return
