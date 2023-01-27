@@ -88,7 +88,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		//Reads input
 		var msg input
-		er := json.NewDecoder(r.Body).Decode(&msg)
+		er := ws.ReadJSON(&msg)
 		if er != nil {
 			break
 		}
@@ -97,11 +97,15 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var mutex = &sync.Mutex{}
+
 func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
+		mutex.Lock()
 		process(&msg.msg, msg.ws)
 		Nullify(&msg)
+		mutex.Unlock()
 	}
 }
 
