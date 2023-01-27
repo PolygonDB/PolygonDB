@@ -217,12 +217,13 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
 	target, _ := UnmarshalJSONValue(&targ)
+	targ = nil
 
 	var output interface{}
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
-		if user.Path(parts[0]).Data() == target {
+		if fmt.Sprint(user.Path(parts[0]).Data()) == fmt.Sprint(target) {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			break
 		}
