@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"github.com/Jeffail/gabs/v2"
@@ -56,6 +57,7 @@ func portgrab(set *settings) {
 }
 
 // data handler
+var databases = &sync.Map{}
 var msg map[string]interface{}
 var upgrader = websocket.Upgrader{
 	EnableCompression: true,
@@ -89,11 +91,11 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 
 	dbfilename := (*msg)["dbname"].(string)
 	er := cd(&dbfilename, &confdata, &database)
+	fmt.Print(database)
 	if er != nil {
 		ws.WriteJSON("{Error: " + er.Error() + ".}")
 		return
 	}
-
 	if (*msg)["password"] != confdata.Key {
 		ws.WriteJSON("{Error: Password Error.}")
 		return
@@ -134,13 +136,19 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		ddone := make(chan bool)
 
 		go conf(&cdone, &conferr, &*location, &*jsonData)
-		go data(&ddone, &dataerr, &*location, &*database)
+
+		if value, ok := databases.Load(*location); ok {
+			*database = parsedata(*&value)
+			value = nil
+		} else {
+			data(&ddone, &dataerr, &*location, &*database)
+		}
 
 		<-cdone
 		if conferr != nil {
 			return conferr
 		}
-		<-ddone
+		//<-ddone
 		if dataerr != nil {
 			return dataerr
 		}
@@ -166,8 +174,10 @@ func data(done *chan bool, err *error, location *string, database *gabs.Containe
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	*database = parsedata(*&data)
+	databases.Store(*location, *&data)
+	data = nil
 	file = nil
-	*done <- true
+	//*done <- true
 }
 
 func conf(done *chan bool, err *error, location *string, jsonData *config) {
@@ -207,8 +217,7 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 		return "Failure. Value cannot be placed into database."
 	}
 
-	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
-	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
+	syncupdate(*jsonParsed, *&location)
 
 	return "Success"
 }
@@ -244,9 +253,7 @@ func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 		return "Failure!"
 	}
 
-	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
-
-	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
+	syncupdate(*jsonParsed, *&location)
 
 	return "Success"
 }
@@ -299,6 +306,13 @@ func Nullify(ptr interface{}) {
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
+}
+
+// Sync Update
+func syncupdate(jsonParsed gabs.Container, location *string) {
+	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
+	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
+	databases.Store(*location, jsonParsed.Data())
 }
 
 // Terminal Websocket
