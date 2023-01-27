@@ -338,14 +338,14 @@ func webparse(ws websocket.Conn) {
 func mainTerm() {
 	for true {
 		x := C.term()
-		go sendtoclients(C.GoString(x))
-		defer C.free(unsafe.Pointer(x))
+		sendtoclients(C.GoString(*&x))
+		C.free(unsafe.Pointer(x))
 	}
 }
 
 func sendtoclients(output string) {
-	fmt.Print(output)
+	fmt.Print(*&output)
 	for client := range clients {
-		client.WriteMessage(websocket.TextMessage, []byte(output))
+		client.WriteMessage(websocket.TextMessage, []byte(*&output))
 	}
 }

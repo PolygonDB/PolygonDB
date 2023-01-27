@@ -9,7 +9,7 @@
 
 
 char* help(){
-    char* path;
+    char* path = (char*) malloc(sizeof(char) * 256);
     sprintf(path, "\n====Polygon Terminal====\nhelp\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\ncreate_database (name) (password)\t\ttest\n========================\n");
     return path;
 }
@@ -46,7 +46,7 @@ char* datacreate(char *name, char *pass) {
     fclose(cfile);
     fclose(dfile);
 
-    char* output;
+    char* output = (char*) malloc(sizeof(char) * 32);
     sprintf(output, "File has been created.\n");
     return output;
 }
