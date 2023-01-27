@@ -93,6 +93,7 @@ func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		process(&msg.msg, msg.ws)
+		Nullify(&msg)
 	}
 }
 
