@@ -93,7 +93,6 @@ func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		process(&msg.msg, msg.ws)
-		runtime.GC()
 	}
 }
 
@@ -138,6 +137,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 	Nullify(&database)
+	runtime.GC()
 
 }
 
