@@ -47,7 +47,7 @@ char* datacreate(char *name, char *pass) {
     fclose(dfile);
 
     char* output;
-    sprintf(output, "File has been created.\n")
+    sprintf(output, "File has been created.\n");
     return output;
 }
 
