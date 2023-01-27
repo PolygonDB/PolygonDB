@@ -47,6 +47,7 @@ func main() {
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	go mainTerm()
+	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -58,12 +59,18 @@ func portgrab(set *settings) {
 
 // data handler
 var databases = &sync.Map{}
-var msg map[string]interface{}
 var upgrader = websocket.Upgrader{
 	EnableCompression: true,
 	ReadBufferSize:    0,
 	WriteBufferSize:   0,
 }
+
+type wsMessage struct {
+	ws  *websocket.Conn
+	msg map[string]interface{}
+}
+
+var queue = make(chan wsMessage)
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
@@ -72,20 +79,29 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
+		var msg map[string]interface{}
 		ws.ReadJSON(&msg)
 		if msg == nil {
 			break
 		}
-
-		process(&msg, &*ws)
+		queue <- wsMessage{ws: ws, msg: msg}
 		Nullify(&msg)
+
 		runtime.GC()
+	}
+}
+
+func processQueue(queue chan wsMessage) {
+	for {
+		msg := <-queue
+		process(&msg.msg, msg.ws)
 	}
 }
 
 // Processes the request
 // Once request is done, it cleans up out-of-scope variables
 func process(msg *map[string]interface{}, ws *websocket.Conn) {
+
 	var confdata config
 	var database gabs.Container
 
@@ -99,7 +115,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 		ws.WriteJSON("{Error: Password Error.}")
 		return
 	}
-	go Nullify(&confdata)
+	Nullify(&confdata)
 
 	direct := (*msg)["location"].(string)
 	action := (*msg)["action"].(string)
@@ -123,6 +139,7 @@ func process(msg *map[string]interface{}, ws *websocket.Conn) {
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 	Nullify(&database)
+
 }
 
 // Config and Database Getting
