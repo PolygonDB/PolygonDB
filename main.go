@@ -81,14 +81,22 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		var msg input
-		er := ws.ReadJSON(&msg)
-		if er != nil {
-			return
+		if !takein(ws) {
+			break
 		}
-		queue <- wsMessage{ws: ws, msg: msg}
-		Nullify(&msg)
+
 	}
+}
+
+func takein(ws *websocket.Conn) bool {
+	var msg input
+	er := ws.ReadJSON(&msg)
+	if er != nil {
+		return false
+	}
+	queue <- wsMessage{ws: ws, msg: msg}
+	Nullify(&msg)
+	return true
 }
 
 var mutex = &sync.Mutex{}
