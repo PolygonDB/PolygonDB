@@ -61,7 +61,7 @@ var upgrader = websocket.Upgrader{
 
 type wsMessage struct {
 	ws  *websocket.Conn
-	msg input
+	msg *input
 }
 
 var queue = make(chan wsMessage)
@@ -94,7 +94,7 @@ func takein(ws *websocket.Conn) bool {
 	if er != nil {
 		return false
 	}
-	queue <- wsMessage{ws: ws, msg: msg}
+	queue <- wsMessage{ws: ws, msg: &msg}
 	Nullify(&msg)
 	return true
 }
@@ -105,7 +105,7 @@ func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		mutex.Lock()
-		process(&msg.msg, msg.ws)
+		process(msg.msg, msg.ws)
 		Nullify(&msg)
 		mutex.Unlock()
 	}
