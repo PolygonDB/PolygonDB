@@ -81,9 +81,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
+		mutex.Lock()
 		if !takein(ws) {
 			break
 		}
+		mutex.Unlock()
 
 	}
 }
