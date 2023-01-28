@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
@@ -56,7 +57,26 @@ func portgrab(set *settings) {
 }
 
 // data handler
-var databases = &sync.Map{}
+// var databases = &sync.Map{}
+type atomicDatabase struct {
+	value atomic.Value
+}
+
+func (ad *atomicDatabase) Load(location string) (*gabs.Container, bool) {
+	v := ad.value.Load()
+	if v == nil {
+		return nil, false
+	}
+	value := v.(*gabs.Container)
+	return value, true
+}
+
+func (ad *atomicDatabase) Store(location string, value *gabs.Container) {
+	ad.value.Store(value)
+}
+
+var databases = &atomicDatabase{}
+
 var upgrader = websocket.Upgrader{
 	EnableCompression: true,
 	ReadBufferSize:    0,
@@ -349,7 +369,7 @@ func Nullify(ptr interface{}) {
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
-	databases.Store(*location, jsonParsed.Data())
+	databases.Store(*location, jsonParsed)
 }
 
 // Terminal Websocket
