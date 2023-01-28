@@ -8,6 +8,7 @@ import "C"
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -37,15 +38,19 @@ type config struct {
 type settings struct {
 	Addr string `json:"addr"`
 	Port string `json:"port"`
+	Goe  bool   `json:"goextend"`
+	Gof  string `json:"gofile"`
 }
 
 // main
 func main() {
 
-	test()
-
 	var set settings
 	portgrab(&set)
+
+	if set.Goe {
+		go getGo(set.Gof)
+	}
 
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	go mainTerm()
@@ -406,21 +411,25 @@ func mainTerm() {
 	}
 }
 
-func test() {
+func getGo(loc string) {
+	resp, err := http.Get(loc)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	fmt.Print(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	i := interp.New(interp.Options{})
 
 	i.Use(stdlib.Symbols)
 
-	_, err := i.Eval(`package main
-	import "fmt"
-	func lastten() {
-		fmt.Println("hello world")
-	}`)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = i.Eval(`temp()`)
+	_, err = i.Eval(`` + string(body) + ``)
 	if err != nil {
 		panic(err)
 	}
