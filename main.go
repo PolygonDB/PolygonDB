@@ -82,7 +82,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
-	rateLimiter := time.Tick(500 * time.Millisecond)
+	rateLimiter := time.Tick(1 * time.Millisecond)
 
 	for {
 		select {
@@ -106,7 +106,8 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		buffer := make([]byte, 1024*1024)
+		buffer := make([]byte, 1024)
+		mutex.Lock()
 		_, err := reader.Read(buffer)
 		if err != nil {
 			return false
@@ -117,7 +118,7 @@ func takein(ws *websocket.Conn) bool {
 		}
 
 		//add message to the queue
-		mutex.Lock()
+		//mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
 	default:
