@@ -96,6 +96,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var msg input
+var buffer = make([]byte, 512)
 
 func takein(ws *websocket.Conn) bool {
 
@@ -107,7 +108,7 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		buffer := make([]byte, 1024)
+
 		defer Nullify(&buffer)
 		mutex.Lock()
 		_, err := reader.Read(buffer)
