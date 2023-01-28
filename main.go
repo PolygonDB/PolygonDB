@@ -82,15 +82,17 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		//Reads input
 		if !takein(ws) {
-			ws.WriteJSON("{Connection: 'Rejected'")
+			ws.WriteJSON("{Connection: 'Failed.'")
 			break
 		}
 
 	}
 }
 
+var msg input
+
 func takein(ws *websocket.Conn) bool {
-	var msg input
+
 	er := ws.ReadJSON(&msg)
 	if er != nil {
 		return false
