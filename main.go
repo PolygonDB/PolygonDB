@@ -81,16 +81,15 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		mutex.Lock()
 		if !takein(ws) {
 			break
 		}
-		mutex.Unlock()
 
 	}
 }
 
 func takein(ws *websocket.Conn) bool {
+	mutex.Lock()
 	var msg input
 	er := ws.ReadJSON(&msg)
 	if er != nil {
@@ -98,6 +97,7 @@ func takein(ws *websocket.Conn) bool {
 	}
 	queue <- wsMessage{ws: ws, msg: msg}
 	Nullify(&msg)
+	mutex.Unlock()
 	return true
 }
 
