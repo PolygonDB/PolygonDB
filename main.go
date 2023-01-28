@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -67,7 +68,7 @@ type wsMessage struct {
 	msg input
 }
 
-var queue = make(chan wsMessage)
+var queue = make(chan wsMessage, 100)
 
 type input struct {
 	Pass   string `json:"password"`
@@ -81,12 +82,15 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
+	rateLimiter := time.Tick(500 * time.Millisecond)
 
 	for {
-		if !takein(ws) {
-			ws.WriteJSON("Connection: 'Failed.'}")
+		select {
+		case <-rateLimiter:
+			if !takein(ws) {
+				ws.WriteJSON("Connection: 'Failed.'}")
+			}
 		}
-
 	}
 }
 
@@ -102,7 +106,7 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, 1024*1024)
 		_, err := reader.Read(buffer)
 		if err != nil {
 			return false
