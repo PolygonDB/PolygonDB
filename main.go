@@ -13,6 +13,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -94,6 +95,7 @@ func processQueue(queue chan *websocket.Conn) {
 
 		process(&uinput, msg)
 		Nullify(&msg)
+		runtime.GC()
 		mutex.Unlock()
 	}
 }
@@ -136,11 +138,11 @@ func process(msg *input, ws *websocket.Conn) {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
-		Nullify(&value)
+		defer Nullify(&value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-	//runtime.GC()
+	runtime.GC()
 
 }
 
