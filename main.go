@@ -82,6 +82,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		//Reads input
 		if !takein(ws) {
+			ws.WriteJSON("{Connection: 'Rejected'")
 			break
 		}
 
