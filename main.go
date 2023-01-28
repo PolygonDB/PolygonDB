@@ -64,7 +64,7 @@ type wsMessage struct {
 	msg input
 }
 
-var queue = make(chan wsMessage)
+var queue = make(chan *websocket.Conn)
 
 type input struct {
 	Pass   string `json:"password"`
@@ -86,22 +86,19 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func takein(ws *websocket.Conn) {
-	var msg input
-	er := ws.ReadJSON(&msg)
-	if er != nil {
-		return
-	}
-	queue <- wsMessage{ws: ws, msg: msg}
-	Nullify(&msg)
+	queue <- ws
 }
 
 var mutex = &sync.Mutex{}
 
-func processQueue(queue chan wsMessage) {
+func processQueue(queue chan *websocket.Conn) {
 	for {
 		msg := <-queue
 		mutex.Lock()
-		process(&msg.msg, msg.ws)
+		var uinput input
+		msg.ReadJSON(&uinput)
+
+		process(&uinput, msg)
 		Nullify(&msg)
 		mutex.Unlock()
 	}
