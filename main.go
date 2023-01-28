@@ -53,6 +53,7 @@ func main() {
 	}
 
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
+	http.HandleFunc("/ws", datahandler)
 	go mainTerm()
 	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -200,7 +201,8 @@ func process(msg *input, ws *websocket.Conn) {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		} else if msg.Act == "custom" {
-
+			output := doGo(&value)
+			ws.WriteJSON(output.String())
 		}
 		Nullify(&value)
 	}
@@ -413,7 +415,7 @@ func mainTerm() {
 	}
 }
 
-var i *interp.Interpreter
+var i *interp.Interpreter = interp.New(interp.Options{})
 
 func getGo(loc string) {
 	resp, err := http.Get(loc)
@@ -439,10 +441,10 @@ func getGo(loc string) {
 	fmt.Print("Succesfully parsed the data! \n")
 }
 
-func doGo(target string) {
-	v, err := i.Eval(`` + target + ``)
+func doGo(target *[]byte) reflect.Value {
+	v, err := i.Eval(`` + string(*target) + ``)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(v)
+	return v
 }
