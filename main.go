@@ -49,7 +49,7 @@ func main() {
 	portgrab(&set)
 
 	if set.Goe {
-		go getGo(set.Gof)
+		getGo(set.Gof)
 	}
 
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -199,6 +199,8 @@ func process(msg *input, ws *websocket.Conn) {
 		} else if msg.Act == "append" {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
+		} else if msg.Act == "custom" {
+
 		}
 		Nullify(&value)
 	}
@@ -411,6 +413,8 @@ func mainTerm() {
 	}
 }
 
+var i *interp.Interpreter
+
 func getGo(loc string) {
 	resp, err := http.Get(loc)
 	if err != nil {
@@ -418,14 +422,12 @@ func getGo(loc string) {
 		return
 	}
 	defer resp.Body.Close()
-	fmt.Print(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	i := interp.New(interp.Options{})
 
 	i.Use(stdlib.Symbols)
 
@@ -433,4 +435,14 @@ func getGo(loc string) {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Print("Succesfully parsed the data! \n")
+}
+
+func doGo(target string) {
+	v, err := i.Eval(`` + target + ``)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Print(v)
 }
