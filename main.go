@@ -59,7 +59,12 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize:   0,
 }
 
-var queue = make(chan *websocket.Conn)
+type wsMessage struct {
+	ws  *websocket.Conn
+	msg input
+}
+
+var queue = make(chan wsMessage)
 
 type input struct {
 	Pass   string `json:"password"`
@@ -76,26 +81,24 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		takein(ws)
+		var msg input
+		er := ws.ReadJSON(&msg)
+		if er != nil {
+			return
+		}
+		queue <- wsMessage{ws: ws, msg: msg}
+		Nullify(&msg)
 	}
-}
-
-func takein(ws *websocket.Conn) {
-	queue <- ws
 }
 
 var mutex = &sync.Mutex{}
 
-func processQueue(queue chan *websocket.Conn) {
+func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
 		mutex.Lock()
-		var uinput input
-		msg.ReadJSON(&uinput)
-
-		process(&uinput, msg)
+		process(&msg.msg, msg.ws)
 		Nullify(&msg)
-		runtime.GC()
 		mutex.Unlock()
 	}
 }
@@ -138,7 +141,7 @@ func process(msg *input, ws *websocket.Conn) {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
-		defer Nullify(&value)
+		Nullify(&value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
