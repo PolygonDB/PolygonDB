@@ -17,7 +17,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -43,7 +42,6 @@ func main() {
 	var set settings
 	portgrab(&set)
 
-	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	go mainTerm()
 	go processQueue(queue)
@@ -56,8 +54,7 @@ func portgrab(set *settings) {
 	file = nil
 }
 
-// data handler
-// var databases = &sync.Map{}
+// Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
 type atomicDatabase struct {
 	value atomic.Value
 }
@@ -102,15 +99,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
-	rateLimiter := time.Tick(1 * time.Millisecond)
-	ws.SetCompressionLevel(6)
+	ws.SetCompressionLevel(3)
 
 	for {
-		select {
-		case <-rateLimiter:
-			if !takein(ws) {
-				ws.WriteJSON("Connection: 'Failed.'}")
-			}
+		if !takein(ws) {
+			ws.WriteJSON("Connection: 'Failed.'}")
 		}
 	}
 }
