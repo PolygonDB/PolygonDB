@@ -28,10 +28,8 @@ type config struct {
 }
 
 type settings struct {
-	Addr  string `json:"addr"`
-	Port  string `json:"port"`
-	Sbool bool   `json:"allow_remote_connections_sysadmin"`
-	Spass string `json:"system_remote_connection_password"`
+	Addr string `json:"addr"`
+	Port string `json:"port"`
 }
 
 // main
@@ -39,10 +37,6 @@ func main() {
 
 	var set settings
 	portgrab(&set)
-
-	if set.Sbool == true {
-		http.HandleFunc("/terminal", Terminal)
-	}
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -357,21 +351,6 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-}
-
-func webparse(ws websocket.Conn) {
-	_, message, _ := ws.ReadMessage()
-	var set settings
-	portgrab(&set)
-
-	fields := strings.Fields(string(*&message))
-
-	if fields[0] == set.Spass {
-		if fields[1] == "help" {
-			C.help()
-		}
-	}
-
 }
 
 func mainTerm() {
