@@ -8,7 +8,6 @@ import "C"
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -103,12 +102,13 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		message, err := io.ReadAll(reader)
+		buffer := make([]byte, 1024)
+		_, err := reader.Read(buffer)
 		if err != nil {
 			return false
 		}
 
-		if err := json.Unmarshal(message, &msg); err != nil {
+		if err := json.Unmarshal(buffer, &msg); err != nil {
 			return false
 		}
 
