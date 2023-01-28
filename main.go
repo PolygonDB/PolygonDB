@@ -83,6 +83,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
 	rateLimiter := time.Tick(1 * time.Millisecond)
+	ws.SetCompressionLevel(6)
 
 	for {
 		select {
