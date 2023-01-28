@@ -22,6 +22,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
+
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -38,6 +41,8 @@ type settings struct {
 
 // main
 func main() {
+
+	test()
 
 	var set settings
 	portgrab(&set)
@@ -398,5 +403,25 @@ func mainTerm() {
 		}
 
 		Nullify(&parts)
+	}
+}
+
+func test() {
+	i := interp.New(interp.Options{})
+
+	i.Use(stdlib.Symbols)
+
+	_, err := i.Eval(`package main
+	import "fmt"
+	func lastten() {
+		fmt.Println("hello world")
+	}`)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = i.Eval(`temp()`)
+	if err != nil {
+		panic(err)
 	}
 }
