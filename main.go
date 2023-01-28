@@ -8,6 +8,7 @@ import "C"
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -84,10 +85,41 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		//Reads input
-		if !takein(ws) {
-			ws.WriteJSON("{Connection: 'Failed.'")
+		messageType, reader, err := ws.NextReader()
+		if err != nil {
+			ws.WriteJSON("{Connection: 'Failed.'}")
 			break
 		}
+
+		switch messageType {
+		case websocket.TextMessage:
+			message, err := io.ReadAll(reader)
+			if err != nil {
+				ws.WriteJSON("{Connection: 'Failed.'}")
+				break
+			}
+
+			if err := json.Unmarshal(message, &msg); err != nil {
+				ws.WriteJSON("{Connection: 'Failed.'}")
+				break
+			}
+
+			//add message to the queue
+			mutex.Lock()
+			queue <- wsMessage{ws: ws, msg: msg}
+			mutex.Unlock()
+		case websocket.BinaryMessage:
+			// handle binary message
+		case websocket.CloseMessage:
+			// handle close message
+		default:
+			// handle unknown message type
+		}
+
+		//if !takein(ws) {
+		//	ws.WriteJSON("{Connection: 'Failed.'")
+		//	break
+		//}
 
 	}
 }
