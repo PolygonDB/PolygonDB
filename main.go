@@ -170,7 +170,6 @@ func process(msg *input, ws *websocket.Conn) {
 func cd(location *string, jsonData *config, database *gabs.Container) error {
 	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
 		var conferr error
-		var dataerr error
 
 		conf(&conferr, &*location, &*jsonData)
 
@@ -178,14 +177,15 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 			*database = *gabs.Wrap(value)
 			value = nil
 		} else {
-			data(&dataerr, location, &*database)
+			var dataerr error
+			dataerr, *database = data(location)
+			if dataerr != nil {
+				return dataerr
+			}
 		}
 
 		if conferr != nil {
 			return conferr
-		}
-		if dataerr != nil {
-			return dataerr
 		}
 		return nil
 
@@ -195,14 +195,15 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 }
 
 // This gets the database file
-func data(err *error, location *string, database *gabs.Container) {
+func data(location *string) (error, gabs.Container) {
 
-	database, *err = gabs.ParseJSONFile("databases/" + *location + "/database.json")
-	if *err != nil {
+	value, err := gabs.ParseJSONFile("databases/" + *location + "/database.json")
+	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 
-	databases.Store(*location, database)
+	databases.Store(*location, value)
+	return err, *value
 }
 
 func conf(err *error, location *string, jsonData *config) {
