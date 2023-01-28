@@ -13,7 +13,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,11 +56,6 @@ var upgrader = websocket.Upgrader{
 	EnableCompression: true,
 	ReadBufferSize:    0,
 	WriteBufferSize:   0,
-}
-
-type wsMessage struct {
-	ws  *websocket.Conn
-	msg input
 }
 
 var queue = make(chan *websocket.Conn)
@@ -146,7 +140,7 @@ func process(msg *input, ws *websocket.Conn) {
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-	runtime.GC()
+	//runtime.GC()
 
 }
 
