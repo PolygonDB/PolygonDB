@@ -172,7 +172,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		conf(&conferr, &*location, &*jsonData)
 
 		if value, ok := databases.Load(*location); ok {
-			*database = parsedata(&value)
+			*database = *gabs.Wrap(value)
 			value = nil
 		} else {
 			data(&dataerr, location, &*database)
@@ -193,24 +193,13 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 // This gets the database file
 func data(err *error, location *string, database *gabs.Container) {
-	var file *os.File
-	file, *err = os.Open("databases/" + *location + "/database.json")
-	if *err != nil {
-		go fmt.Println("Error reading file:", err)
-	}
-	defer file.Close()
 
-	// Unmarshal the JSON data into a variable
-	var data interface{}
-	*err = json.NewDecoder(file).Decode(&data)
-
+	database, *err = gabs.ParseJSONFile("databases/" + *location + "/database.json")
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-	*database = parsedata(&data)
-	databases.Store(*location, *&data)
-	data = nil
-	//*done <- true
+
+	databases.Store(*location, database)
 }
 
 func conf(err *error, location *string, jsonData *config) {
@@ -324,14 +313,6 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 	return v, err
 }
 
-// parses database
-func parsedata(database *interface{}) gabs.Container {
-	jsonData, _ := json.Marshal(&database)
-	Nullify(&database)
-	jsonParsed, _ := gabs.ParseJSON(*&jsonData)
-	return *jsonParsed
-}
-
 // Nullify basically helps with the memory management when it comes to websockets
 func Nullify(ptr interface{}) {
 	val := reflect.ValueOf(*&ptr)
@@ -382,12 +363,5 @@ func mainTerm() {
 		}
 
 		Nullify(&parts)
-	}
-}
-
-func sendtoclients(output string) {
-	fmt.Print(*&output)
-	for client := range clients {
-		client.WriteMessage(websocket.TextMessage, []byte(*&output))
 	}
 }
