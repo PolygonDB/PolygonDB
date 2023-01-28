@@ -217,7 +217,6 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		}
 
 		if value, ok := databases.Load(*location); ok {
-			fmt.Print("WE CAN USE THIS!")
 			*database = *gabs.Wrap(value)
 			value = nil
 		} else {
