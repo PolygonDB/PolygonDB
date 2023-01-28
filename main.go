@@ -84,42 +84,9 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		//Reads input
-		messageType, reader, err := ws.NextReader()
-		if err != nil {
-			ws.WriteJSON("{Connection: 'Failed.'}")
-			break
+		if !takein(ws) {
+			ws.WriteJSON("Connection: 'Failed.'}")
 		}
-
-		switch messageType {
-		case websocket.TextMessage:
-			message, err := io.ReadAll(reader)
-			if err != nil {
-				ws.WriteJSON("{Connection: 'Failed.'}")
-				break
-			}
-
-			if err := json.Unmarshal(message, &msg); err != nil {
-				ws.WriteJSON("{Connection: 'Failed.'}")
-				break
-			}
-
-			//add message to the queue
-			mutex.Lock()
-			queue <- wsMessage{ws: ws, msg: msg}
-			mutex.Unlock()
-		case websocket.BinaryMessage:
-			// handle binary message
-		case websocket.CloseMessage:
-			// handle close message
-		default:
-			// handle unknown message type
-		}
-
-		//if !takein(ws) {
-		//	ws.WriteJSON("{Connection: 'Failed.'")
-		//	break
-		//}
 
 	}
 }
@@ -128,14 +95,30 @@ var msg input
 
 func takein(ws *websocket.Conn) bool {
 
-	er := ws.ReadJSON(&msg)
-	if er != nil {
+	//Reads input
+	messageType, reader, err := ws.NextReader()
+	if err != nil {
 		return false
 	}
-	mutex.Lock()
-	queue <- wsMessage{ws: ws, msg: msg}
-	Nullify(&msg)
-	mutex.Unlock()
+
+	switch messageType {
+	case websocket.TextMessage:
+		message, err := io.ReadAll(reader)
+		if err != nil {
+			return false
+		}
+
+		if err := json.Unmarshal(message, &msg); err != nil {
+			return false
+		}
+
+		//add message to the queue
+		mutex.Lock()
+		queue <- wsMessage{ws: ws, msg: msg}
+		mutex.Unlock()
+	default:
+		return false
+	}
 	return true
 }
 
