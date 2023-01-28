@@ -109,7 +109,6 @@ func takein(ws *websocket.Conn) bool {
 	switch messageType {
 	case websocket.TextMessage:
 
-		defer Nullify(&buffer)
 		mutex.Lock()
 		_, err := reader.Read(buffer)
 		if err != nil {
@@ -120,8 +119,6 @@ func takein(ws *websocket.Conn) bool {
 			return false
 		}
 
-		//add message to the queue
-		//mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
 	default:
