@@ -212,8 +212,12 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		var conferr error
 
 		conf(&conferr, &*location, &*jsonData)
+		if conferr != nil {
+			return conferr
+		}
 
 		if value, ok := databases.Load(*location); ok {
+			fmt.Print("WE CAN USE THIS!")
 			*database = *gabs.Wrap(value)
 			value = nil
 		} else {
@@ -224,9 +228,6 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 			}
 		}
 
-		if conferr != nil {
-			return conferr
-		}
 		return nil
 
 	} else {
@@ -236,12 +237,10 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
-
 	value, err := gabs.ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-
 	databases.Store(*location, value)
 	return err, *value
 }
