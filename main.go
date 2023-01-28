@@ -7,7 +7,6 @@ package main
 import "C"
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -21,7 +20,11 @@ import (
 	"github.com/Jeffail/gabs/v2"
 
 	"github.com/gorilla/websocket"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type config struct {
 	Key string `json:"key"`
