@@ -14,8 +14,6 @@ go build
 rm -f main.go
 rm -f go.mod
 rm -f go.sum
-rm -f sysadmin/sysadmin.c
-rm -r sysadmin
 #settings.json file
 if [ ! -f /mnt/server/settings.json ]; then
 curl -o settings.json https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/settings.json
