@@ -201,7 +201,7 @@ func process(msg *input, ws *websocket.Conn) {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		} else if msg.Act == "custom" {
-			output := doGo(&value)
+			output := doGo(&value, &database, &msg.Loc)
 			ws.WriteJSON(output.String())
 		}
 		Nullify(&value)
@@ -441,8 +441,14 @@ func getGo(loc string) {
 	fmt.Print("Succesfully parsed the data! \n")
 }
 
-func doGo(target *[]byte) reflect.Value {
-	v, err := i.Eval(`` + string(*target) + ``)
+func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
+	parbyte := string(*target)
+	if strings.Contains(parbyte, "{database}") {
+		mut := retrieve(direct, database).(string)
+		parbyte = strings.Replace(parbyte, "{database}", mut, -1)
+	}
+
+	v, err := i.Eval(`` + parbyte + ``)
 	if err != nil {
 		panic(err)
 	}
