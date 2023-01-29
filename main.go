@@ -106,16 +106,9 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		var msg input
-		er := ws.ReadJSON(&msg)
-		if er != nil {
+		if !takein(ws) {
 			break
 		}
-		queue <- wsMessage{ws: ws, msg: msg}
-		//if !takein(ws) {
-		//	ws.WriteJSON("Connection: 'Failed.'}")
-		//	break
-		//}
 	}
 }
 
@@ -267,9 +260,9 @@ func conf(err *error, location *string, jsonData *config) {
 // Types of Actions
 func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	if *direct == "" {
-		return jsonParsed.String()
+		return jsonParsed.Data()
 	} else {
-		return jsonParsed.Path(*direct).String()
+		return jsonParsed.Path(*direct).Data()
 	}
 }
 
@@ -417,6 +410,18 @@ func datacreate(name, pass string) {
 	fmt.Println("File has been created.")
 }
 
+func setup() {
+	defaultset := settings{
+		Addr: "0.0.0.0",
+		Port: "25565",
+		Goe:  false,
+		Gof:  "link",
+	}
+	data, _ := json.Marshal(defaultset)
+	os.WriteFile("settings.json", data, 0644)
+	fmt.Print("Settings.json has been setup. \n")
+}
+
 var i *interp.Interpreter = interp.New(interp.Options{})
 
 func getGo(loc string) {
@@ -446,12 +451,11 @@ func getGo(loc string) {
 func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
 	parbyte := string(*target)
 	if strings.Contains(parbyte, "{database}") {
-		mut := retrieve(direct, database).(string)
+		mut := retrieve(*&direct, *&database).(string)
 		*&mut = strings.Replace(mut, "\"", "'", -1)
 		*&parbyte = strings.Replace(parbyte, "{database}", "\""+mut+"\"", -1)
 	}
 
-	fmt.Print(parbyte, "\n\n")
 	v, err := i.Eval(`` + parbyte + ``)
 	if err != nil {
 		fmt.Print(err)
