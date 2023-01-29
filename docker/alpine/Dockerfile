@@ -1,7 +1,7 @@
 FROM --platform=$TARGETOS/$TARGETARCH alpine:latest
 
 
-RUN apk update && apk add git go
+RUN apk update && apk add git go gcc
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:$PATH
