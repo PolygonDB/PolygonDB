@@ -1,19 +1,12 @@
-FROM        --platform=$TARGETOS/$TARGETARCH golang:1.19.5 as build
+FROM --platform=$TARGETOS/$TARGETARCH alpine:latest
 
-RUN adduser -D -h /home/container container 
+RUN apk update && apk add git go
 
-USER container
-ENV  HOME /home/container
-WORKDIR /home/container
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:$PATH
 
-COPY . .
-RUN go build
+RUN git clone https://github.com/JewishLewish/PolygonDB /tmp/tmp
+RUN mv /tmp/tmp $GOPATH/home/container
 
-
-FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
-
-USER container
-ENV  HOME /home/container
-WORKDIR /home/container
-
-CMD ["./PolygonDB"]
+WORKDIR $GOPATH/home/container
+RUN go build .
