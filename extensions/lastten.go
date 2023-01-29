@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	_ = sort("[{'age':5,'name':'A'},{'age':20,'name':'B'},{'age':30,'name':'C'},{'age':40,'name':'D'}]")
+	fmt.Print("Main is up!\n")
 }
 
 func say_hello() string {
