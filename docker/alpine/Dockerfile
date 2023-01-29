@@ -1,4 +1,14 @@
-FROM        --platform=$TARGETOS/$TARGETARCH ghcr.io/parkervcp/yolks:go_1.19
-FROM        --platform=$TARGETOS/$TARGETARCH alpine:3.17.1
+FROM --platform=$TARGETOS/$TARGETARCH alpine:latest
 
-CMD [ "bash" ]
+RUN apk update && apk add --no-cache go
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:$PATH
+
+WORKDIR $GOPATH
+
+COPY . .
+
+RUN go build -o /home/container .
+
+CMD ["/home/container"]
