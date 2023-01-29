@@ -385,24 +385,6 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 }
 
 // Terminal Websocket
-var clients = make(map[*websocket.Conn]bool)
-
-func Terminal(w http.ResponseWriter, r *http.Request) {
-	ws, _ := upgrader.Upgrade(w, r, nil)
-	defer ws.Close()
-	clients[ws] = true
-
-	for {
-		var msg string
-		err := ws.ReadJSON(&msg)
-		if err != nil {
-			fmt.Println(err)
-			delete(clients, ws)
-			break
-		}
-	}
-}
-
 func mainTerm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
