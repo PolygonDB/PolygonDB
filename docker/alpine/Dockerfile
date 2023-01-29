@@ -3,6 +3,9 @@ FROM --platform=$TARGETOS/$TARGETARCH alpine:latest
 
 RUN apk update && apk add git go gcc
 
+RUN apk add --no-cache --virtual .build-deps curl binutils build-base gcc abuild binutils musl-dev glibc-dev
+
+
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:$PATH
 
