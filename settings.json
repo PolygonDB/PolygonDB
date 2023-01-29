@@ -1,6 +1,6 @@
 {
-    "addr":"0.0.0.0",
-    "port":"6060",
-    "goextend":true,
-    "gofile":"https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/extensions/lastten.go"
+    "addr": "0.0.0.0",
+    "port": "25565",
+    "goextend": false,
+    "gofile": "link"
 }

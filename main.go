@@ -363,7 +363,7 @@ func Nullify(ptr interface{}) {
 
 // Sync Update
 func syncupdate(jsonParsed *gabs.Container, location *string) {
-	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
+	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "    ")
 	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
@@ -420,7 +420,7 @@ func setup() {
 		Goe:  false,
 		Gof:  "link",
 	}
-	data, _ := json.MarshalIndent(&defaultset, "", "\t")
+	data, _ := json.MarshalIndent(defaultset, "", "    ")
 	os.WriteFile("settings.json", *&data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
