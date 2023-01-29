@@ -52,8 +52,8 @@ func main() {
 		getGo(set.Gof)
 	}
 
-	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	http.HandleFunc("/ws", datahandler)
+	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 	go mainTerm()
 	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
@@ -70,16 +70,16 @@ type atomicDatabase struct {
 	value atomic.Value
 }
 
-func (ad *atomicDatabase) Load(location string) (*gabs.Container, bool) {
+func (ad *atomicDatabase) Load(location string) ([]byte, bool) {
 	v := ad.value.Load()
 	if v == nil {
 		return nil, false
 	}
-	value := v.(*gabs.Container)
+	value := v.([]byte)
 	return value, true
 }
 
-func (ad *atomicDatabase) Store(location string, value *gabs.Container) {
+func (ad *atomicDatabase) Store(location string, value []byte) {
 	ad.value.Store(value)
 }
 
@@ -110,17 +110,22 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	defer ws.Close()
-	ws.SetCompressionLevel(3)
 
 	for {
-		if !takein(ws) {
-			ws.WriteJSON("Connection: 'Failed.'}")
+		var msg input
+		er := ws.ReadJSON(&msg)
+		if er != nil {
+			break
 		}
+		queue <- wsMessage{ws: ws, msg: msg}
+		//if !takein(ws) {
+		//	ws.WriteJSON("Connection: 'Failed.'}")
+		//	break
+		//}
 	}
 }
 
 var msg input
-var buffer = make([]byte, 512)
 
 func takein(ws *websocket.Conn) bool {
 
@@ -132,17 +137,17 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-
-		mutex.Lock()
-		_, err := reader.Read(buffer)
+		message, err := io.ReadAll(reader)
 		if err != nil {
 			return false
 		}
 
-		if err := json.Unmarshal(buffer, &msg); err != nil {
+		if err := json.Unmarshal(message, &msg); err != nil {
 			return false
 		}
 
+		//add message to the queue
+		mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
 	default:
@@ -158,7 +163,6 @@ func processQueue(queue chan wsMessage) {
 		msg := <-queue
 		mutex.Lock()
 		process(&msg.msg, msg.ws)
-		//Nullify(&msg)
 		mutex.Unlock()
 	}
 }
@@ -181,7 +185,6 @@ func process(msg *input, ws *websocket.Conn) {
 	}
 	defer Nullify(&confdata)
 	defer Nullify(&database)
-	defer Nullify(&msg)
 
 	//direct := (*msg)["location"].(string)
 	//action := (*msg)["action"].(string)
@@ -224,7 +227,8 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		}
 
 		if value, ok := databases.Load(*location); ok {
-			*database = *gabs.Wrap(value)
+			parsed, _ := gabs.ParseJSON(value)
+			*database = *parsed
 			value = nil
 		} else {
 			var dataerr error
@@ -247,7 +251,7 @@ func data(location *string) (error, gabs.Container) {
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-	databases.Store(*location, value)
+	databases.Store(*location, value.Bytes())
 	return err, *value
 }
 
@@ -271,6 +275,9 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	if *direct == "" {
 		return jsonParsed.String()
 	} else {
+		//fmt.Print(*direct, "\n")
+		//fmt.Print(jsonParsed, "\n")
+		//fmt.Print(jsonParsed.Path(*direct), "\n")
 		return jsonParsed.Path(*direct).String()
 	}
 }
@@ -374,7 +381,7 @@ func Nullify(ptr interface{}) {
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "\t")
 	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
-	databases.Store(*location, jsonParsed)
+	databases.Store(*location, jsonParsed.Bytes())
 }
 
 // Terminal Websocket
@@ -435,7 +442,7 @@ func getGo(loc string) {
 
 	_, err = i.Eval(`` + string(body) + ``)
 	if err != nil {
-		panic(err)
+		println(err)
 	}
 
 	fmt.Print("Succesfully parsed the data! \n")
@@ -443,12 +450,10 @@ func getGo(loc string) {
 
 func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
 	parbyte := string(*target)
-	fmt.Print(parbyte, "\n")
 	if strings.Contains(parbyte, "{database}") {
-		fmt.Print("WE CHANGED THE VALUE!")
 		mut := retrieve(direct, database).(string)
-		*&parbyte = strings.Replace(parbyte, "{database}", mut, -1)
-		fmt.Print(parbyte)
+		*&mut = strings.Replace(mut, "\"", "'", -1)
+		*&parbyte = strings.Replace(parbyte, "{database}", "\""+mut+"\"", -1)
 	}
 
 	fmt.Print(parbyte, "\n\n")
