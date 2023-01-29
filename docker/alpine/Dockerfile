@@ -1,9 +1,7 @@
-FROM --platform=$TARGETOS/$TARGETARCH alpine:latest
+FROM --platform=$TARGETOS/$TARGETARCH golang:1.15-alpine3.12
 
 
 RUN apk update && apk add git go gcc
-
-RUN apk add --no-cache --virtual .build-deps curl binutils build-base gcc abuild binutils musl-dev glibc-dev
 
 
 ENV GOPATH /go
