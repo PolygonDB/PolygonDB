@@ -23,7 +23,7 @@ if [ ! -d /mnt/server/databases ]; then
 mkdir -p databases
 mkdir -p databases/ExampleDB
 cd databases/ExampleDB
-curl -o config.json https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/databases/CatoDB/config.json
-curl -o database.json https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/databases/CatoDB/database.json
+curl -o config.json https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/databases/ExampleDB/config.json
+curl -o database.json https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/databases/ExampleDB/database.json
 fi
 cd /mnt/server
