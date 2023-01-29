@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -419,7 +420,7 @@ func getGo(loc string) {
 		return
 	}
 
-	//i.Use(stdlib.Symbols)
+	i.Use(stdlib.Symbols)
 
 	_, err = i.Eval(`` + string(body) + ``)
 	if err != nil {
