@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-func main() {
-	fmt.Print("Main is up!\n")
-}
-
 func say_hello() string {
 	fmt.Print("Hello world\n")
 	return ("Hello world")

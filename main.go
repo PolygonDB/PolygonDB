@@ -15,6 +15,8 @@ import (
 	"sync/atomic"
 
 	"github.com/Jeffail/gabs/v2"
+	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 
 	"github.com/gorilla/websocket"
 
@@ -36,9 +38,13 @@ type settings struct {
 
 // main
 func main() {
-
+	fmt.Print("test")
 	var set settings
 	portgrab(&set)
+
+	if set.Goe {
+		getGo(set.Gof)
+	}
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -191,6 +197,9 @@ func process(msg *input, ws *websocket.Conn) {
 		} else if msg.Act == "append" {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
+		} else if msg.Act == "custom" {
+			output := doGo(&value, &database, &msg.Loc)
+			ws.WriteJSON(output.String())
 		}
 		Nullify(&value)
 	}
@@ -260,9 +269,6 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	if *direct == "" {
 		return jsonParsed.String()
 	} else {
-		//fmt.Print(*direct, "\n")
-		//fmt.Print(jsonParsed, "\n")
-		//fmt.Print(jsonParsed.Path(*direct), "\n")
 		return jsonParsed.Path(*direct).String()
 	}
 }
@@ -409,4 +415,46 @@ func datacreate(name, pass string) {
 	os.WriteFile(datapath, dinput, 0644)
 
 	fmt.Println("File has been created.")
+}
+
+var i *interp.Interpreter = interp.New(interp.Options{})
+
+func getGo(loc string) {
+	resp, err := http.Get(loc)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	i.Use(stdlib.Symbols)
+
+	_, err = i.Eval(`` + string(body) + ``)
+	if err != nil {
+		println(err)
+	}
+
+	fmt.Print("Succesfully parsed the data! \n")
+}
+
+func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
+	parbyte := string(*target)
+	if strings.Contains(parbyte, "{database}") {
+		mut := retrieve(direct, database).(string)
+		*&mut = strings.Replace(mut, "\"", "'", -1)
+		*&parbyte = strings.Replace(parbyte, "{database}", "\""+mut+"\"", -1)
+	}
+
+	fmt.Print(parbyte, "\n\n")
+	v, err := i.Eval(`` + parbyte + ``)
+	if err != nil {
+		fmt.Print(err)
+	}
+	return v
 }
