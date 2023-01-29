@@ -124,12 +124,12 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		message, err := io.ReadAll(reader)
+		message, err := io.ReadAll(*&reader)
 		if err != nil {
 			return false
 		}
 
-		if err := json.Unmarshal(message, &msg); err != nil {
+		if err := json.Unmarshal(*&message, &msg); err != nil {
 			return false
 		}
 
