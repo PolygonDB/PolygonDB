@@ -1,3 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH golang:1.19.5 as build
+FROM        --platform=$TARGETOS/$TARGETARCH ghcr.io/parkervcp/yolks:go_1.19
+FROM        --platform=$TARGETOS/$TARGETARCH alpine:3.17.1
 
-FROM        --platform=$TARGETOS/$TARGETARCH ghcr.io/pterodactyl/yolks:alpine
+CMD [ "bash" ]
