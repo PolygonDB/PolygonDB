@@ -158,7 +158,7 @@ func processQueue(queue chan wsMessage) {
 		msg := <-queue
 		mutex.Lock()
 		process(&msg.msg, msg.ws)
-		Nullify(&msg)
+		//Nullify(&msg)
 		mutex.Unlock()
 	}
 }
@@ -443,14 +443,18 @@ func getGo(loc string) {
 
 func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
 	parbyte := string(*target)
+	fmt.Print(parbyte, "\n")
 	if strings.Contains(parbyte, "{database}") {
+		fmt.Print("WE CHANGED THE VALUE!")
 		mut := retrieve(direct, database).(string)
-		parbyte = strings.Replace(parbyte, "{database}", mut, -1)
+		*&parbyte = strings.Replace(parbyte, "{database}", mut, -1)
+		fmt.Print(parbyte)
 	}
 
+	fmt.Print(parbyte, "\n\n")
 	v, err := i.Eval(`` + parbyte + ``)
 	if err != nil {
-		panic(err)
+		fmt.Print(err)
 	}
 	return v
 }

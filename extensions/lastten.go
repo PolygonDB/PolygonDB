@@ -9,5 +9,5 @@ func say_hello() string {
 
 func sort(data string) string {
 	fmt.Print(data, "\n")
-	return "Hello world."
+	return ("Hello world")
 }
