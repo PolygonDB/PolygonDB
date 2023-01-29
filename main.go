@@ -38,7 +38,6 @@ type settings struct {
 
 // main
 func main() {
-	fmt.Print("test")
 	var set settings
 	portgrab(&set)
 
