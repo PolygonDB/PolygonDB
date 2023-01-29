@@ -382,6 +382,8 @@ func mainTerm() {
 			help()
 		} else if parts[0] == "create_database" {
 			datacreate(parts[1], parts[2])
+		} else if parts[0] == "setup" {
+			setup()
 		}
 
 		Nullify(&parts)
@@ -389,10 +391,11 @@ func mainTerm() {
 }
 
 func help() {
-	fmt.Print("====Polygon Terminal====\n")
+	fmt.Print("\n====Polygon Terminal====\n")
 	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
 	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
-	fmt.Print("========================\n")
+	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
+	fmt.Print("========================\n\n")
 }
 
 func datacreate(name, pass string) {
@@ -417,8 +420,8 @@ func setup() {
 		Goe:  false,
 		Gof:  "link",
 	}
-	data, _ := json.Marshal(defaultset)
-	os.WriteFile("settings.json", data, 0644)
+	data, _ := json.MarshalIndent(&defaultset, "", "\t")
+	os.WriteFile("settings.json", *&data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
 
