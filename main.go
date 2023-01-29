@@ -1,10 +1,5 @@
 package main
 
-/*
-#include <stdio.h>
-#include "sysadmin/sysadmin.c"
-*/
-import "C"
 import (
 	"bufio"
 	"fmt"
@@ -385,11 +380,33 @@ func mainTerm() {
 		}
 
 		if parts[0] == "help" {
-			C.help()
+			help()
 		} else if parts[0] == "create_database" {
-			C.datacreate(C.CString(parts[1]), C.CString(parts[2]))
+			datacreate(parts[1], parts[2])
 		}
 
 		Nullify(&parts)
 	}
+}
+
+func help() {
+	fmt.Print("====Polygon Terminal====\n")
+	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
+	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
+	fmt.Print("========================\n")
+}
+
+func datacreate(name, pass string) {
+	path := "databases/" + name
+	os.Mkdir(path, 0777)
+
+	conpath := path + "/config.json"
+	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
+	os.WriteFile(conpath, cinput, 0644)
+
+	datapath := path + "/database.json"
+	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
+	os.WriteFile(datapath, dinput, 0644)
+
+	fmt.Println("File has been created.")
 }

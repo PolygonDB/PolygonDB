@@ -8,9 +8,6 @@ TAR=253f6ce735de4e82a70936b55c01ebad03c922a9
 curl -o main.go https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/main.go
 curl -o go.mod https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/go.mod
 curl -o go.sum https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/go.sum
-mkdir -p /mnt/server/sysadmin/
-cd sysadmin
-curl -o sysadmin.c https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/sysadmin/sysadmin.c
 cd /mnt/server
 go get
 go build
