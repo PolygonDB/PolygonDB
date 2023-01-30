@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"reflect"
 	"runtime"
@@ -42,7 +41,7 @@ func main() {
 	portgrab(&set)
 
 	if set.Goe {
-		getGo(set.Gof)
+		getGo(*&set.Gof)
 	}
 
 	http.HandleFunc("/ws", datahandler)
