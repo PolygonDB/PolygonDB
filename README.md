@@ -8,10 +8,10 @@
 https://github.com/JewishLewish/PolygonDB/wiki
 
 ## Usage
-Adjust databases/name-of-server/config.json
+(more examples in wiki)
+Config.json Example
 ```json
 {
-    "path":"database.json",
     "key":"Better_Password"
 }
 ```
