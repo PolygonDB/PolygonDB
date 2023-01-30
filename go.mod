@@ -7,7 +7,6 @@ require github.com/gorilla/websocket v1.5.0
 require (
 	github.com/Jeffail/gabs/v2 v2.6.1
 	github.com/json-iterator/go v1.1.12
-	github.com/traefik/yaegi v0.14.3
 )
 
 require (

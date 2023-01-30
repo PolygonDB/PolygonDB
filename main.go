@@ -14,15 +14,32 @@ import (
 	"sync/atomic"
 
 	"github.com/Jeffail/gabs/v2"
-	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
 
 	"github.com/gorilla/websocket"
 
 	jsoniter "github.com/json-iterator/go"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var (
+	//uses the json-iterator library since it's faster
+	json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
+	databases = &atomicDatabase{}
+
+	//Local_only. Can the server be reached outside or only from a certain server?
+
+	upgrader = websocket.Upgrader{
+		EnableCompression: true,
+		ReadBufferSize:    0,
+		WriteBufferSize:   0,
+	}
+
+	queue = make(chan wsMessage, 100)
+
+	msg   input
+	mutex = &sync.Mutex{}
+)
 
 type config struct {
 	Key string `json:"key"`
@@ -31,18 +48,13 @@ type config struct {
 type settings struct {
 	Addr string `json:"addr"`
 	Port string `json:"port"`
-	Goe  bool   `json:"goextend"`
-	Gof  string `json:"gofile"`
+	//Lbool bool   `json:"local_only"`
 }
 
 // main
 func main() {
 	var set settings
 	portgrab(&set)
-
-	if set.Goe {
-		getGo(*&set.Gof)
-	}
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -75,20 +87,10 @@ func (ad *atomicDatabase) Store(location string, value []byte) {
 	ad.value.Store(value)
 }
 
-var databases = &atomicDatabase{}
-
-var upgrader = websocket.Upgrader{
-	EnableCompression: true,
-	ReadBufferSize:    0,
-	WriteBufferSize:   0,
-}
-
 type wsMessage struct {
 	ws  *websocket.Conn
 	msg input
 }
-
-var queue = make(chan wsMessage, 100)
 
 type input struct {
 	Pass   string `json:"password"`
@@ -109,8 +111,6 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-var msg input
 
 func takein(ws *websocket.Conn) bool {
 
@@ -140,8 +140,6 @@ func takein(ws *websocket.Conn) bool {
 	}
 	return true
 }
-
-var mutex = &sync.Mutex{}
 
 func processQueue(queue chan wsMessage) {
 	for {
@@ -188,9 +186,6 @@ func process(msg *input, ws *websocket.Conn) {
 		} else if msg.Act == "append" {
 			output := append(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
-		} else if msg.Act == "custom" {
-			output := doGo(&value, &database, &msg.Loc)
-			ws.WriteJSON(output.String())
 		}
 		Nullify(&value)
 	}
@@ -415,51 +410,8 @@ func setup() {
 	defaultset := settings{
 		Addr: "0.0.0.0",
 		Port: "25565",
-		Goe:  false,
-		Gof:  "link",
 	}
 	data, _ := json.MarshalIndent(defaultset, "", "    ")
 	os.WriteFile("settings.json", *&data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
-}
-
-var i *interp.Interpreter = interp.New(interp.Options{})
-
-func getGo(loc string) {
-	resp, err := http.Get(loc)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	i.Use(stdlib.Symbols)
-
-	_, err = i.Eval(`` + string(body) + ``)
-	if err != nil {
-		println(err)
-	}
-
-	fmt.Print("Succesfully parsed the data! \n")
-}
-
-func doGo(target *[]byte, database *gabs.Container, direct *string) reflect.Value {
-	parbyte := string(*target)
-	if strings.Contains(parbyte, "{database}") {
-		mut := retrieve(*&direct, *&database).(string)
-		*&mut = strings.Replace(mut, "\"", "'", -1)
-		*&parbyte = strings.Replace(parbyte, "{database}", "\""+mut+"\"", -1)
-	}
-
-	v, err := i.Eval(`` + parbyte + ``)
-	if err != nil {
-		fmt.Print(err)
-	}
-	return v
 }
