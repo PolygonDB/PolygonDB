@@ -1,5 +1,5 @@
 <div align="center"><h1>Polygon</h1></div>
-<div align="center"><h4>Database designed to be Minimal</h4></div>
+<div align="center"><h4>Database System Designed to be Fast, Performant and Minimal</h4></div>
 <hr>
 
 ![Frame 2](https://user-images.githubusercontent.com/65754609/215379958-d8f02d22-fec4-4200-85c1-0177a62e661d.png)
