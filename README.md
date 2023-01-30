@@ -1,10 +1,13 @@
-![Frame 1](https://user-images.githubusercontent.com/65754609/213882280-367ceb95-600c-4998-b4cb-c1fd914a89b4.png)
-![Frame 2](https://user-images.githubusercontent.com/65754609/213882292-b5c2f635-a86e-4f38-b88e-962679120926.png)
+<div align="center"><h1>Polygon</h1></div>
+<div align="center"><h4>Database designed to be Minimal</h4></div>
+<hr>
 
-# Details about Project
-Wiki: https://github.com/JewishLewish/PolygonDB/wiki
+![Frame 2](https://user-images.githubusercontent.com/65754609/215379958-d8f02d22-fec4-4200-85c1-0177a62e661d.png)
 
-# Usage
+## Details about Project
+https://github.com/JewishLewish/PolygonDB/wiki
+
+## Usage
 Adjust databases/name-of-server/config.json
 ```json
 {
@@ -73,7 +76,7 @@ ws.send(json.dumps(
 print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 ```
 
-# Companies that uses PolygonDB
+## Companies that uses PolygonDB
 
 <div style="display: flex; justify-content: center;">
 	<img src="https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2" alt="Discord Banner 2"/>
@@ -82,9 +85,8 @@ print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 
 <img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
 
-Sidenote, if you want your server to be on here then open a pull request. 
-
-# Modules (Makes Polygon Easier to Use)
+## Modules / Packages for Certain Langs
 Javascript - https://github.com/NekaouMike/PloyConJS
 
-Feel free to make your own module for Polygon, I will put your github on here. 
+
+If you wish for your company / module to be placed here then open a pull request
