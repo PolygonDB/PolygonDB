@@ -53,9 +53,6 @@ type settings struct {
 
 // main
 func main() {
-	polygon_retrieve("ExampleDB", "rows.0.name")
-}
-func tmain() {
 	var set settings
 	portgrab(&set)
 
@@ -456,7 +453,7 @@ func create_polygon(name, password *string) error {
 
 // dbname = Name of the Database you are trying to retrieve
 // location = Location inside the Database
-func polygon_retrieve(dbname string, location string) (error, interface{}) {
+func polygon_retrieve(dbname string, location string) (error, any) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
@@ -466,4 +463,12 @@ func polygon_retrieve(dbname string, location string) (error, interface{}) {
 	return nil, output
 }
 
-//direct *string, jsonParsed *gabs.Container, value *[]byte, location *string
+func polygon_record(dbname string, location string, value []byte) (error, any) {
+	var database gabs.Container
+	er := datacheck(&dbname, &database)
+	if er != nil {
+		return er, nil
+	}
+	output := record(&location, &database, &value, &location)
+	return nil, output
+}
