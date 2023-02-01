@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -251,16 +250,10 @@ func data(location *string) (error, gabs.Container) {
 
 func conf(err *error, location *string, jsonData *config) {
 
-	var file *os.File
-	file, *err = os.Open("databases/" + *location + "/config.json")
-	if *err != nil {
-		go fmt.Println("Error reading file:", err)
-	}
-	defer file.Close()
-	content, _ := ioutil.ReadAll(file)
+	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
 	// Unmarshal the JSON data for config
-	*err = sonic.Unmarshal([]byte(content), &jsonData)
+	*err = sonic.Unmarshal(*&content, &jsonData)
 
 	//*err = json.NewDecoder(file).Decode(&jsonData)
 	if *err != nil {
