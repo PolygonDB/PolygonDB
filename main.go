@@ -476,8 +476,28 @@ func polygon_record(dbname string, location string, value []byte) (error, any) {
 	}
 	er, output := record(&location, &database, &value, &location)
 	if er != nil {
-		return er, ""
+		return er, nil
 	} else {
 		return nil, output
 	}
+}
+
+func polygon_search(dbname string, location string, value []byte) (error, any) {
+	var database gabs.Container
+	er := datacheck(&dbname, &database)
+	if er != nil {
+		return er, nil
+	}
+	output := search(&location, &database, &value)
+	return nil, output
+}
+
+func polygon_append(dbname string, location string, value []byte) (error, any) {
+	var database gabs.Container
+	er := datacheck(&dbname, &database)
+	if er != nil {
+		return er, nil
+	}
+	output := append(&location, &database, &value, &location)
+	return nil, output
 }
