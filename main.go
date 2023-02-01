@@ -301,11 +301,11 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	for i, user := range it {
 		if fmt.Sprint(user.Path(parts[0]).Data()) == fmt.Sprint(*&target) {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
-			break
+			return output
 		}
 	}
 
-	return output
+	return "Cannot find value."
 }
 
 func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
@@ -474,7 +474,7 @@ func polygon_record(dbname string, location string, value []byte) (error, any) {
 	if er != nil {
 		return er, nil
 	}
-	er, output := record(&location, &database, &value, &location)
+	er, output := record(&location, &database, &value, &dbname)
 	if er != nil {
 		return er, nil
 	} else {
@@ -500,4 +500,30 @@ func polygon_append(dbname string, location string, value []byte) (error, any) {
 	}
 	output := append(&location, &database, &value, &location)
 	return nil, output
+}
+
+type polygon struct {
+	data gabs.Container
+	name string
+}
+
+// If a user wants a "polygon" database and from there modify that, then they can use the following commands:
+func get_polygon(dbname string) (error, polygon) {
+	var database polygon
+	er := datacheck(&dbname, &database.data)
+	if er != nil {
+		return er, database
+	}
+	database.name = dbname
+	return nil, database
+}
+
+func (g polygon) retrieve(location string) any {
+	output := retrieve(&location, &g.data)
+	return output
+}
+
+func (g polygon) record(location string, value []byte) any {
+	_, output := record(&location, &g.data, &value, &g.name)
+	return output
 }
