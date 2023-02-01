@@ -415,3 +415,38 @@ func setup() {
 	os.WriteFile("settings.json", *&data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
+
+//Embeddable Section
+//If the code is being used to embed into another Go Lang project then these functions are designed to that.
+//This re-uses the code shown above but re-purposes certain functions for an embed. project
+
+// Starts Polygon Server
+func startpolygon(target string) error {
+	http.HandleFunc("/ws", datahandler)
+	go processQueue(queue)
+	er := http.ListenAndServe(target, nil)
+	if er != nil {
+		return er
+	} else {
+		fmt.Print("Server started on -> "+target, "\n")
+		return nil
+	}
+}
+
+// Creates a database for you
+func create_polygon(name, password *string) error {
+	if _, err := os.Stat("databases/" + *name); !os.IsNotExist(err) {
+		datacreate(*name, *password)
+		return nil
+	} else {
+		return err
+	}
+}
+
+// dbname = Name of the Database you are trying to retrieve
+// location = Location inside the Database
+func polygon_retrieve(dbname string, location string) {
+	//work in progress
+}
+
+//direct *string, jsonParsed *gabs.Container, value *[]byte, location *string
