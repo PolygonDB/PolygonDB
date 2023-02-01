@@ -53,6 +53,9 @@ type settings struct {
 
 // main
 func main() {
+	polygon_retrieve("ExampleDB", "rows.0.name")
+}
+func tmain() {
 	var set settings
 	portgrab(&set)
 
@@ -206,27 +209,35 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 			return conferr
 		}
 
-		if value, ok := databases.Load(*location); ok {
-			parsed, _ := gabs.ParseJSON(value)
-			*database = *parsed
-			value = nil
+		er := datacheck(*&location, *&database)
+		if er != nil {
+			return er
 		} else {
-			var dataerr error
-			dataerr, *database = data(location)
-			if dataerr != nil {
-				return dataerr
-			}
+			return nil
 		}
-
-		return nil
-
 	} else {
 		return err
 	}
 }
 
+func datacheck(location *string, database *gabs.Container) error {
+	if value, ok := databases.Load(*location); ok {
+		parsed, _ := gabs.ParseJSON(value)
+		*database = *parsed
+		value = nil
+	} else {
+		var dataerr error
+		_, *database = data(location)
+		if dataerr != nil {
+			return dataerr
+		}
+	}
+	return nil
+}
+
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
+
 	value, err := gabs.ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
@@ -445,8 +456,14 @@ func create_polygon(name, password *string) error {
 
 // dbname = Name of the Database you are trying to retrieve
 // location = Location inside the Database
-func polygon_retrieve(dbname string, location string) {
-	//work in progress
+func polygon_retrieve(dbname string, location string) (error, interface{}) {
+	var database gabs.Container
+	er := datacheck(&dbname, &database)
+	if er != nil {
+		return er, nil
+	}
+	output := retrieve(&location, &database)
+	return nil, output
 }
 
 //direct *string, jsonParsed *gabs.Container, value *[]byte, location *string
