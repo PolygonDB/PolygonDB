@@ -178,8 +178,13 @@ func process(msg *input, ws *websocket.Conn) {
 	} else {
 		value := []byte(msg.Val)
 		if msg.Act == "record" {
-			output := record(&msg.Loc, &database, &value, &msg.Dbname)
-			ws.WriteJSON("{Status: " + output + "}")
+			err, output := record(&msg.Loc, &database, &value, &msg.Dbname)
+			if err != nil {
+				ws.WriteJSON("{Error: " + err.Error() + "}")
+			} else {
+				ws.WriteJSON("{Status: " + output + "}")
+			}
+
 		} else if msg.Act == "search" {
 			output := search(&msg.Loc, &database, &value)
 			ws.WriteJSON(&output)
@@ -267,21 +272,21 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
+func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
 
 	val, err := UnmarshalJSONValue(&*value)
 	if err != nil {
-		return "Failure. Value cannot be unmarshal to json."
+		return err, ""
 	}
 
 	_, err = jsonParsed.SetP(&val, *direct)
 	if err != nil {
-		return "Failure. Value cannot be placed into database."
+		return err, ""
 	}
 
 	syncupdate(jsonParsed, *&location)
 
-	return "Success"
+	return nil, "Success"
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
@@ -469,6 +474,10 @@ func polygon_record(dbname string, location string, value []byte) (error, any) {
 	if er != nil {
 		return er, nil
 	}
-	output := record(&location, &database, &value, &location)
-	return nil, output
+	er, output := record(&location, &database, &value, &location)
+	if er != nil {
+		return er, ""
+	} else {
+		return nil, output
+	}
 }
