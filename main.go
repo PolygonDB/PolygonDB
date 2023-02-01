@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -17,12 +18,12 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/bytedance/sonic"
 )
 
 var (
 	//uses the json-iterator library since it's faster
-	json = jsoniter.ConfigCompatibleWithStandardLibrary
+	//json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
 	databases = &atomicDatabase{}
@@ -65,7 +66,7 @@ func main() {
 
 func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
-	json.Unmarshal(file, &set)
+	sonic.Unmarshal(file, &set)
 	file = nil
 }
 
@@ -127,7 +128,7 @@ func takein(ws *websocket.Conn) bool {
 			return false
 		}
 
-		if err := json.Unmarshal(*&message, &msg); err != nil {
+		if err := sonic.Unmarshal(*&message, &msg); err != nil {
 			return false
 		}
 
@@ -249,15 +250,19 @@ func data(location *string) (error, gabs.Container) {
 }
 
 func conf(err *error, location *string, jsonData *config) {
+
 	var file *os.File
 	file, *err = os.Open("databases/" + *location + "/config.json")
 	if *err != nil {
 		go fmt.Println("Error reading file:", err)
 	}
 	defer file.Close()
+	content, _ := ioutil.ReadAll(file)
 
 	// Unmarshal the JSON data for config
-	*err = json.NewDecoder(file).Decode(&jsonData)
+	*err = sonic.Unmarshal([]byte(content), &jsonData)
+
+	//*err = json.NewDecoder(file).Decode(&jsonData)
 	if *err != nil {
 		go fmt.Println("Error unmarshalling Config JSON:", err)
 	}
@@ -342,12 +347,12 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 		if (*data)[len(*data)-1] != '}' {
 			return nil, fmt.Errorf("json object is not properly formatted")
 		}
-		err = json.Unmarshal(*data, &v)
+		err = sonic.Unmarshal(*data, &v)
 	case '[':
 		if (*data)[len(*data)-1] != ']' {
 			return nil, fmt.Errorf("json array is not properly formatted")
 		}
-		err = json.Unmarshal(*data, &v)
+		err = sonic.Unmarshal(*data, &v)
 	default:
 		i, e := strconv.Atoi(string(*data))
 		if e != nil {
@@ -369,7 +374,7 @@ func Nullify(ptr interface{}) {
 
 // Sync Update
 func syncupdate(jsonParsed *gabs.Container, location *string) {
-	jsonData, _ := json.MarshalIndent(jsonParsed.Data(), "", "    ")
+	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
 	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
@@ -424,7 +429,7 @@ func setup() {
 		Addr: "0.0.0.0",
 		Port: "25565",
 	}
-	data, _ := json.MarshalIndent(defaultset, "", "    ")
+	data, _ := sonic.ConfigDefault.MarshalIndent(defaultset, "", "    ")
 	os.WriteFile("settings.json", *&data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
