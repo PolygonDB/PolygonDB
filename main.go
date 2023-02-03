@@ -224,8 +224,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 func datacheck(location *string, database *gabs.Container) error {
 	if value, ok := databases.Load(*location); ok {
-		parsed, _ := gabs.ParseJSON(value)
-		*database = *parsed
+		*database, _ = ParseJSON(&value)
 		value = nil
 	} else {
 		var dataerr error
@@ -235,6 +234,14 @@ func datacheck(location *string, database *gabs.Container) error {
 		}
 	}
 	return nil
+}
+
+func ParseJSON(sample *[]byte) (gabs.Container, error) {
+	var gab interface{}
+	if err := sonic.Unmarshal(*sample, &gab); err != nil {
+		return *gabs.Wrap(&gab), err
+	}
+	return *gabs.Wrap(gab), nil
 }
 
 // This gets the database file
