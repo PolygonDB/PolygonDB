@@ -197,7 +197,6 @@ func process(msg *input, ws *websocket.Conn) {
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
 	runtime.GC()
-
 }
 
 // Config and Database Getting
@@ -236,14 +235,6 @@ func datacheck(location *string, database *gabs.Container) error {
 	return nil
 }
 
-func ParseJSON(sample *[]byte) (gabs.Container, error) {
-	var gab interface{}
-	if err := sonic.Unmarshal(*sample, &gab); err != nil {
-		return *gabs.Wrap(&gab), err
-	}
-	return *gabs.Wrap(gab), nil
-}
-
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
 
@@ -253,21 +244,6 @@ func data(location *string) (error, gabs.Container) {
 	}
 	databases.Store(*location, value.Bytes())
 	return err, *value
-}
-
-func ParseJSONFile(path string) (*gabs.Container, error) {
-
-	cBytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	container, err := ParseJSON(&cBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &container, nil
 }
 
 func conf(err *error, location *string, jsonData *config) {
@@ -556,4 +532,29 @@ func (g polygon) search(location *string, value *[]byte) any {
 func (g polygon) append(location *string, value *[]byte) any {
 	output := append(location, &g.data, value, &g.name)
 	return output
+}
+
+// Json Decoding Functions
+// Instead of using Gab's parsers, it uses a custom json parser that works with Sonic
+func ParseJSON(sample *[]byte) (gabs.Container, error) {
+	var gab interface{}
+	if err := sonic.Unmarshal(*sample, &gab); err != nil {
+		return *gabs.Wrap(&gab), err
+	}
+	return *gabs.Wrap(gab), nil
+}
+
+func ParseJSONFile(path string) (*gabs.Container, error) {
+
+	cBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := ParseJSON(&cBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &container, nil
 }
