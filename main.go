@@ -229,7 +229,7 @@ func datacheck(location *string, database *gabs.Container) error {
 		value = nil
 	} else {
 		var dataerr error
-		_, *database = data(location)
+		dataerr, *database = data(location)
 		if dataerr != nil {
 			return dataerr
 		}
@@ -516,22 +516,22 @@ func get_polygon(dbname string) (error, polygon) {
 	return nil, database
 }
 
-func (g polygon) retrieve(location string) any {
-	output := retrieve(&location, &g.data)
+func (g polygon) retrieve(location *string) any {
+	output := retrieve(location, &g.data)
 	return output
 }
 
-func (g polygon) record(location string, value []byte) any {
-	_, output := record(&location, &g.data, &value, &g.name)
+func (g polygon) record(location *string, value *[]byte) any {
+	_, output := record(location, &g.data, value, &g.name)
 	return output
 }
 
-func (g polygon) search(location string, value []byte) any {
-	output := search(&location, &g.data, &value)
+func (g polygon) search(location *string, value *[]byte) any {
+	output := search(location, &g.data, value)
 	return output
 }
 
-func (g polygon) append(location string, value []byte) any {
-	output := append(&location, &g.data, &value, &g.name)
+func (g polygon) append(location *string, value *[]byte) any {
+	output := append(location, &g.data, value, &g.name)
 	return output
 }
