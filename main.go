@@ -247,12 +247,27 @@ func ParseJSON(sample *[]byte) (gabs.Container, error) {
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
 
-	value, err := gabs.ParseJSONFile("databases/" + *location + "/database.json")
+	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	databases.Store(*location, value.Bytes())
 	return err, *value
+}
+
+func ParseJSONFile(path string) (*gabs.Container, error) {
+
+	cBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := ParseJSON(&cBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &container, nil
 }
 
 func conf(err *error, location *string, jsonData *config) {
