@@ -79,7 +79,7 @@ Javascript Code via [PloyConJS](https://github.com/NekaouMike/PloyConJS)
 ```js
 const ploycon = require('ployconjs');
 
-const db = new ploycon("ws://localhost:8000","Secret_Password");
+const db = new ploycon("localhost:8000","Secret_Password");
 
 main();
 async function main() {
