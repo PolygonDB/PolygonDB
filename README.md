@@ -98,7 +98,7 @@ async function main() {
 ## Companies that uses PolygonDB 
 
 <div style="display: flex; justify-content: center;">
-		<a href="https://discord.gg/MHEAwNjKb2">
+		<a href="https://discord.gg/muXKEkbRwp">
 
 <img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
 		</a>
