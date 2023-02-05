@@ -1,4 +1,4 @@
-package utils
+package polytools
 
 import (
 	"os"
@@ -41,4 +41,8 @@ func WriteFile(name string, data *[]byte, perm os.FileMode) error {
 		err = err1
 	}
 	return err
+}
+
+func Testterm(name string) (string, error) {
+	return "Hello", nil
 }

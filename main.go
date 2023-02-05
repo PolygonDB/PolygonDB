@@ -19,7 +19,9 @@ import (
 
 	"github.com/bytedance/sonic"
 
-	utils "github.com/JewishLewish/PolygonDB/utilities"
+	polytools "github.com/JewishLewish/PolygonDB/utilities/polyFuncs"
+
+	term "github.com/JewishLewish/PolygonDB/utilities/terminal"
 )
 
 var (
@@ -61,7 +63,7 @@ func main() {
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
-	go mainTerm()
+	go term.Mainterm()
 	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -230,7 +232,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 func datacheck(location *string, database *gabs.Container) error {
 	if value, ok := databases.Load(*location); ok {
-		*database, _ = utils.ParseJSON(&value)
+		*database, _ = polytools.ParseJSON(&value)
 		value = nil
 	} else {
 		var dataerr error
@@ -245,7 +247,7 @@ func datacheck(location *string, database *gabs.Container) error {
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
 
-	value, err := utils.ParseJSONFile("databases/" + *location + "/database.json")
+	value, err := polytools.ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
@@ -373,12 +375,11 @@ func Nullify(ptr interface{}) {
 // Sync Update
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	utils.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	polytools.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
 // Terminal
-// Used for Standalone Application
 func mainTerm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -396,7 +397,7 @@ func mainTerm() {
 			setup()
 		}
 
-		Nullify(&parts)
+		parts = nil
 	}
 }
 
@@ -414,22 +415,26 @@ func datacreate(name, pass string) {
 
 	conpath := path + "/config.json"
 	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
-	utils.WriteFile(conpath, &cinput, 0644)
+	polytools.WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	utils.WriteFile(datapath, &dinput, 0644)
+	polytools.WriteFile(datapath, &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
 
 func setup() {
+	type settings struct {
+		Addr string `json:"addr"`
+		Port string `json:"port"`
+	}
 	defaultset := settings{
 		Addr: "0.0.0.0",
 		Port: "25565",
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
-	utils.WriteFile("settings.json", &data, 0644)
+	polytools.WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
 
@@ -438,7 +443,7 @@ func setup() {
 //This re-uses the code shown above but re-purposes certain functions for an embed. project
 
 // Starts Polygon Server
-func startpolygon(target string) error {
+func Startpolygon(target string) error {
 	http.HandleFunc("/ws", datahandler)
 	go processQueue(queue)
 	er := http.ListenAndServe(target, nil)
@@ -451,7 +456,7 @@ func startpolygon(target string) error {
 }
 
 // Creates a database for you
-func create_polygon(name, password *string) error {
+func Create_polygon(name, password *string) error {
 	if _, err := os.Stat("databases/" + *name); !os.IsNotExist(err) {
 		datacreate(*name, *password)
 		return nil

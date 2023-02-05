@@ -11,7 +11,7 @@ import (
 	utils "github.com/JewishLewish/PolygonDB/utilities/polyFuncs"
 )
 
-func mainTerm(v any) {
+func Mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		scanner.Scan()
