@@ -41,14 +41,15 @@ var (
 	mutex = &sync.Mutex{}
 )
 
+// Config for databases only holds key
 type config struct {
 	Key string `json:"key"`
 }
 
+// Settings.json parsing
 type settings struct {
 	Addr string `json:"addr"`
 	Port string `json:"port"`
-	//Lbool bool   `json:"local_only"`
 }
 
 // main
@@ -63,6 +64,7 @@ func main() {
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
+// Parses the data
 func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
@@ -87,11 +89,13 @@ func (ad *atomicDatabase) Store(location string, value []byte) {
 	ad.value.Store(value)
 }
 
+// Websocket Message. Each wsMessage is placed in queue
 type wsMessage struct {
 	ws  *websocket.Conn
 	msg input
 }
 
+// Parses Input
 type input struct {
 	Pass   string `json:"password"`
 	Dbname string `json:"dbname"`
@@ -100,6 +104,7 @@ type input struct {
 	Val    string `json:"value"`
 }
 
+// datahandler is where the mainsocker action occurs.
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := upgrader.Upgrade(w, r, nil)
@@ -122,7 +127,7 @@ func takein(ws *websocket.Conn) bool {
 
 	switch messageType {
 	case websocket.TextMessage:
-		message, err := io.ReadAll(*&reader)
+		message, err := io.ReadAll(reader)
 		if err != nil {
 			return false
 		}
@@ -189,7 +194,7 @@ func process(msg *input, ws *websocket.Conn) {
 			output := search(&msg.Loc, &database, &value)
 			ws.WriteJSON(&output)
 		} else if msg.Act == "append" {
-			output := append(&msg.Loc, &database, &value, &msg.Dbname)
+			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
 		Nullify(&value)
@@ -304,7 +309,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	return "Cannot find value."
 }
 
-func append(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
+func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
 
 	val, err := UnmarshalJSONValue(&*value)
 	if err != nil {
@@ -366,11 +371,12 @@ func Nullify(ptr interface{}) {
 // Sync Update
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	os.WriteFile("databases/"+*location+"/database.json", *&jsonData, 0644)
+	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
-// Terminal Websocket
+// Terminal
+// Used for Standalone Application
 func mainTerm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -406,11 +412,11 @@ func datacreate(name, pass string) {
 
 	conpath := path + "/config.json"
 	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
-	os.WriteFile(conpath, cinput, 0644)
+	WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	os.WriteFile(datapath, dinput, 0644)
+	WriteFile(datapath, &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
@@ -420,8 +426,8 @@ func setup() {
 		Addr: "0.0.0.0",
 		Port: "25565",
 	}
-	data, _ := sonic.ConfigDefault.MarshalIndent(defaultset, "", "    ")
-	os.WriteFile("settings.json", *&data, 0644)
+	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
+	WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
 
@@ -494,7 +500,7 @@ func polygon_append(dbname string, location string, value []byte) (error, any) {
 	if er != nil {
 		return er, nil
 	}
-	output := append(&location, &database, &value, &location)
+	output := append_p(&location, &database, &value, &location)
 	return nil, output
 }
 
@@ -530,7 +536,7 @@ func (g polygon) search(location *string, value *[]byte) any {
 }
 
 func (g polygon) append(location *string, value *[]byte) any {
-	output := append(location, &g.data, value, &g.name)
+	output := append_p(location, &g.data, value, &g.name)
 	return output
 }
 
@@ -557,4 +563,16 @@ func ParseJSONFile(path string) (*gabs.Container, error) {
 	}
 
 	return &container, nil
+}
+
+func WriteFile(name string, data *[]byte, perm os.FileMode) error {
+	f, err := os.OpenFile(name, 1|64|512, perm)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(*data)
+	if err1 := f.Close(); err1 != nil && err == nil {
+		err = err1
+	}
+	return err
 }
