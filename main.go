@@ -134,7 +134,7 @@ func takein(ws *websocket.Conn) bool {
 			return false
 		}
 
-		if err := sonic.Unmarshal(*&message, &msg); err != nil {
+		if err := sonic.Unmarshal(message, &msg); err != nil {
 			return false
 		}
 
@@ -212,12 +212,12 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
 		var conferr error
 
-		conf(&conferr, &*location, &*jsonData)
+		conf(&conferr, location, jsonData)
 		if conferr != nil {
 			return conferr
 		}
 
-		er := datacheck(*&location, *&database)
+		er := datacheck(location, database)
 		if er != nil {
 			return er
 		} else {
@@ -250,7 +250,7 @@ func data(location *string) (error, gabs.Container) {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	databases.Store(*location, value.Bytes())
-	return err, *value
+	return nil, *value
 }
 
 func conf(err *error, location *string, jsonData *config) {
@@ -258,7 +258,7 @@ func conf(err *error, location *string, jsonData *config) {
 	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
 	// Unmarshal the JSON data for config
-	*err = sonic.Unmarshal(*&content, &jsonData)
+	*err = sonic.Unmarshal(content, &jsonData)
 
 	//*err = json.NewDecoder(file).Decode(&jsonData)
 	if *err != nil {
@@ -277,7 +277,7 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 
 func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
 
-	val, err := UnmarshalJSONValue(&*value)
+	val, err := UnmarshalJSONValue(value)
 	if err != nil {
 		return err, ""
 	}
@@ -287,7 +287,7 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 		return err, ""
 	}
 
-	syncupdate(jsonParsed, *&location)
+	syncupdate(jsonParsed, location)
 
 	return nil, "Success"
 }
@@ -302,7 +302,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
-		if fmt.Sprint(user.Path(parts[0]).Data()) == fmt.Sprint(*&target) {
+		if fmt.Sprint(user.Path(parts[0]).Data()) == fmt.Sprint(target) {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			return output
 		}
@@ -313,7 +313,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 
 func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
 
-	val, err := UnmarshalJSONValue(&*value)
+	val, err := UnmarshalJSONValue(value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
@@ -323,7 +323,7 @@ func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, locatio
 		return "Failure!"
 	}
 
-	syncupdate(jsonParsed, *&location)
+	syncupdate(jsonParsed, location)
 
 	return "Success"
 }
@@ -364,7 +364,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 
 // Nullify basically helps with the memory management when it comes to websockets
 func Nullify(ptr interface{}) {
-	val := reflect.ValueOf(*&ptr)
+	val := reflect.ValueOf(ptr)
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
 	}
