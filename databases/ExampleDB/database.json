@@ -1,24 +1,28 @@
 {
-	"rows": [
-		{
-			"age": 5,
-			"name": "A"
-		},
-		{
-			"age": 20,
-			"name": "B"
-		},
-		{
-			"age": 30,
-			"name": "C"
-		},
-		{
-			"age": 40,
-			"name": "D"
-		}
-	],
-	"schema": [
-		"name"
-	],
-	"test": "test"
+    "rows": [
+        {
+            "age": 5,
+            "name": "A"
+        },
+        {
+            "age": 20,
+            "name": "B"
+        },
+        {
+            "age": 30,
+            "name": "C"
+        },
+        {
+            "age": 40,
+            "name": "D"
+        },
+        {
+            "age": 40,
+            "name": "D"
+        }
+    ],
+    "schema": [
+        "name"
+    ],
+    "test": "test"
 }

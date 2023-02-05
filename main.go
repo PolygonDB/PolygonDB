@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,8 +20,6 @@ import (
 	"github.com/bytedance/sonic"
 
 	polytools "github.com/JewishLewish/PolygonDB/utilities/polyFuncs"
-
-	term "github.com/JewishLewish/PolygonDB/utilities/terminal"
 )
 
 var (
@@ -62,7 +61,7 @@ func main() {
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
-	go term.Mainterm()
+	go Mainterm()
 	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -398,7 +397,7 @@ func Startpolygon(target string) error {
 // Creates a database for you
 func Create_polygon(name, password *string) error {
 	if _, err := os.Stat("databases/" + *name); !os.IsNotExist(err) {
-		term.Datacreate(*name, *password)
+		datacreate(*name, *password)
 		return nil
 	} else {
 		return err
@@ -407,48 +406,48 @@ func Create_polygon(name, password *string) error {
 
 // dbname = Name of the Database you are trying to retrieve
 // location = Location inside the Database
-func polygon_retrieve(dbname string, location string) (error, any) {
+func Polygon_retrieve(dbname string, location string) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
-		return er, nil
+		return nil, er
 	}
 	output := retrieve(&location, &database)
-	return nil, output
+	return output, nil
 }
 
-func polygon_record(dbname string, location string, value []byte) (error, any) {
+func Polygon_record(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
-		return er, nil
+		return nil, er
 	}
 	er, output := record(&location, &database, &value, &dbname)
 	if er != nil {
-		return er, nil
+		return nil, er
 	} else {
-		return nil, output
+		return output, nil
 	}
 }
 
-func polygon_search(dbname string, location string, value []byte) (error, any) {
+func Polygon_search(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
-		return er, nil
+		return nil, er
 	}
 	output := search(&location, &database, &value)
-	return nil, output
+	return output, nil
 }
 
-func polygon_append(dbname string, location string, value []byte) (error, any) {
+func Polygon_append(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
-		return er, nil
+		return nil, er
 	}
 	output := append_p(&location, &database, &value, &location)
-	return nil, output
+	return output, nil
 }
 
 type polygon struct {
@@ -457,32 +456,91 @@ type polygon struct {
 }
 
 // If a user wants a "polygon" database and from there modify that, then they can use the following commands:
-func get_polygon(dbname string) (error, polygon) {
+func Get_polygon(dbname string) (polygon, error) {
 	var database polygon
 	er := datacheck(&dbname, &database.data)
 	if er != nil {
-		return er, database
+		return database, er
 	}
 	database.name = dbname
-	return nil, database
+	return database, nil
 }
 
-func (g polygon) retrieve(location string) any {
+func (g polygon) Retrieve(location string) any {
 	output := retrieve(&location, &g.data)
 	return output
 }
 
-func (g polygon) record(location string, value []byte) any {
+func (g polygon) Record(location string, value []byte) any {
 	_, output := record(&location, &g.data, &value, &g.name)
 	return output
 }
 
-func (g polygon) search(location string, value []byte) any {
+func (g polygon) Search(location string, value []byte) any {
 	output := search(&location, &g.data, &value)
 	return output
 }
 
-func (g polygon) append(location string, value []byte) any {
+func (g polygon) Append(location string, value []byte) any {
 	output := append_p(&location, &g.data, &value, &g.name)
 	return output
+}
+
+// Terminal
+func Mainterm() {
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		scanner.Scan()
+		parts := strings.Fields(scanner.Text())
+		if len(parts) == 0 {
+			continue
+		}
+
+		if parts[0] == "help" {
+			help()
+		} else if parts[0] == "create_database" {
+			datacreate(parts[1], parts[2])
+		} else if parts[0] == "setup" {
+			setup()
+		}
+
+		parts = nil
+	}
+}
+
+func help() {
+	fmt.Print("\n====Polygon Terminal====\n")
+	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
+	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
+	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
+	fmt.Print("========================\n\n")
+}
+
+func datacreate(name, pass string) {
+	path := "databases/" + name
+	os.Mkdir(path, 0777)
+
+	conpath := path + "/config.json"
+	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
+	polytools.WriteFile(conpath, &cinput, 0644)
+
+	datapath := path + "/database.json"
+	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
+	polytools.WriteFile(datapath, &dinput, 0644)
+
+	fmt.Println("File has been created.")
+}
+
+func setup() {
+	type settings struct {
+		Addr string `json:"addr"`
+		Port string `json:"port"`
+	}
+	defaultset := settings{
+		Addr: "0.0.0.0",
+		Port: "25565",
+	}
+	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
+	polytools.WriteFile("settings.json", &data, 0644)
+	fmt.Print("Settings.json has been setup. \n")
 }
