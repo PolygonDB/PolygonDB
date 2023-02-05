@@ -481,9 +481,14 @@ func (g Polygon) Record(location string, value []byte) any {
 	return output
 }
 
-func (g Polygon) Search(location string, value []byte) any {
+func (g Polygon) Search(location string, value []byte) map[string]interface{} {
 	output := search(&location, &g.data, &value)
-	return output
+	if output == "Cannot find value." {
+		return nil
+	} else {
+		return output.(map[string]interface{})
+	}
+
 }
 
 func (g Polygon) Append(location string, value []byte) any {
