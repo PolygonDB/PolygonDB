@@ -18,8 +18,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/bytedance/sonic"
-
-	polytools "github.com/JewishLewish/PolygonDB/utilities/polyFuncs"
 )
 
 var (
@@ -228,7 +226,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 func datacheck(location *string, database *gabs.Container) error {
 	if value, ok := databases.Load(*location); ok {
-		*database, _ = polytools.ParseJSON(&value)
+		*database, _ = ParseJSON(&value)
 		value = nil
 	} else {
 		var dataerr error
@@ -243,7 +241,7 @@ func datacheck(location *string, database *gabs.Container) error {
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
 
-	value, err := polytools.ParseJSONFile("databases/" + *location + "/database.json")
+	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
@@ -371,7 +369,7 @@ func nullify(ptr interface{}) {
 // Sync Update
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	polytools.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
@@ -530,11 +528,11 @@ func datacreate(name, pass string) {
 
 	conpath := path + "/config.json"
 	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
-	polytools.WriteFile(conpath, &cinput, 0644)
+	WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	polytools.WriteFile(datapath, &dinput, 0644)
+	WriteFile(datapath, &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
@@ -549,6 +547,46 @@ func setup() {
 		Port: "25565",
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
-	polytools.WriteFile("settings.json", &data, 0644)
+	WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
+}
+
+func ParseJSON(sample *[]byte) (gabs.Container, error) {
+	var gab interface{}
+	if err := sonic.Unmarshal(*sample, &gab); err != nil {
+		return *gabs.Wrap(&gab), err
+	}
+	return *gabs.Wrap(gab), nil
+}
+
+func ParseJSONFile(path string) (*gabs.Container, error) {
+
+	cBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := ParseJSON(&cBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &container, nil
+}
+
+// This is from the OS function. It does the same thing but data now takes in a pointer to make it use less memory
+func WriteFile(name string, data *[]byte, perm os.FileMode) error {
+	f, err := os.OpenFile(name, 1|64|512, perm)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(*data)
+	if err1 := f.Close(); err1 != nil && err == nil {
+		err = err1
+	}
+	return err
+}
+
+func Testterm(name string) (string, error) {
+	return "Hello", nil
 }
