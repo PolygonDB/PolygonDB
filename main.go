@@ -187,7 +187,7 @@ func process(msg *input, ws *websocket.Conn) {
 		if msg.Act == "record" {
 			err, output := record(&msg.Loc, &database, &value, &msg.Dbname)
 			if err != nil {
-				ws.WriteJSON("{Error: " + err.Error() + "}")
+				ws.WriteJSON("{\"Error\": \"" + err.Error() + "\"}")
 			} else {
 				ws.WriteJSON("{\"Status\": \"" + output + "\"}")
 			}
