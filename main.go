@@ -23,8 +23,6 @@ import (
 )
 
 var (
-	//uses the json-iterator library since it's faster
-	//json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
 	databases = &atomicDatabase{}
