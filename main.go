@@ -189,7 +189,7 @@ func process(msg *input, ws *websocket.Conn) {
 			if err != nil {
 				ws.WriteJSON("{Error: " + err.Error() + "}")
 			} else {
-				ws.WriteJSON("{Status: " + output + "}")
+				ws.WriteJSON("{\"Status\": \"" + output + "\"}")
 			}
 
 		} else if msg.Act == "search" {
@@ -197,7 +197,7 @@ func process(msg *input, ws *websocket.Conn) {
 			ws.WriteJSON(&output)
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
-			ws.WriteJSON("{Status: " + output + "}")
+			ws.WriteJSON("{\"Status\": \"" + output + "\"}")
 		}
 		nullify(&value)
 	}
