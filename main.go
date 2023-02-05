@@ -173,8 +173,8 @@ func process(msg *input, ws *websocket.Conn) {
 		ws.WriteJSON("{Error: Password Error.}")
 		return
 	}
-	defer Nullify(&confdata)
-	defer Nullify(&database)
+	defer nullify(&confdata)
+	defer nullify(&database)
 
 	//direct := (*msg)["location"].(string)
 	//action := (*msg)["action"].(string)
@@ -199,7 +199,7 @@ func process(msg *input, ws *websocket.Conn) {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			ws.WriteJSON("{Status: " + output + "}")
 		}
-		Nullify(&value)
+		nullify(&value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
@@ -277,7 +277,7 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 
 func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
 
-	val, err := UnmarshalJSONValue(value)
+	val, err := unmarshalJSONValue(value)
 	if err != nil {
 		return err, ""
 	}
@@ -295,7 +295,7 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
-	target, _ := UnmarshalJSONValue(&targ)
+	target, _ := unmarshalJSONValue(&targ)
 	targ = nil
 
 	var output interface{}
@@ -313,7 +313,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 
 func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
 
-	val, err := UnmarshalJSONValue(value)
+	val, err := unmarshalJSONValue(value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
@@ -329,7 +329,7 @@ func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, locatio
 }
 
 // Unmarhsals the value into an appropriate json input
-func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
+func unmarshalJSONValue(data *[]byte) (interface{}, error) {
 	var v interface{}
 	var err error
 	if len(*data) == 0 {
@@ -363,7 +363,7 @@ func UnmarshalJSONValue(data *[]byte) (interface{}, error) {
 }
 
 // Nullify basically helps with the memory management when it comes to websockets
-func Nullify(ptr interface{}) {
+func nullify(ptr interface{}) {
 	val := reflect.ValueOf(ptr)
 	if val.Kind() == reflect.Ptr {
 		val.Elem().Set(reflect.Zero(val.Elem().Type()))
