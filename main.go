@@ -382,7 +382,7 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 //This re-uses the code shown above but re-purposes certain functions for an embed. project
 
 // Starts Polygon Server
-func Startpolygon(target string) error {
+func Start(target string) error {
 	http.HandleFunc("/ws", datahandler)
 	go processQueue(queue)
 	er := http.ListenAndServe(target, nil)
@@ -395,7 +395,7 @@ func Startpolygon(target string) error {
 }
 
 // Creates a database for you
-func Create_polygon(name, password *string) error {
+func Create(name, password *string) error {
 	if _, err := os.Stat("databases/" + *name); !os.IsNotExist(err) {
 		datacreate(*name, *password)
 		return nil
@@ -406,7 +406,7 @@ func Create_polygon(name, password *string) error {
 
 // dbname = Name of the Database you are trying to retrieve
 // location = Location inside the Database
-func Polygon_retrieve(dbname string, location string) (any, error) {
+func Retrieve_P(dbname string, location string) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
@@ -416,7 +416,7 @@ func Polygon_retrieve(dbname string, location string) (any, error) {
 	return output, nil
 }
 
-func Polygon_record(dbname string, location string, value []byte) (any, error) {
+func Record_P(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
@@ -430,7 +430,7 @@ func Polygon_record(dbname string, location string, value []byte) (any, error) {
 	}
 }
 
-func Polygon_search(dbname string, location string, value []byte) (any, error) {
+func Search_P(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
@@ -440,7 +440,7 @@ func Polygon_search(dbname string, location string, value []byte) (any, error) {
 	return output, nil
 }
 
-func Polygon_append(dbname string, location string, value []byte) (any, error) {
+func Append_P(dbname string, location string, value []byte) (any, error) {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
@@ -450,14 +450,14 @@ func Polygon_append(dbname string, location string, value []byte) (any, error) {
 	return output, nil
 }
 
-type polygon struct {
+type Polygon struct {
 	data gabs.Container
 	name string
 }
 
 // If a user wants a "polygon" database and from there modify that, then they can use the following commands:
-func Get_polygon(dbname string) (polygon, error) {
-	var database polygon
+func Get(dbname string) (Polygon, error) {
+	var database Polygon
 	er := datacheck(&dbname, &database.data)
 	if er != nil {
 		return database, er
@@ -466,22 +466,22 @@ func Get_polygon(dbname string) (polygon, error) {
 	return database, nil
 }
 
-func (g polygon) Retrieve(location string) any {
+func (g Polygon) Retrieve(location string) any {
 	output := retrieve(&location, &g.data)
 	return output
 }
 
-func (g polygon) Record(location string, value []byte) any {
+func (g Polygon) Record(location string, value []byte) any {
 	_, output := record(&location, &g.data, &value, &g.name)
 	return output
 }
 
-func (g polygon) Search(location string, value []byte) any {
+func (g Polygon) Search(location string, value []byte) any {
 	output := search(&location, &g.data, &value)
 	return output
 }
 
-func (g polygon) Append(location string, value []byte) any {
+func (g Polygon) Append(location string, value []byte) any {
 	output := append_p(&location, &g.data, &value, &g.name)
 	return output
 }
