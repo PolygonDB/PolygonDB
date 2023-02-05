@@ -397,6 +397,10 @@ func Start(target string) error {
 
 // Creates a database for you
 func Create(name, password string) error {
+	if _, err := os.Stat("databases"); os.IsNotExist(err) {
+		os.Mkdir("database", os.ModePerm)
+	}
+
 	if _, err := os.Stat("databases/" + name); !os.IsNotExist(err) {
 		datacreate(name, password)
 		return nil
