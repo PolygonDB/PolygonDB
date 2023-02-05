@@ -1,4 +1,4 @@
-module JL/PolygonDB
+module github.com/JewishLewish/PolygonDB
 
 go 1.19
 
