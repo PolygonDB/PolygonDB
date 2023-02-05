@@ -23,7 +23,7 @@ func Mainterm() {
 		if parts[0] == "help" {
 			help()
 		} else if parts[0] == "create_database" {
-			datacreate(parts[1], parts[2])
+			Datacreate(parts[1], parts[2])
 		} else if parts[0] == "setup" {
 			setup()
 		}
@@ -40,7 +40,7 @@ func help() {
 	fmt.Print("========================\n\n")
 }
 
-func datacreate(name, pass string) {
+func Datacreate(name, pass string) {
 	path := "databases/" + name
 	os.Mkdir(path, 0777)
 
