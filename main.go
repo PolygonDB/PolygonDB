@@ -61,7 +61,7 @@ func main() {
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
-	go Mainterm()
+	go mainterm()
 	go processQueue(queue)
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -385,6 +385,7 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 func Start(target string) error {
 	http.HandleFunc("/ws", datahandler)
 	go processQueue(queue)
+	fmt.Print("Server starting on => " + target)
 	er := http.ListenAndServe(target, nil)
 	if er != nil {
 		return er
@@ -395,9 +396,9 @@ func Start(target string) error {
 }
 
 // Creates a database for you
-func Create(name, password *string) error {
-	if _, err := os.Stat("databases/" + *name); !os.IsNotExist(err) {
-		datacreate(*name, *password)
+func Create(name, password string) error {
+	if _, err := os.Stat("databases/" + name); !os.IsNotExist(err) {
+		datacreate(name, password)
 		return nil
 	} else {
 		return err
@@ -487,7 +488,7 @@ func (g Polygon) Append(location string, value []byte) any {
 }
 
 // Terminal
-func Mainterm() {
+func mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		scanner.Scan()
