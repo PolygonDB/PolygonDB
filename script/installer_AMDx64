@@ -1,0 +1,18 @@
+# NOTE THIS WILL ONLY WORK ON LINUX AMDx64 SYSTEMS WITH ROOT PERMS
+echo installing...
+# get binary and install it in usr/bin
+curl https://cdn.mewgem.net/users/NekaouMike/test_1675640982760.undefined -o /usr/bin/ploygondb
+chmod +x /usr/bin/ploygondb
+# make plygondb folder for data
+mkdir /etc/ploygon
+mkdir /etc/ploygon/databases
+mkdir /etc/ploygon/databases/ExampleDB
+curl https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/settings.json -o /etc/ploygon/settings.json
+curl https://github.com/JewishLewish/PolygonDB/raw/main/databases/ExampleDB/config.json -o /etc/ploygon/databases/ExampleDB/config.json
+curl https://github.com/JewishLewish/PolygonDB/raw/main/databases/ExampleDB/database.json -o /etc/ploygon/databases/ExampleDB/database.json
+# get service
+curl https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/ploygondb.service -o /etc/systemd/system/ploygondb.service
+systemctl daemon-reload
+systemctl enable ploygondb
+systemctl start ploygondb
+echo if no errors are shown then ploygon has ran sucessfully!
