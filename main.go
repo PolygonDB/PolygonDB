@@ -1,4 +1,4 @@
-package Polygon
+package main
 
 import (
 	"bufio"
