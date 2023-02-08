@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -23,7 +22,9 @@ import (
 var (
 
 	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
-	databases = &atomicDatabase{}
+	databases = &atomicDatabase{
+		data: make(map[string][]byte),
+	}
 
 	//Local_only. Can the server be reached outside or only from a certain server?
 
@@ -71,20 +72,27 @@ func portgrab(set *settings) {
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
 type atomicDatabase struct {
-	value atomic.Value
+	data map[string][]byte
+	mu   sync.RWMutex
 }
 
 func (ad *atomicDatabase) Load(location string) ([]byte, bool) {
-	v := ad.value.Load()
-	if v == nil {
+	ad.mu.RLock()
+	defer ad.mu.RUnlock()
+
+	value, ok := ad.data[location]
+	if !ok {
 		return nil, false
 	}
-	value := v.([]byte)
+
 	return value, true
 }
 
 func (ad *atomicDatabase) Store(location string, value []byte) {
-	ad.value.Store(value)
+	ad.mu.RLock()
+	defer ad.mu.RUnlock()
+
+	ad.data[location] = value
 }
 
 // Websocket Message. Each wsMessage is placed in queue
@@ -171,9 +179,6 @@ func process(msg *input, ws *websocket.Conn) {
 	}
 	defer nullify(&confdata)
 	defer nullify(&database)
-
-	//direct := (*msg)["location"].(string)
-	//action := (*msg)["action"].(string)
 
 	if msg.Act == "retrieve" {
 		output := retrieve(&msg.Loc, &database)
