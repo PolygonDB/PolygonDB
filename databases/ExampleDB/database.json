@@ -1,8 +1,8 @@
 {
     "rows": [
         {
-            "age": 5,
-            "name": "A"
+            "name": "A",
+            "age": 5
         },
         {
             "age": 20,
@@ -17,12 +17,11 @@
             "name": "D"
         },
         {
-            "age": 40,
-            "name": "D"
+            "name": "D",
+            "age": 40
         }
     ],
     "schema": [
         "name"
-    ],
-    "test": "test"
+    ]
 }
