@@ -1,4 +1,4 @@
-package main
+package Polygon
 
 import (
 	"bufio"
@@ -11,20 +11,21 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Jeffail/gabs/v2"
 
 	"github.com/gorilla/websocket"
 
 	"github.com/bytedance/sonic"
+
+	polytools "github.com/JewishLewish/PolygonDB/utilities/polyFuncs"
 )
 
 var (
 
 	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
-	databases = &atomicDatabase{
-		data: make(map[string][]byte),
-	}
+	databases = &atomicDatabase{}
 
 	//Local_only. Can the server be reached outside or only from a certain server?
 
@@ -52,6 +53,7 @@ type settings struct {
 }
 
 // main
+// When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
 	var set settings
 	portgrab(&set)
@@ -64,6 +66,7 @@ func main() {
 }
 
 // Parses the data
+// Grabs the informatin from settings.json
 func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
@@ -71,28 +74,22 @@ func portgrab(set *settings) {
 }
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
+// Instead of Constantly Re-opening the database json file, this would save the database once and re-use it
 type atomicDatabase struct {
-	data map[string][]byte
-	mu   sync.RWMutex
+	value atomic.Value
 }
 
 func (ad *atomicDatabase) Load(location string) ([]byte, bool) {
-	ad.mu.RLock()
-	defer ad.mu.RUnlock()
-
-	value, ok := ad.data[location]
-	if !ok {
+	v := ad.value.Load()
+	if v == nil {
 		return nil, false
 	}
-
+	value := v.([]byte)
 	return value, true
 }
 
 func (ad *atomicDatabase) Store(location string, value []byte) {
-	ad.mu.RLock()
-	defer ad.mu.RUnlock()
-
-	ad.data[location] = value
+	ad.value.Store(value)
 }
 
 // Websocket Message. Each wsMessage is placed in queue
@@ -101,7 +98,7 @@ type wsMessage struct {
 	msg input
 }
 
-// Parses Input
+// Parses Input that the Websocket would recieve
 type input struct {
 	Pass   string `json:"password"`
 	Dbname string `json:"dbname"`
@@ -123,6 +120,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Take in takes in the Websocket Message
+/*\
+From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
+*/
 func takein(ws *websocket.Conn) bool {
 
 	//Reads input
@@ -152,6 +153,9 @@ func takein(ws *websocket.Conn) bool {
 	return true
 }
 
+// Processes the Queue. One at a time.
+// Both Websocket Handler and Processes Queue work semi-independently
+// a Mutex.Lock() is made so it can prevent any possible global variable manipulation and ensures safety
 func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
@@ -179,6 +183,9 @@ func process(msg *input, ws *websocket.Conn) {
 	}
 	defer nullify(&confdata)
 	defer nullify(&database)
+
+	//direct := (*msg)["location"].(string)
+	//action := (*msg)["action"].(string)
 
 	if msg.Act == "retrieve" {
 		output := retrieve(&msg.Loc, &database)
@@ -231,7 +238,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 func datacheck(location *string, database *gabs.Container) error {
 	if value, ok := databases.Load(*location); ok {
-		*database, _ = ParseJSON(&value)
+		*database, _ = polytools.ParseJSON(&value)
 		value = nil
 	} else {
 		var dataerr error
@@ -246,7 +253,7 @@ func datacheck(location *string, database *gabs.Container) error {
 // This gets the database file
 func data(location *string) (error, gabs.Container) {
 
-	value, err := ParseJSONFile("databases/" + *location + "/database.json")
+	value, err := polytools.ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
@@ -376,9 +383,10 @@ func nullify(ptr interface{}) {
 }
 
 // Sync Update
+// Since we are using atomic/sync for memory efficiency. We need to make sure that when the atomic database is updated, then we can update the sync database
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	polytools.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
@@ -502,6 +510,8 @@ func (g Polygon) Append(location string, value []byte) any {
 }
 
 // Terminal
+// This is designed for the standalone executable.
+// However, datacreate() is used in the Create Function for Go Package
 func mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -517,6 +527,8 @@ func mainterm() {
 			datacreate(parts[1], parts[2])
 		} else if parts[0] == "setup" {
 			setup()
+		} else if parts[0] == "resync" {
+			resync(&parts[1])
 		}
 
 		parts = nil
@@ -537,11 +549,11 @@ func datacreate(name, pass string) {
 
 	conpath := path + "/config.json"
 	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
-	WriteFile(conpath, &cinput, 0644)
+	polytools.WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	WriteFile(datapath, &dinput, 0644)
+	polytools.WriteFile(datapath, &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
@@ -556,46 +568,21 @@ func setup() {
 		Port: "25565",
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
-	WriteFile("settings.json", &data, 0644)
+	polytools.WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
 
-func ParseJSON(sample *[]byte) (gabs.Container, error) {
-	var gab interface{}
-	if err := sonic.Unmarshal(*sample, &gab); err != nil {
-		return *gabs.Wrap(&gab), err
+func resync(name *string) {
+	_, st := databases.Load(*name)
+	if !st {
+		fmt.Print("There appears to be no databases previous synced...\n")
+		return
+	} else {
+		value, err := polytools.ParseJSONFile("databases/" + *name + "/database.json")
+		if err != nil {
+			fmt.Println("Error unmarshalling Database JSON:", err)
+			return
+		}
+		databases.Store(*name, value.Bytes())
 	}
-	return *gabs.Wrap(gab), nil
-}
-
-func ParseJSONFile(path string) (*gabs.Container, error) {
-
-	cBytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	container, err := ParseJSON(&cBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &container, nil
-}
-
-// This is from the OS function. It does the same thing but data now takes in a pointer to make it use less memory
-func WriteFile(name string, data *[]byte, perm os.FileMode) error {
-	f, err := os.OpenFile(name, 1|64|512, perm)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(*data)
-	if err1 := f.Close(); err1 != nil && err == nil {
-		err = err1
-	}
-	return err
-}
-
-func Testterm(name string) (string, error) {
-	return "Hello", nil
 }
