@@ -1,4 +1,4 @@
-module main
+module PolygonDB
 
 go 1.19
 
