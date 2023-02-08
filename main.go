@@ -527,6 +527,8 @@ func mainterm() {
 			datacreate(parts[1], parts[2])
 		} else if parts[0] == "setup" {
 			setup()
+		} else if parts[0] == "resync" {
+			resync(&parts[1])
 		}
 
 		parts = nil
@@ -568,4 +570,19 @@ func setup() {
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	polytools.WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
+}
+
+func resync(name *string) {
+	_, st := databases.Load(*name)
+	if st == false {
+		fmt.Print("There appears to be no databases previous synced...\n")
+		return
+	} else {
+		value, err := polytools.ParseJSONFile("databases/" + *name + "/database.json")
+		if err != nil {
+			fmt.Println("Error unmarshalling Database JSON:", err)
+			return
+		}
+		databases.Store(*name, value.Bytes())
+	}
 }
