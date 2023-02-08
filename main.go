@@ -517,6 +517,8 @@ func mainterm() {
 			datacreate(parts[1], parts[2])
 		} else if parts[0] == "setup" {
 			setup()
+		} else if parts[0] == "resync" {
+			resync(&parts[1])
 		}
 
 		parts = nil
@@ -528,6 +530,7 @@ func help() {
 	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
 	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
 	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
+	fmt.Print("resync (name)\t\t\t\t\tRe-syncs a database. For Manual Editing of a database\n")
 	fmt.Print("========================\n\n")
 }
 
@@ -558,6 +561,22 @@ func setup() {
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
+}
+
+func resync(name *string) {
+	_, st := databases.Load(*name)
+	if !st {
+		fmt.Print("There appears to be no databases previous synced...\n")
+		return
+	} else {
+		value, err := ParseJSONFile("databases/" + *name + "/database.json")
+		if err != nil {
+			fmt.Println("Error unmarshalling Database JSON:", err)
+			return
+		}
+		databases.Store(*name, value.Bytes())
+		fmt.Print("Resync has been successful!\n")
+	}
 }
 
 func ParseJSON(sample *[]byte) (gabs.Container, error) {
