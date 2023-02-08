@@ -574,7 +574,7 @@ func setup() {
 
 func resync(name *string) {
 	_, st := databases.Load(*name)
-	if st == false {
+	if !st {
 		fmt.Print("There appears to be no databases previous synced...\n")
 		return
 	} else {
