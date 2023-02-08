@@ -274,13 +274,18 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
 
 	val, err := unmarshalJSONValue(value)
-	if err != nil {
-		return err, ""
-	}
+	if val == "" {
+		jsonParsed.DeleteP(*direct)
+	} else {
+		if err != nil {
+			return err, ""
+		}
 
-	_, err = jsonParsed.SetP(&val, *direct)
-	if err != nil {
-		return err, ""
+		_, err = jsonParsed.SetP(&val, *direct)
+
+		if err != nil {
+			return err, ""
+		}
 	}
 
 	syncupdate(jsonParsed, location)
