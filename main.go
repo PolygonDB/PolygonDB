@@ -38,6 +38,7 @@ var (
 
 	msg   input
 	mutex = &sync.Mutex{}
+	set   settings
 )
 
 // Config for databases only holds key
@@ -49,18 +50,19 @@ type config struct {
 type settings struct {
 	Addr string `json:"addr"`
 	Port string `json:"port"`
+	Logb bool   `json:"log"`
 }
 
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
-	var set settings
 	portgrab(&set)
-
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
+
 	go mainterm()
 	go processQueue(queue)
+
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
 
@@ -122,6 +124,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		if !takein(ws) {
 			break
+		} else if set.Logb {
+			fmt.Print("Address:" + r.RemoteAddr + "has connected to the websocket successfully.")
 		}
 	}
 }
@@ -592,6 +596,9 @@ func resync(name *string) {
 	}
 }
 
+// This code takes normal code from previous functions and uses Ownership + Borrowing
+// Memory Efficiency
+// $5 Subway
 func ParseJSON(sample *[]byte) (gabs.Container, error) {
 	var gab interface{}
 	if err := sonic.Unmarshal(*sample, &gab); err != nil {
