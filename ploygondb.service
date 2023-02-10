@@ -1,0 +1,10 @@
+[Unit]
+Description=Start ploygonDB server.
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/ploygon
+ExecStart=ploygondb      
+
+[Install]
+WantedBy=multi-user.target

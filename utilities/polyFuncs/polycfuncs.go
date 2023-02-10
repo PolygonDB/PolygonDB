@@ -7,6 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 )
 
+//Polyfuncs was just designed to re-use certain functions from Gabs and OS but takes in pointers to allow memory efficiency
+// Ownership + Borrowing is used here
+
 func ParseJSON(sample *[]byte) (gabs.Container, error) {
 	var gab interface{}
 	if err := sonic.Unmarshal(*sample, &gab); err != nil {
@@ -41,8 +44,4 @@ func WriteFile(name string, data *[]byte, perm os.FileMode) error {
 		err = err1
 	}
 	return err
-}
-
-func Testterm(name string) (string, error) {
-	return "Hello", nil
 }

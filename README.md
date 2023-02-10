@@ -112,8 +112,5 @@ async function main() {
 ## Modules / Packages for Certain Langs
 Javascript - https://github.com/NekaouMike/PloyConJS
 
-## Tools
-soon
-
 ## notice
 If you wish for your company / module to be placed here then open a pull request

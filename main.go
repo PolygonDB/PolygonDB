@@ -52,6 +52,7 @@ type settings struct {
 }
 
 // main
+// When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
 	var set settings
 	portgrab(&set)
@@ -64,6 +65,7 @@ func main() {
 }
 
 // Parses the data
+// Grabs the informatin from settings.json
 func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
@@ -71,6 +73,7 @@ func portgrab(set *settings) {
 }
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
+// Instead of Constantly Re-opening the database json file, this would save the database once and re-use it
 type atomicDatabase struct {
 	data map[string][]byte
 	mu   sync.RWMutex
@@ -101,7 +104,7 @@ type wsMessage struct {
 	msg input
 }
 
-// Parses Input
+// Parses Input that the Websocket would recieve
 type input struct {
 	Pass   string `json:"password"`
 	Dbname string `json:"dbname"`
@@ -123,6 +126,10 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Take in takes in the Websocket Message
+/*\
+From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
+*/
 func takein(ws *websocket.Conn) bool {
 
 	//Reads input
@@ -152,6 +159,9 @@ func takein(ws *websocket.Conn) bool {
 	return true
 }
 
+// Processes the Queue. One at a time.
+// Both Websocket Handler and Processes Queue work semi-independently
+// a Mutex.Lock() is made so it can prevent any possible global variable manipulation and ensures safety
 func processQueue(queue chan wsMessage) {
 	for {
 		msg := <-queue
@@ -376,6 +386,7 @@ func nullify(ptr interface{}) {
 }
 
 // Sync Update
+// Since we are using atomic/sync for memory efficiency. We need to make sure that when the atomic database is updated, then we can update the sync database
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
 	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
@@ -502,6 +513,8 @@ func (g Polygon) Append(location string, value []byte) any {
 }
 
 // Terminal
+// This is designed for the standalone executable.
+// However, datacreate() is used in the Create Function for Go Package
 func mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -613,8 +626,4 @@ func WriteFile(name string, data *[]byte, perm os.FileMode) error {
 		err = err1
 	}
 	return err
-}
-
-func Testterm(name string) (string, error) {
-	return "Hello", nil
 }
