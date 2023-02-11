@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -115,6 +116,21 @@ type input struct {
 	Val    string `json:"value"`
 }
 
+func log(r *http.Request, msg input) {
+	output, _ := sonic.ConfigDefault.MarshalIndent(&msg, "", "    ")
+	data := "\n\tAddress: " + r.RemoteAddr + "\n\tContent:" + string(output) + "\n"
+
+	f, err := os.OpenFile("History.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), data)); err != nil {
+		panic(err)
+	}
+}
+
 // datahandler is where the mainsocker action occurs.
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
@@ -122,10 +138,8 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	for {
-		if !takein(ws) {
+		if !takein(ws, r) {
 			break
-		} else if set.Logb {
-			fmt.Print("Address:" + r.RemoteAddr + "has connected to the websocket successfully.")
 		}
 	}
 }
@@ -134,7 +148,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 /*\
 From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
 */
-func takein(ws *websocket.Conn) bool {
+func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
 	messageType, reader, err := ws.NextReader()
@@ -157,6 +171,9 @@ func takein(ws *websocket.Conn) bool {
 		mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
+		if set.Logb {
+			log(r, msg)
+		}
 	default:
 		return false
 	}
