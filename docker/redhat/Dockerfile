@@ -1,15 +1,13 @@
-FROM        --platform=$TARGETOS/$TARGETARCH redhat/ubi8-minimal:latest
+FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         yum -y update
-RUN         yum -y install libpcap-devel libpcap gcc-c++ openssl-devel \
+RUN         apk -y update
+RUN         apk add --no-cache libpcap-devel libpcap gcc-c++ openssl-devel \
             openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
-
-RUN         yum clean all
 
 USER        container
 ENV         USER=container HOME=/home/container
