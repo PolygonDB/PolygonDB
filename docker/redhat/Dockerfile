@@ -6,7 +6,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.licenses=MIT
 
 SHELL       ["/bin/sh", "-eux"]
-
+RUN         apk update
 RUN         apk add --no-cache libpcap-devel libpcap gcc-c++ openssl-devel \
             openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
 
