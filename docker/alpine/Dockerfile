@@ -6,7 +6,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.licenses=MIT
 
 
-RUN         apk add --update --no-cache bash ca-certificates tzdata curl git jq wget\
+RUN         apk add --update --no-cache bash ca-certificates tzdata curl git jq wget libc6-compat\
 				&& adduser -D -h /home/container container
 
 USER        container
