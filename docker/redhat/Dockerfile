@@ -1,39 +1,15 @@
-FROM        --platform=$TARGETOS/$TARGETARCH redhat/ubi8:latest
+FROM        --platform=$TARGETOS/$TARGETARCH centos
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN yum update -y \
-    && yum install -y \
-        gcc \
-        g++ \
-        libgcc \
-        libstdc++-devel \
-        gdb \
-        glibc \
-        git \
-        wget \
-        curl \
-        tar \
-        zip \
-        unzip \
-        binutils \
-        xz \
-        lzo \
-        cabextract \
-        iproute \
-        iproute-tc \
-        net-tools \
-        nc \
-        telnet \
-        libatomic \
-        libSDL1_2 \
-        libSDL2_0 \
-        fontconfig \
-        libicu \
-        libicu-de
+RUN         yum -y update
+RUN         yum -y install libpcap-devel libpcap gcc-c++ openssl-devel \
+            openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
+
+RUN         yum clean all
 
 USER        container
 ENV         USER=container HOME=/home/container
