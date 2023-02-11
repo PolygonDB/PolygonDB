@@ -6,7 +6,8 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.licenses=MIT
 
 
-RUN         apk add --update --no-cache nginx
+RUN         apk add --update --no-cache ca-certificates tzdata \
+				&& adduser -D -h /home/container container
 
 USER        container
 ENV         USER=container HOME=/home/container

@@ -1,7 +1,7 @@
 name: Debian Push
 
 on:
-  release:
+  push:
     branches:
       - main
 

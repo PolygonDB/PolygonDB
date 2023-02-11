@@ -44,9 +44,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: ./docker/redhat
+          context: ./docker/alpine
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/jewishlewish/polygon
+            ghcr.io/jewishlewish/polygon-alpine
           labels: ${{ steps.meta.outputs.labels }}
