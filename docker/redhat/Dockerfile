@@ -5,7 +5,8 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         yum -y -update install bash
+RUN         yum -y update
+RUN         yum -y install bash
 
 RUN         yum clean all
 
