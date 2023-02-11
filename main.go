@@ -37,7 +37,6 @@ var (
 
 	queue = make(chan wsMessage, 100)
 
-	msg   input
 	mutex = &sync.Mutex{}
 	set   settings
 )
@@ -162,7 +161,7 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		if err != nil {
 			return false
 		}
-
+		var msg input
 		if err := sonic.Unmarshal(message, &msg); err != nil {
 			return false
 		}
