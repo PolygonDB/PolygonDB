@@ -1,12 +1,11 @@
-FROM        --platform=$TARGETOS/$TARGETARCH centos:centos7
+FROM        --platform=$TARGETOS/$TARGETARCH redhat/ubi8:8.7
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         yum -y update
-RUN         yum -y install bash
+RUN         yum -y -update install bash
 
 RUN         yum clean all
 
