@@ -38,7 +38,7 @@ var (
 	queue = make(chan wsMessage, 100)
 
 	mutex = &sync.Mutex{}
-	set   settings
+	logb  bool
 )
 
 // Config for databases only holds key
@@ -56,12 +56,14 @@ type settings struct {
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
+	var set settings
 	portgrab(&set)
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
 	go mainterm()
 	go processQueue(queue)
+	logb := set.Logb
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -170,7 +172,7 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
-		if set.Logb {
+		if logb {
 			log(r, msg)
 		}
 	default:
