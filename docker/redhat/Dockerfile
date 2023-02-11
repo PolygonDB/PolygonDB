@@ -6,8 +6,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.licenses=MIT
 
 
-RUN         apk add --update --no-cache libpcap-devel libpcap gcc-c++ openssl-devel \
-            openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
+RUN         apk add --update --no-cache nginx
 
 USER        container
 ENV         USER=container HOME=/home/container
