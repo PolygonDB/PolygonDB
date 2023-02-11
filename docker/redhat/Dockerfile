@@ -1,4 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH redhat/ubi8-minimal:latest
+FROM        --platform=$TARGETOS/$TARGETARCH redhat/ubi9-minimal:latest
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
