@@ -6,7 +6,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.licenses=MIT
 
 RUN         microdnf update
-RUN         microdnf install --nocache bash
+RUN         microdnf install bash
 
 RUN         microdnf clean all
 
