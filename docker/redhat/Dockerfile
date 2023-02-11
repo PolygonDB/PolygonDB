@@ -5,13 +5,10 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         rpm --import https://www.redhat.com/security/fd431d51.txt && \
-            yum install -y yum
+RUN         microdnf update
+RUN         microdnf install --nocache bash
 
-RUN         yum -y update
-RUN         yum -y install bash
-
-RUN         yum clean all
+RUN         microdnf clean all
 
 USER        container
 ENV         USER=container HOME=/home/container
