@@ -5,7 +5,6 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         apk -y update
 RUN         apk add --no-cache libpcap-devel libpcap gcc-c++ openssl-devel \
             openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
 
