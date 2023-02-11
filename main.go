@@ -29,11 +29,11 @@ var (
 
 	//Local_only. Can the server be reached outside or only from a certain server?
 
-	upgrader = websocket.Upgrader{
-		EnableCompression: true,
-		ReadBufferSize:    0,
-		WriteBufferSize:   0,
-	}
+	//upgrader = websocket.Upgrader{
+	//	EnableCompression: true,
+	//	ReadBufferSize:    0,
+	//	WriteBufferSize:   0,
+	//}
 
 	queue = make(chan wsMessage, 100)
 
@@ -133,7 +133,7 @@ func log(r *http.Request, msg input) {
 // datahandler is where the mainsocker action occurs.
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
-	ws, _ := upgrader.Upgrade(w, r, nil)
+	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
 	defer ws.Close()
 
 	for {
