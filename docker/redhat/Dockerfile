@@ -5,8 +5,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-COPY        ./entrypoint.sh /entrypoint.sh
-CMD         [ "/bin/bash", "/entrypoint.sh" ]
+SHELL       ["/bin/sh", "-eux"]
 
 RUN         apk add --no-cache libpcap-devel libpcap gcc-c++ openssl-devel \
             openssl-libs openssl ncurses-devel lksctp-tools lksctp-tools-devel
@@ -16,4 +15,5 @@ ENV         USER=container HOME=/home/container
 
 WORKDIR     /home/container
 
-
+COPY        ./entrypoint.sh /entrypoint.sh
+CMD         [ "/bin/bash", "/entrypoint.sh" ]
