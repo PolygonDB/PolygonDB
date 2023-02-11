@@ -1,4 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH centos
+FROM        --platform=$TARGETOS/$TARGETARCH centos:centos7
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
