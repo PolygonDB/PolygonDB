@@ -217,7 +217,7 @@ func process(msg *input, ws *websocket.Conn) {
 	} else {
 		value := []byte(msg.Val)
 		if msg.Act == "record" {
-			err, output := record(&msg.Loc, &database, &value, &msg.Dbname)
+			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
 			if err != nil {
 				ws.WriteJSON("{\"Error\": \"" + err.Error() + "\"}")
 			} else {
@@ -266,7 +266,7 @@ func datacheck(location *string, database *gabs.Container) error {
 		value = nil
 	} else {
 		var dataerr error
-		dataerr, *database = data(location)
+		*database, dataerr = data(location)
 		if dataerr != nil {
 			return dataerr
 		}
@@ -275,14 +275,14 @@ func datacheck(location *string, database *gabs.Container) error {
 }
 
 // This gets the database file
-func data(location *string) (error, gabs.Container) {
+func data(location *string) (gabs.Container, error) {
 
 	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	databases.Store(*location, value.Bytes())
-	return nil, *value
+	return *value, nil
 }
 
 func conf(err *error, location *string, jsonData *config) {
@@ -307,25 +307,25 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
+func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (string, error) {
 	if string(*value) == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
 		val, err := unmarshalJSONValue(value)
 		if err != nil {
-			return err, ""
+			return "", err
 		}
 
 		_, err = jsonParsed.SetP(&val, *direct)
 
 		if err != nil {
-			return err, ""
+			return "", err
 		}
 	}
 
 	syncupdate(jsonParsed, location)
 
-	return nil, "Success"
+	return "Success", nil
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
@@ -464,7 +464,7 @@ func Record_P(dbname string, location string, value []byte) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	er, output := record(&location, &database, &value, &dbname)
+	output, er := record(&location, &database, &value, &dbname)
 	if er != nil {
 		return nil, er
 	} else {
