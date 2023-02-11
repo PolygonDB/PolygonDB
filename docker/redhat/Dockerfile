@@ -5,7 +5,9 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         yum -y install yum
+RUN         rpm --import https://www.redhat.com/security/fd431d51.txt && \
+            yum install -y yum
+
 RUN         yum -y update
 RUN         yum -y install bash
 
