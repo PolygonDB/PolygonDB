@@ -1,4 +1,4 @@
-name: RedHat Push
+name: Alpine Push
 
 on:
   push:
