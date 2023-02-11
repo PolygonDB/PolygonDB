@@ -63,7 +63,7 @@ func main() {
 
 	go mainterm()
 	go processQueue(queue)
-	logb := set.Logb
+	logb = set.Logb
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
