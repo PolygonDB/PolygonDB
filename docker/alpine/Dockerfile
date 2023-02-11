@@ -1,4 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH alpine:3.14
+FROM        --platform=$TARGETOS/$TARGETARCH alpine:latest
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
