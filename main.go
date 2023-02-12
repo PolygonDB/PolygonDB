@@ -165,6 +165,8 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		if logb {
 			log(r, msg)
 		}
+		defer nullify(&msg)
+
 	default:
 		return false
 	}
