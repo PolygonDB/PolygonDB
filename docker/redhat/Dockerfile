@@ -5,7 +5,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         dnf update -y && dnf install -y iproute gawk sed
+RUN         microdnf update -y && microdnf install -y iproute gawk sed
 
 USER        container
 ENV         USER=container HOME=/home/container
