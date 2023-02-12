@@ -603,6 +603,7 @@ func resync(name *string) {
 		}
 		databases.Store(*name, value.Bytes())
 		fmt.Print("Resync has been successful!\n")
+		value = nil
 	}
 }
 
