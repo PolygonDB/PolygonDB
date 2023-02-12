@@ -5,11 +5,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-# Get a list of all installed packages
-RUN         microdnf leaves | awk '{ if ($1 != "microdnf") print $1 }' > /tmp/packages
-
-# Remove all packages except for microdnf
-RUN         while read package; do microdnf remove "$package"; done < /tmp/packages
+RUN         microdnf clean
 
 
 USER        container
