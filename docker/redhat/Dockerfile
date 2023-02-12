@@ -5,7 +5,11 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         microdnf remove crypto-policies libgcrypt
+# Get a list of all installed packages
+RUN         microdnf list installed | awk '{ if ($1 != "microdnf") print $1 }' > /tmp/packages
+
+# Remove all packages except for microdnf
+RUN         xargs -a /tmp/packages microdnf remove
 
 
 USER        container
