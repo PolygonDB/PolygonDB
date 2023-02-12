@@ -9,7 +9,7 @@ LABEL       author="JewishLewish" \
 RUN         microdnf list installed | awk '{ if ($1 != "microdnf") print $1 }' > /tmp/packages
 
 # Remove all packages except for microdnf
-RUN         xargs -a /tmp/packages microdnf remove
+RUN         while read package; do microdnf remove "$package"; done < /tmp/packages
 
 
 USER        container
