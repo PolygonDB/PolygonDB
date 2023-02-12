@@ -5,6 +5,8 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
+RUN         microdnf install dnf
+RUN         dnf list autoremove
 RUN         microdnf clean all
 
 

@@ -1,7 +1,7 @@
 name: Red Hat Push
 
 on:
-  release:
+  push:
     branches:
       - main
 
