@@ -1,4 +1,4 @@
-FROM        --platform=$TARGETOS/$TARGETARCH registry.access.redhat.com/ubi7/ubi-minimal:7.9-915
+FROM        --platform=$TARGETOS/$TARGETARCH registry.access.redhat.com/ubi7/ubi-minimal:latest
 
 LABEL       author="JewishLewish" \
             maintainer="lenny@lunes.host" \
