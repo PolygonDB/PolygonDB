@@ -5,10 +5,6 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         microdnf update
-RUN         microdnf install -y iproute
-RUN         microdnf clean all
-
 USER        container
 ENV         USER=container HOME=/home/container
 
