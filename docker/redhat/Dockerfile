@@ -5,7 +5,7 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
-RUN         microdnf clean
+RUN         microdnf clean all
 
 
 USER        container
