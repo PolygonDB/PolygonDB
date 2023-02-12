@@ -21,19 +21,9 @@ import (
 )
 
 var (
-
-	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
 	databases = &atomicDatabase{
 		data: make(map[string][]byte),
 	}
-
-	//Local_only. Can the server be reached outside or only from a certain server?
-
-	//upgrader = websocket.Upgrader{
-	//	EnableCompression: true,
-	//	ReadBufferSize:    0,
-	//	WriteBufferSize:   0,
-	//}
 
 	queue = make(chan wsMessage, 100)
 
