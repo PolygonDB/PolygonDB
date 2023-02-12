@@ -5,6 +5,9 @@ LABEL       author="JewishLewish" \
             org.opencontainers.image.source="https://github.com/JewishLewish/PolygonDB" \
             org.opencontainers.image.licenses=MIT
 
+RUN         microdnf remove crypto-policies libgcrypt
+
+
 USER        container
 ENV         USER=container HOME=/home/container
 
