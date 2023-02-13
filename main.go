@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/rc4"
 	"fmt"
 	"io"
 	"net"
@@ -36,6 +37,7 @@ var (
 // Config for databases only holds key
 type config struct {
 	Key string `json:"key"`
+	Enc bool   `json:"encrypted"`
 }
 
 // Settings.json parsing
@@ -44,6 +46,7 @@ type settings struct {
 	Port     string        `json:"port"`
 	Logb     bool          `json:"log"`
 	Whiteadd []interface{} `json:"whitelist_addresses"`
+	Enc      bool          `json:"encryptjson"`
 }
 
 // main
@@ -579,6 +582,10 @@ func mainterm() {
 			setup()
 		} else if parts[0] == "resync" {
 			resync(&parts[1])
+		} else if parts[0] == "encrypt" {
+			encrypt(&parts[1])
+		} else if parts[0] == "decrypt" {
+			decrypt(&parts[1])
 		}
 
 		parts = nil
@@ -599,7 +606,11 @@ func datacreate(name, pass string) {
 	os.Mkdir(path, 0777)
 
 	conpath := path + "/config.json"
-	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
+	cinput := []byte(fmt.Sprintf(
+		`{
+	"key": "%s",
+	"encrypted": false
+}`, pass))
 	WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
@@ -640,6 +651,59 @@ func resync(name *string) {
 	}
 }
 
+func encrypt(target *string) {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	if !jsonData.Enc {
+		var database gabs.Container
+		err := datacheck(target, &database)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
+		fmt.Print(string(newtext), "\n")
+	} else {
+		fmt.Print("The following data is already encrypted. Don't encrypt again.\n")
+	}
+}
+
+func decrypt(target *string) {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	//if true...
+	if jsonData.Enc {
+		var database gabs.Container
+		err := datacheck(target, &database)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		newtext := deep_decrypt(database.Bytes(), []byte(jsonData.Key))
+		fmt.Print("output: ", string(newtext), "\n")
+	} else {
+		fmt.Print("Following data is already decrypted. Do not decrypt again.\n")
+	}
+}
+
 // This code takes normal code from previous functions and uses Ownership + Borrowing
 // Memory Efficiency
 // $5 Subway
@@ -677,4 +741,18 @@ func WriteFile(name string, data *[]byte, perm os.FileMode) error {
 		err = err1
 	}
 	return err
+}
+
+func deep_encrypt(plaintext, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	ciphertext := make([]byte, len(plaintext))
+	cipher.XORKeyStream(ciphertext, plaintext)
+	return ciphertext
+}
+
+func deep_decrypt(ciphertext, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	plaintext := make([]byte, len(ciphertext))
+	cipher.XORKeyStream(plaintext, ciphertext)
+	return plaintext
 }
