@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -27,8 +28,9 @@ var (
 
 	queue = make(chan wsMessage, 100)
 
-	mutex = &sync.Mutex{}
-	logb  bool
+	mutex     = &sync.Mutex{}
+	whitelist []interface{}
+	logb      bool
 )
 
 // Config for databases only holds key
@@ -38,9 +40,10 @@ type config struct {
 
 // Settings.json parsing
 type settings struct {
-	Addr string `json:"addr"`
-	Port string `json:"port"`
-	Logb bool   `json:"log"`
+	Addr     string        `json:"addr"`
+	Port     string        `json:"port"`
+	Logb     bool          `json:"log"`
+	Whiteadd []interface{} `json:"whitelist_addresses"`
 }
 
 // main
@@ -48,12 +51,14 @@ type settings struct {
 func main() {
 	var set settings
 	portgrab(&set)
+
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
 	go mainterm()
 	go processQueue(queue)
 	logb = set.Logb
+	whitelist = set.Whiteadd
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -128,11 +133,39 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
 	defer ws.Close()
 
-	for {
-		if !takein(ws, r) {
-			break
+	if address(&r.RemoteAddr) {
+		for {
+			if !takein(ws, r) {
+				break
+			}
+		}
+	} else {
+		ws.Close()
+	}
+
+}
+
+func address(r *string) bool {
+	if len(whitelist) == 0 {
+		return true
+	} else {
+		host, _, _ := net.SplitHostPort(*r)
+		defer nullify(&host)
+		if contains(&whitelist, &host) {
+			return true
+		} else {
+			return false
 		}
 	}
+}
+
+func contains(s *[]interface{}, str *string) bool {
+	for _, v := range *s {
+		if v == *str {
+			return true
+		}
+	}
+	return false
 }
 
 //Take in takes in the Websocket Message
