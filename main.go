@@ -278,9 +278,16 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 			return conferr
 		}
 
-		er := datacheck(location, database)
-		if er != nil {
-			return er
+		if jsonData.Enc { //if encrypted
+			decrypt(location)
+			err = datacheck(location, database)
+			encrypt(location)
+		} else {
+			err = datacheck(location, database)
+		}
+
+		if err != nil {
+			return err
 		} else {
 			return nil
 		}
