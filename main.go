@@ -735,11 +735,8 @@ func decrypt(target *string) {
 			return
 		}
 
-		newtext := deep_decrypt(database, []byte(jsonData.Key))
-		fmt.Print("output: ", string(newtext), "\n")
-
+		newtext := deep_decrypt(&database, []byte(jsonData.Key))
 		indent(&newtext)
-
 		jsonData.Enc = false
 
 		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
@@ -804,9 +801,9 @@ func deep_encrypt(plaintext, key []byte) []byte {
 	return ciphertext
 }
 
-func deep_decrypt(ciphertext, key []byte) []byte {
+func deep_decrypt(ciphertext *[]byte, key []byte) []byte {
 	cipher, _ := rc4.NewCipher(key)
-	plaintext := make([]byte, len(ciphertext))
-	cipher.XORKeyStream(plaintext, ciphertext)
+	plaintext := make([]byte, len(*ciphertext))
+	cipher.XORKeyStream(plaintext, *ciphertext)
 	return plaintext
 }
