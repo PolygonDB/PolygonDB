@@ -685,6 +685,7 @@ func encrypt(target *string) {
 		return
 	}
 
+	//if not true...
 	if !jsonData.Enc {
 		var database gabs.Container
 		err := datacheck(target, &database)
@@ -695,6 +696,14 @@ func encrypt(target *string) {
 
 		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
 		fmt.Print(string(newtext), "\n")
+
+		jsonData.Enc = true
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		fmt.Print("Encryption successful for " + *target + ".\n")
 	} else {
 		fmt.Print("The following data is already encrypted. Don't encrypt again.\n")
 	}
@@ -713,18 +722,33 @@ func decrypt(target *string) {
 
 	//if true...
 	if jsonData.Enc {
-		var database gabs.Container
-		err := datacheck(target, &database)
+		database, err := os.ReadFile("databases/" + *target + "/database.json")
 		if err != nil {
-			fmt.Print(err)
+			fmt.Print(err, "\n")
 			return
 		}
 
-		newtext := deep_decrypt(database.Bytes(), []byte(jsonData.Key))
+		newtext := deep_decrypt(database, []byte(jsonData.Key))
 		fmt.Print("output: ", string(newtext), "\n")
+
+		indent(&newtext)
+
+		jsonData.Enc = false
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		fmt.Print("Decryption successful for " + *target + ".\n")
 	} else {
 		fmt.Print("Following data is already decrypted. Do not decrypt again.\n")
 	}
+}
+
+func indent(input *[]byte) {
+	var output interface{}
+	sonic.ConfigDefault.Unmarshal(*input, &output)
+	*input, _ = sonic.ConfigDefault.MarshalIndent(&output, "", "    ")
 }
 
 // This code takes normal code from previous functions and uses Ownership + Borrowing
@@ -735,7 +759,7 @@ func ParseJSON(sample *[]byte) (gabs.Container, error) {
 	if err := sonic.Unmarshal(*sample, &gab); err != nil {
 		return *gabs.Wrap(&gab), err
 	}
-	return *gabs.Wrap(gab), nil
+	return *gabs.Wrap(&gab), nil
 }
 
 func ParseJSONFile(path string) (*gabs.Container, error) {
