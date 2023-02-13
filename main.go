@@ -468,7 +468,7 @@ func Create(name, password string) error {
 	}
 
 	if _, err := os.Stat("databases/" + name); err != nil {
-		datacreate(name, password)
+		datacreate(&name, &password)
 		return nil
 	} else {
 		return err
@@ -577,7 +577,7 @@ func mainterm() {
 		if parts[0] == "help" {
 			help()
 		} else if parts[0] == "create_database" {
-			datacreate(parts[1], parts[2])
+			datacreate(&parts[1], &parts[2]) //create_database name password
 		} else if parts[0] == "setup" {
 			setup()
 		} else if parts[0] == "resync" {
@@ -586,6 +586,8 @@ func mainterm() {
 			encrypt(&parts[1])
 		} else if parts[0] == "decrypt" {
 			decrypt(&parts[1])
+		} else if parts[0] == "change_password" {
+			chpassword(&parts[1], &parts[2]) //change_password name password
 		}
 
 		parts = nil
@@ -601,8 +603,8 @@ func help() {
 	fmt.Print("========================\n\n")
 }
 
-func datacreate(name, pass string) {
-	path := "databases/" + name
+func datacreate(name, pass *string) {
+	path := "databases/" + *name
 	os.Mkdir(path, 0777)
 
 	conpath := path + "/config.json"
@@ -610,7 +612,7 @@ func datacreate(name, pass string) {
 		`{
 	"key": "%s",
 	"encrypted": false
-}`, pass))
+}`, *pass))
 	WriteFile(conpath, &cinput, 0644)
 
 	datapath := path + "/database.json"
@@ -618,6 +620,23 @@ func datacreate(name, pass string) {
 	WriteFile(datapath, &dinput, 0644)
 
 	fmt.Println("File has been created.")
+}
+
+func chpassword(name, pass *string) {
+	content, er := os.ReadFile("databases/" + *name + "/config.json")
+	if er != nil {
+		fmt.Print(er)
+		return
+	}
+	var conf config
+	sonic.Unmarshal(content, &conf)
+
+	if conf.Enc {
+		fmt.Print("Turn off encryption first before changing password as it can break the database!\n")
+		return
+	}
+	conf.Key = *pass
+	fmt.Print("Password successfully changed!\n")
 }
 
 func setup() {
