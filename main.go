@@ -636,17 +636,21 @@ func chpassword(name, pass *string) {
 		return
 	}
 	conf.Key = *pass
+
+	content, _ = sonic.ConfigFastest.MarshalIndent(&conf, "", "    ")
+	WriteFile("databases/"+*name+"/config.json", &content, 0644)
+
 	fmt.Print("Password successfully changed!\n")
 }
 
 func setup() {
-	type settings struct {
-		Addr string `json:"addr"`
-		Port string `json:"port"`
-	}
+	var w []interface{}
 	defaultset := settings{
-		Addr: "0.0.0.0",
-		Port: "25565",
+		Addr:     "0.0.0.0",
+		Port:     "25565",
+		Logb:     false,
+		Whiteadd: w,
+		Enc:      false,
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
