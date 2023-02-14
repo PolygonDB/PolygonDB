@@ -768,9 +768,9 @@ func indent(input *[]byte) {
 func ParseJSON(sample *[]byte) (gabs.Container, error) {
 	var gab interface{}
 	if err := sonic.Unmarshal(*sample, &gab); err != nil {
-		return *gabs.Wrap(&gab), err
+		return *gabs.Wrap(gab), err
 	}
-	return *gabs.Wrap(&gab), nil
+	return *gabs.Wrap(gab), nil
 }
 
 func ParseJSONFile(path string) (*gabs.Container, error) {
