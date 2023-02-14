@@ -446,7 +446,14 @@ func nullify(ptr interface{}) {
 // Since we are using atomic/sync for memory efficiency. We need to make sure that when the atomic database is updated, then we can update the sync database
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	if checkenc(location) { //if true...
+		decrypt(location)
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+		encrypt(location)
+	} else {
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	}
+
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
@@ -806,4 +813,16 @@ func deep_decrypt(ciphertext *[]byte, key []byte) []byte {
 	plaintext := make([]byte, len(*ciphertext))
 	cipher.XORKeyStream(plaintext, *ciphertext)
 	return plaintext
+}
+
+func checkenc(location *string) bool {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *location + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		return false
+	}
+	return jsonData.Enc
 }
