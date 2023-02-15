@@ -647,17 +647,15 @@ func datacreate(name, pass *string) {
 	path := "databases/" + *name
 	os.Mkdir(path, 0777)
 
-	conpath := path + "/config.json"
 	cinput := []byte(fmt.Sprintf(
 		`{
 	"key": "%s",
 	"encrypted": false
 }`, *pass))
-	WriteFile(conpath, &cinput, 0644)
+	WriteFile(path+"/config.json", &cinput, 0644)
 
-	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	WriteFile(datapath, &dinput, 0644)
+	WriteFile(path+"/database.json", &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
