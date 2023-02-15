@@ -605,21 +605,22 @@ func mainterm() {
 				clearScreen()
 			}
 		} else {
-			if parts[0] == "help" {
+			switch strings.ToLower(parts[0]) {
+			case "help":
 				help()
-			} else if parts[0] == "create_database" {
-				datacreate(&parts[1], &parts[2]) //create_database name password
-			} else if parts[0] == "setup" {
+			case "create_database":
+				datacreate(&parts[1], &parts[2])
+			case "setup":
 				setup()
-			} else if parts[0] == "resync" {
+			case "resync":
 				resync(&parts[1])
-			} else if parts[0] == "encrypt" {
+			case "encrypt":
 				encrypt(&parts[1])
-			} else if parts[0] == "decrypt" {
+			case "decrypt":
 				decrypt(&parts[1])
-			} else if parts[0] == "change_password" {
-				chpassword(&parts[1], &parts[2]) //change_password name password
-			} else if parts[0] == "lock" {
+			case "change_password":
+				chpassword(&parts[1], &parts[2])
+			case "lock":
 				if len(parts) == 1 {
 					continue
 				} else {
@@ -628,6 +629,7 @@ func mainterm() {
 					clearScreen()
 				}
 			}
+
 		}
 		parts = nil
 	}
