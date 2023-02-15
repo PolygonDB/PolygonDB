@@ -48,7 +48,6 @@ type settings struct {
 	Port     string        `json:"port"`
 	Logb     bool          `json:"log"`
 	Whiteadd []interface{} `json:"whitelist_addresses"`
-	Enc      bool          `json:"encryptjson"`
 }
 
 // main
@@ -691,7 +690,6 @@ func setup() {
 		Port:     "25565",
 		Logb:     false,
 		Whiteadd: w,
-		Enc:      false,
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
