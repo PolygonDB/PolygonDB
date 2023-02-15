@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -32,6 +33,7 @@ var (
 	mutex     = &sync.Mutex{}
 	whitelist []interface{}
 	logb      bool
+	lock      string
 )
 
 // Config for databases only holds key
@@ -581,6 +583,7 @@ func (g Polygon) Append(location string, value []byte) any {
 // However, datacreate() is used in the Create Function for Go Package
 func mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
+	locked := false
 	for {
 		scanner.Scan()
 		parts := strings.Fields(scanner.Text())
@@ -588,22 +591,44 @@ func mainterm() {
 			continue
 		}
 
-		if parts[0] == "help" {
-			help()
-		} else if parts[0] == "create_database" {
-			datacreate(&parts[1], &parts[2]) //create_database name password
-		} else if parts[0] == "setup" {
-			setup()
-		} else if parts[0] == "resync" {
-			resync(&parts[1])
-		} else if parts[0] == "encrypt" {
-			encrypt(&parts[1])
-		} else if parts[0] == "decrypt" {
-			decrypt(&parts[1])
-		} else if parts[0] == "change_password" {
-			chpassword(&parts[1], &parts[2]) //change_password name password
+		if locked {
+			if parts[0] == "unlock" {
+				if len(parts) == 1 {
+					continue
+				} else {
+					if parts[1] == lock {
+						lock = ""
+						locked = false
+					}
+				}
+			} else {
+				clearScreen()
+			}
+		} else {
+			if parts[0] == "help" {
+				help()
+			} else if parts[0] == "create_database" {
+				datacreate(&parts[1], &parts[2]) //create_database name password
+			} else if parts[0] == "setup" {
+				setup()
+			} else if parts[0] == "resync" {
+				resync(&parts[1])
+			} else if parts[0] == "encrypt" {
+				encrypt(&parts[1])
+			} else if parts[0] == "decrypt" {
+				decrypt(&parts[1])
+			} else if parts[0] == "change_password" {
+				chpassword(&parts[1], &parts[2]) //change_password name password
+			} else if parts[0] == "lock" {
+				if len(parts) == 1 {
+					continue
+				} else {
+					lock = parts[1]
+					locked = true
+					clearScreen()
+				}
+			}
 		}
-
 		parts = nil
 	}
 }
@@ -825,4 +850,23 @@ func checkenc(location *string) bool {
 		return false
 	}
 	return jsonData.Enc
+}
+
+// Locking System
+func clearScreen() {
+	// Get the OS name
+	osName := runtime.GOOS
+
+	var cmd *exec.Cmd
+
+	if osName == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	cmd.Run()
+	//Runs twice because sometimes pterodactyl servers needs a 2nd clear
 }
