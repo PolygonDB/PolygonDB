@@ -1,16 +1,20 @@
-package PolygonDB
+package Polygon
 
 import (
 	"bufio"
+	"crypto/rc4"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Jeffail/gabs/v2"
 
@@ -20,48 +24,45 @@ import (
 )
 
 var (
-
-	//sync/atomic helps with re-using databases so it doesn't constantly re-open a database file
 	databases = &atomicDatabase{
 		data: make(map[string][]byte),
 	}
 
-	//Local_only. Can the server be reached outside or only from a certain server?
-
-	upgrader = websocket.Upgrader{
-		EnableCompression: true,
-		ReadBufferSize:    0,
-		WriteBufferSize:   0,
-	}
-
 	queue = make(chan wsMessage, 100)
 
-	msg   input
-	mutex = &sync.Mutex{}
-	set   settings
+	mutex     = &sync.Mutex{}
+	whitelist []interface{}
+	logb      bool
+	lock      string
 )
 
 // Config for databases only holds key
 type config struct {
 	Key string `json:"key"`
+	Enc bool   `json:"encrypted"`
 }
 
 // Settings.json parsing
 type settings struct {
-	Addr string `json:"addr"`
-	Port string `json:"port"`
-	Logb bool   `json:"log"`
+	Addr     string        `json:"addr"`
+	Port     string        `json:"port"`
+	Logb     bool          `json:"log"`
+	Whiteadd []interface{} `json:"whitelist_addresses"`
 }
 
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
+	var set settings
 	portgrab(&set)
+
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
 	go mainterm()
 	go processQueue(queue)
+	logb = set.Logb
+	whitelist = set.Whiteadd
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -115,26 +116,67 @@ type input struct {
 	Val    string `json:"value"`
 }
 
+func log(r *http.Request, msg input) {
+	output, _ := sonic.ConfigDefault.MarshalIndent(&msg, "", "    ")
+	data := "\n\tAddress: " + r.RemoteAddr + "\n\tContent:" + string(output) + "\n"
+
+	f, err := os.OpenFile("History.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), data)); err != nil {
+		panic(err)
+	}
+}
+
 // datahandler is where the mainsocker action occurs.
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
-	ws, _ := upgrader.Upgrade(w, r, nil)
+	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
 	defer ws.Close()
 
-	for {
-		if !takein(ws) {
-			break
-		} else if set.Logb {
-			fmt.Print("Address:" + r.RemoteAddr + "has connected to the websocket successfully.")
+	if address(&r.RemoteAddr) {
+		for {
+			if !takein(ws, r) {
+				break
+			}
+		}
+	} else {
+		ws.Close()
+	}
+
+}
+
+func address(r *string) bool {
+	if len(whitelist) == 0 {
+		return true
+	} else {
+		host, _, _ := net.SplitHostPort(*r)
+		defer nullify(&host)
+		if contains(&whitelist, &host) {
+			return true
+		} else {
+			return false
 		}
 	}
+}
+
+func contains(s *[]interface{}, str *string) bool {
+	for _, v := range *s {
+		if v == *str {
+			return true
+		}
+	}
+	return false
 }
 
 //Take in takes in the Websocket Message
 /*\
 From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
 */
-func takein(ws *websocket.Conn) bool {
+func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
 	messageType, reader, err := ws.NextReader()
@@ -148,7 +190,7 @@ func takein(ws *websocket.Conn) bool {
 		if err != nil {
 			return false
 		}
-
+		var msg input
 		if err := sonic.Unmarshal(message, &msg); err != nil {
 			return false
 		}
@@ -157,6 +199,11 @@ func takein(ws *websocket.Conn) bool {
 		mutex.Lock()
 		queue <- wsMessage{ws: ws, msg: msg}
 		mutex.Unlock()
+		if logb {
+			log(r, msg)
+		}
+		defer nullify(&msg)
+
 	default:
 		return false
 	}
@@ -200,7 +247,7 @@ func process(msg *input, ws *websocket.Conn) {
 	} else {
 		value := []byte(msg.Val)
 		if msg.Act == "record" {
-			err, output := record(&msg.Loc, &database, &value, &msg.Dbname)
+			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
 			if err != nil {
 				ws.WriteJSON("{\"Error\": \"" + err.Error() + "\"}")
 			} else {
@@ -232,9 +279,16 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 			return conferr
 		}
 
-		er := datacheck(location, database)
-		if er != nil {
-			return er
+		if jsonData.Enc { //if encrypted
+			decrypt(location)
+			err = datacheck(location, database)
+			encrypt(location)
+		} else {
+			err = datacheck(location, database)
+		}
+
+		if err != nil {
+			return err
 		} else {
 			return nil
 		}
@@ -249,7 +303,7 @@ func datacheck(location *string, database *gabs.Container) error {
 		value = nil
 	} else {
 		var dataerr error
-		dataerr, *database = data(location)
+		*database, dataerr = data(location)
 		if dataerr != nil {
 			return dataerr
 		}
@@ -258,14 +312,14 @@ func datacheck(location *string, database *gabs.Container) error {
 }
 
 // This gets the database file
-func data(location *string) (error, gabs.Container) {
+func data(location *string) (gabs.Container, error) {
 
 	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
 	databases.Store(*location, value.Bytes())
-	return nil, *value
+	return *value, nil
 }
 
 func conf(err *error, location *string, jsonData *config) {
@@ -290,25 +344,25 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (error, string) {
+func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (string, error) {
 	if string(*value) == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
 		val, err := unmarshalJSONValue(value)
 		if err != nil {
-			return err, ""
+			return "", err
 		}
 
 		_, err = jsonParsed.SetP(&val, *direct)
 
 		if err != nil {
-			return err, ""
+			return "", err
 		}
 	}
 
 	syncupdate(jsonParsed, location)
 
-	return nil, "Success"
+	return "Success", nil
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
@@ -321,7 +375,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 
 	it := jsonParsed.Path(*direct).Children()
 	for i, user := range it {
-		if fmt.Sprint(user.Path(parts[0]).Data()) == fmt.Sprint(target) {
+		if strings.EqualFold(fmt.Sprint(user.Path(parts[0]).Data()), fmt.Sprint(target)) {
 			output = map[string]interface{}{"Index": i, "Value": user.Data()}
 			return output
 		}
@@ -393,7 +447,14 @@ func nullify(ptr interface{}) {
 // Since we are using atomic/sync for memory efficiency. We need to make sure that when the atomic database is updated, then we can update the sync database
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
-	WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	if checkenc(location) { //if true...
+		decrypt(location)
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+		encrypt(location)
+	} else {
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+	}
+
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
@@ -422,7 +483,7 @@ func Create(name, password string) error {
 	}
 
 	if _, err := os.Stat("databases/" + name); err != nil {
-		datacreate(name, password)
+		datacreate(&name, &password)
 		return nil
 	} else {
 		return err
@@ -447,7 +508,7 @@ func Record_P(dbname string, location string, value []byte) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	er, output := record(&location, &database, &value, &dbname)
+	output, er := record(&location, &database, &value, &dbname)
 	if er != nil {
 		return nil, er
 	} else {
@@ -521,6 +582,7 @@ func (g Polygon) Append(location string, value []byte) any {
 // However, datacreate() is used in the Create Function for Go Package
 func mainterm() {
 	scanner := bufio.NewScanner(os.Stdin)
+	locked := false
 	for {
 		scanner.Scan()
 		parts := strings.Fields(scanner.Text())
@@ -528,16 +590,46 @@ func mainterm() {
 			continue
 		}
 
-		if parts[0] == "help" {
-			help()
-		} else if parts[0] == "create_database" {
-			datacreate(parts[1], parts[2])
-		} else if parts[0] == "setup" {
-			setup()
-		} else if parts[0] == "resync" {
-			resync(&parts[1])
-		}
+		if locked {
+			if parts[0] == "unlock" {
+				if len(parts) == 1 {
+					continue
+				} else {
+					if parts[1] == lock {
+						lock = ""
+						locked = false
+					}
+				}
+			} else {
+				clearScreen()
+			}
+		} else {
+			switch strings.ToLower(parts[0]) {
+			case "help":
+				help()
+			case "create_database":
+				datacreate(&parts[1], &parts[2])
+			case "setup":
+				setup()
+			case "resync":
+				resync(&parts[1])
+			case "encrypt":
+				encrypt(&parts[1])
+			case "decrypt":
+				decrypt(&parts[1])
+			case "change_password":
+				chpassword(&parts[1], &parts[2])
+			case "lock":
+				if len(parts) == 1 {
+					continue
+				} else {
+					lock = parts[1]
+					locked = true
+					clearScreen()
+				}
+			}
 
+		}
 		parts = nil
 	}
 }
@@ -551,29 +643,51 @@ func help() {
 	fmt.Print("========================\n\n")
 }
 
-func datacreate(name, pass string) {
-	path := "databases/" + name
+func datacreate(name, pass *string) {
+	path := "databases/" + *name
 	os.Mkdir(path, 0777)
 
-	conpath := path + "/config.json"
-	cinput := []byte(fmt.Sprintf("{\n\t\"key\": \"%s\"\n}", pass))
-	WriteFile(conpath, &cinput, 0644)
+	cinput := []byte(fmt.Sprintf(
+		`{
+	"key": "%s",
+	"encrypted": false
+}`, *pass))
+	WriteFile(path+"/config.json", &cinput, 0644)
 
-	datapath := path + "/database.json"
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	WriteFile(datapath, &dinput, 0644)
+	WriteFile(path+"/database.json", &dinput, 0644)
 
 	fmt.Println("File has been created.")
 }
 
-func setup() {
-	type settings struct {
-		Addr string `json:"addr"`
-		Port string `json:"port"`
+func chpassword(name, pass *string) {
+	content, er := os.ReadFile("databases/" + *name + "/config.json")
+	if er != nil {
+		fmt.Print(er)
+		return
 	}
+	var conf config
+	sonic.Unmarshal(content, &conf)
+
+	if conf.Enc {
+		fmt.Print("Turn off encryption first before changing password as it can break the database!\n")
+		return
+	}
+	conf.Key = *pass
+
+	content, _ = sonic.ConfigFastest.MarshalIndent(&conf, "", "    ")
+	WriteFile("databases/"+*name+"/config.json", &content, 0644)
+
+	fmt.Print("Password successfully changed!\n")
+}
+
+func setup() {
+	var w []interface{}
 	defaultset := settings{
-		Addr: "0.0.0.0",
-		Port: "25565",
+		Addr:     "0.0.0.0",
+		Port:     "25565",
+		Logb:     false,
+		Whiteadd: w,
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
@@ -593,7 +707,82 @@ func resync(name *string) {
 		}
 		databases.Store(*name, value.Bytes())
 		fmt.Print("Resync has been successful!\n")
+		value = nil
 	}
+}
+
+func encrypt(target *string) {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	//if not true...
+	if !jsonData.Enc {
+		var database gabs.Container
+		err := datacheck(target, &database)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
+		fmt.Print(string(newtext), "\n")
+
+		jsonData.Enc = true
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		fmt.Print("Encryption successful for " + *target + ".\n")
+	} else {
+		fmt.Print("The following data is already encrypted. Don't encrypt again.\n")
+	}
+}
+
+func decrypt(target *string) {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	//if true...
+	if jsonData.Enc {
+		database, err := os.ReadFile("databases/" + *target + "/database.json")
+		if err != nil {
+			fmt.Print(err, "\n")
+			return
+		}
+
+		newtext := deep_decrypt(&database, []byte(jsonData.Key))
+		indent(&newtext)
+		jsonData.Enc = false
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		fmt.Print("Decryption successful for " + *target + ".\n")
+	} else {
+		fmt.Print("Following data is already decrypted. Do not decrypt again.\n")
+	}
+}
+
+func indent(input *[]byte) {
+	var output interface{}
+	sonic.ConfigDefault.Unmarshal(*input, &output)
+	*input, _ = sonic.ConfigDefault.MarshalIndent(&output, "", "    ")
 }
 
 // This code takes normal code from previous functions and uses Ownership + Borrowing
@@ -602,7 +791,7 @@ func resync(name *string) {
 func ParseJSON(sample *[]byte) (gabs.Container, error) {
 	var gab interface{}
 	if err := sonic.Unmarshal(*sample, &gab); err != nil {
-		return *gabs.Wrap(&gab), err
+		return *gabs.Wrap(gab), err
 	}
 	return *gabs.Wrap(gab), nil
 }
@@ -633,4 +822,49 @@ func WriteFile(name string, data *[]byte, perm os.FileMode) error {
 		err = err1
 	}
 	return err
+}
+
+func deep_encrypt(plaintext, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	ciphertext := make([]byte, len(plaintext))
+	cipher.XORKeyStream(ciphertext, plaintext)
+	return ciphertext
+}
+
+func deep_decrypt(ciphertext *[]byte, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	plaintext := make([]byte, len(*ciphertext))
+	cipher.XORKeyStream(plaintext, *ciphertext)
+	return plaintext
+}
+
+func checkenc(location *string) bool {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *location + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		return false
+	}
+	return jsonData.Enc
+}
+
+// Locking System
+func clearScreen() {
+	// Get the OS name
+	osName := runtime.GOOS
+
+	var cmd *exec.Cmd
+
+	if osName == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	cmd.Run()
+	//Runs twice because sometimes pterodactyl servers needs a 2nd clear
 }
