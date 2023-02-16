@@ -391,8 +391,8 @@ func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, locatio
 		return "Failure. Value cannot be unmarshal to json."
 	}
 
-	er := jsonParsed.ArrayAppendP(&val, *direct)
-	if er != nil {
+	err = jsonParsed.ArrayAppendP(&val, *direct)
+	if err != nil {
 		return "Failure!"
 	}
 
@@ -725,7 +725,7 @@ func encrypt(target *string) {
 	//if not true...
 	if !jsonData.Enc {
 		var database gabs.Container
-		err := datacheck(target, &database)
+		err = datacheck(target, &database)
 		if err != nil {
 			fmt.Print(err)
 			return
