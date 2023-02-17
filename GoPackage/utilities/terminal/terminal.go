@@ -13,73 +13,89 @@ import (
 	polygon "github.com/JewishLewish/PolygonDB/GoPackage/utilities/polyStructs"
 	polysync "github.com/JewishLewish/PolygonDB/GoPackage/utilities/polySync"
 	"github.com/bytedance/sonic"
+	"github.com/gorilla/websocket"
 )
 
 // Terminal
 // This is designed for the standalone executable.
 // However, datacreate() is used in the Create Function for Go Package
+var (
+	locked        = false
+	lock   string = ""
+)
+
 func Terminal() {
 	scanner := bufio.NewScanner(os.Stdin)
-	locked := false
-	var lock string = ""
 	for {
 		scanner.Scan()
-		parts := strings.Fields(scanner.Text())
-		if len(parts) == 0 {
-			continue
-		}
-
-		if locked {
-			if parts[0] == "unlock" {
-				if len(parts) == 1 {
-					continue
-				} else {
-					if parts[1] == lock {
-						lock = ""
-						locked = false
-					}
-				}
-			} else {
-				clearScreen()
-			}
-		} else {
-			switch strings.ToLower(parts[0]) {
-			case "help":
-				help()
-			case "create_database":
-				Datacreate(&parts[1], &parts[2])
-			case "setup":
-				setup()
-			case "resync":
-				resync(&parts[1])
-			case "encrypt":
-				polySecurity.Encrypt(&parts[1])
-			case "decrypt":
-				polySecurity.Decrypt(&parts[1])
-			case "change_password":
-				chpassword(&parts[1], &parts[2])
-			case "lock":
-				if len(parts) == 1 {
-					continue
-				} else {
-					lock = parts[1]
-					locked = true
-					clearScreen()
-				}
-			}
-
-		}
-		parts = nil
+		Parse(strings.Fields(scanner.Text()), nil)
 	}
 }
 
-func help() {
-	fmt.Print("\n====Polygon Terminal====\n")
-	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
-	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
-	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
-	fmt.Print("resync (name)\t\t\t\t\tRe-syncs a database. For Manual Editing of a database\n")
-	fmt.Print("========================\n\n")
+func Parse(parts []string, ws *websocket.Conn) {
+	var output string
+	if len(parts) == 0 {
+		return
+	}
+
+	if locked {
+		if parts[0] == "unlock" {
+			if len(parts) == 1 {
+				return
+			} else {
+				if parts[1] == lock {
+					lock = ""
+					locked = false
+					output = "Terminal has been unlocked successfully."
+				}
+			}
+		} else {
+			clearScreen()
+		}
+	} else {
+		switch strings.ToLower(parts[0]) {
+		case "help":
+			output = help()
+		case "create_database":
+			Datacreate(&parts[1], &parts[2])
+		case "setup":
+			setup()
+		case "resync":
+			resync(&parts[1])
+		case "encrypt":
+			polySecurity.Encrypt(&parts[1])
+		case "decrypt":
+			polySecurity.Decrypt(&parts[1])
+		case "change_password":
+			chpassword(&parts[1], &parts[2])
+		case "lock":
+			if len(parts) == 1 {
+				return
+			} else {
+				lock = parts[1]
+				locked = true
+				clearScreen()
+				return
+			}
+		default:
+			return
+		}
+	}
+
+	if ws != nil {
+		ws.WriteJSON(output)
+	}
+}
+
+func help() string {
+	return `
+\n====Polygon Terminal====\n
+help									This displays all the possible executable lines for Polygon
+create_database (name) (password)		This will create a database for you with name and password
+setup									Creates settings.json for you\n
+resync (name)							Re-syncs a database. For Manual Editing of a database
+========================
+`
 }
 
 func Datacreate(name, pass *string) {

@@ -1,11 +1,13 @@
-package Polygon
+package main
 
 import (
+	"crypto/rc4"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -18,10 +20,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/bytedance/sonic"
-
-	polySecurity "github.com/JewishLewish/PolygonDB/GoPackage/utilities/polyEncrypt"
-	utils "github.com/JewishLewish/PolygonDB/GoPackage/utilities/polyFuncs"
-	term "github.com/JewishLewish/PolygonDB/GoPackage/utilities/terminal"
 )
 
 var (
@@ -34,6 +32,8 @@ var (
 	mutex     = &sync.Mutex{}
 	whitelist []interface{}
 	logb      bool
+	lock      string
+	locked    = false
 )
 
 // Config for databases only holds key
@@ -43,7 +43,7 @@ type config struct {
 }
 
 // Settings.json parsing
-type Settings struct {
+type settings struct {
 	Addr     string        `json:"addr"`
 	Port     string        `json:"port"`
 	Logb     bool          `json:"log"`
@@ -52,14 +52,14 @@ type Settings struct {
 
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
-func Main() {
-	var set Settings
+func main() {
+	var set settings
 	portgrab(&set)
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
-	go term.Terminal()
+	http.HandleFunc("/ws", terminalsock)
 	go processQueue(queue)
 	logb = set.Logb
 	whitelist = set.Whiteadd
@@ -69,7 +69,7 @@ func Main() {
 
 // Parses the data
 // Grabs the informatin from settings.json
-func portgrab(set *Settings) {
+func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
 	file = nil
@@ -131,7 +131,6 @@ func log(r *http.Request, msg input) {
 	}
 }
 
-// datahandler is where the mainsocker action occurs.
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
@@ -280,9 +279,9 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 		}
 
 		if jsonData.Enc { //if encrypted
-			polySecurity.Decrypt(location)
+			decrypt(location)
 			err = datacheck(location, database)
-			polySecurity.Encrypt(location)
+			encrypt(location)
 		} else {
 			err = datacheck(location, database)
 		}
@@ -299,7 +298,7 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 func datacheck(location *string, database *gabs.Container) error {
 	if value, ok := databases.Load(*location); ok {
-		*database, _ = utils.ParseJSON(&value)
+		*database, _ = ParseJSON(&value)
 		value = nil
 	} else {
 		var dataerr error
@@ -314,7 +313,7 @@ func datacheck(location *string, database *gabs.Container) error {
 // This gets the database file
 func data(location *string) (gabs.Container, error) {
 
-	value, err := utils.ParseJSONFile("databases/" + *location + "/database.json")
+	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
@@ -391,8 +390,8 @@ func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, locatio
 		return "Failure. Value cannot be unmarshal to json."
 	}
 
-	er := jsonParsed.ArrayAppendP(&val, *direct)
-	if er != nil {
+	err = jsonParsed.ArrayAppendP(&val, *direct)
+	if err != nil {
 		return "Failure!"
 	}
 
@@ -448,133 +447,287 @@ func nullify(ptr interface{}) {
 func syncupdate(jsonParsed *gabs.Container, location *string) {
 	jsonData, _ := sonic.ConfigDefault.MarshalIndent(jsonParsed.Data(), "", "    ")
 	if checkenc(location) { //if true...
-		polySecurity.Decrypt(location)
-		utils.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
-		polySecurity.Encrypt(location)
+		decrypt(location)
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+		encrypt(location)
 	} else {
-		utils.WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
+		WriteFile("databases/"+*location+"/database.json", &jsonData, 0644)
 	}
 
 	databases.Store(*location, jsonParsed.Bytes())
 }
 
-//Embeddable Section
-//If the code is being used to embed into another Go Lang project then these functions are designed to that.
-//This re-uses the code shown above but re-purposes certain functions for an embed. project
+// Terminal
+func terminalsock(w http.ResponseWriter, r *http.Request) {
+	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
+	defer ws.Close()
 
-// Starts Polygon Server
-func Start(target string) error {
-	http.HandleFunc("/ws", datahandler)
-	go processQueue(queue)
-	fmt.Print("Server starting on => " + target)
-	er := http.ListenAndServe(target, nil)
-	if er != nil {
-		return er
+	if address(&r.RemoteAddr) {
+		for {
+			_, reader, err := ws.NextReader()
+			if err != nil {
+				ws.WriteJSON(err)
+				break
+			}
+			message, err := io.ReadAll(reader)
+			if err != nil {
+				ws.WriteJSON(err)
+				break
+			}
+			ws.WriteJSON(mainterm(strings.Fields(string(message))))
+		}
 	} else {
-		fmt.Print("Server started on -> "+target, "\n")
-		return nil
+		ws.Close()
 	}
 }
 
-// Creates a database for you
-func Create(name, password string) error {
-	if _, err := os.Stat("databases"); os.IsNotExist(err) {
-		os.Mkdir("databases", 0777)
+func mainterm(parts []string) string {
+	if len(parts) == 0 {
+		return ""
 	}
 
-	if _, err := os.Stat("databases/" + name); err != nil {
-		term.Datacreate(&name, &password)
-		return nil
+	if locked {
+		if parts[0] == "unlock" {
+			if len(parts) == 1 {
+				return ""
+			} else {
+				if parts[1] == lock {
+					lock = ""
+					locked = false
+					return "Terminal has been unlocked."
+				}
+			}
+		} else {
+			clearScreen()
+		}
 	} else {
+		switch strings.ToLower(parts[0]) {
+		case "help":
+			return help()
+		case "create_database":
+			return datacreate(&parts[1], &parts[2])
+		case "setup":
+			return setup()
+		case "resync":
+			return resync(&parts[1])
+		case "encrypt":
+			return encrypt(&parts[1])
+		case "decrypt":
+			return decrypt(&parts[1])
+		case "change_password":
+			return chpassword(&parts[1], &parts[2])
+		case "lock":
+			if len(parts) == 1 {
+				return ""
+			} else {
+				lock = parts[1]
+				locked = true
+				clearScreen()
+			}
+		}
+
+	}
+	parts = nil
+	return ""
+}
+
+func help() string {
+	return `
+\n====Polygon Terminal====\n
+help									This displays all the possible executable lines for Polygon\n
+create_database (name) (password)		This will create a database for you with name and password\n
+setup									Creates settings.json for you\n
+resync (name)							Re-syncs a database. For Manual Editing of a database\n
+========================
+	`
+}
+
+func datacreate(name, pass *string) string {
+	path := "databases/" + *name
+	os.Mkdir(path, 0777)
+
+	cinput := []byte(fmt.Sprintf(
+		`{
+	"key": "%s",
+	"encrypted": false
+}`, *pass))
+	WriteFile(path+"/config.json", &cinput, 0644)
+
+	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
+	WriteFile(path+"/database.json", &dinput, 0644)
+
+	return "File has been created"
+}
+
+func chpassword(name, pass *string) string {
+	content, er := os.ReadFile("databases/" + *name + "/config.json")
+	if er != nil {
+		return er.Error()
+	}
+	var conf config
+	sonic.Unmarshal(content, &conf)
+
+	if conf.Enc {
+		fmt.Print()
+		return "Turn off encryption first before changing password as it can break the database!"
+	}
+	conf.Key = *pass
+
+	content, _ = sonic.ConfigFastest.MarshalIndent(&conf, "", "    ")
+	WriteFile("databases/"+*name+"/config.json", &content, 0644)
+
+	return "Password successfully changed!"
+}
+
+func setup() string {
+	var w []interface{}
+	defaultset := settings{
+		Addr:     "0.0.0.0",
+		Port:     "25565",
+		Logb:     false,
+		Whiteadd: w,
+	}
+	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
+	WriteFile("settings.json", &data, 0644)
+	return "Settings.json has been setup"
+}
+
+func resync(name *string) string {
+	_, st := databases.Load(*name)
+	if !st {
+		return "There appears to be no databases previous synced"
+	} else {
+		value, err := ParseJSONFile("databases/" + *name + "/database.json")
+		if err != nil {
+			return err.Error()
+		}
+		databases.Store(*name, value.Bytes())
+		value = nil
+		return "Resync has been successful!"
+	}
+}
+
+func encrypt(target *string) string {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		return err.Error()
+	}
+
+	//if not true...
+	if !jsonData.Enc {
+		var database gabs.Container
+		err = datacheck(target, &database)
+		if err != nil {
+			return err.Error()
+		}
+
+		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
+		fmt.Print(string(newtext), "\n")
+
+		jsonData.Enc = true
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		return "Encryption successful for " + *target
+	} else {
+		return "The following data is already encrypted. Don't encrypt again."
+	}
+}
+
+func decrypt(target *string) string {
+	var jsonData config
+	content, _ := os.ReadFile("databases/" + *target + "/config.json")
+
+	// Unmarshal the JSON data for config
+	err := sonic.Unmarshal(content, &jsonData)
+	if err != nil {
+		return err.Error()
+	}
+
+	//if true...
+	if jsonData.Enc {
+		database, err := os.ReadFile("databases/" + *target + "/database.json")
+		if err != nil {
+			return err.Error()
+		}
+
+		newtext := deep_decrypt(&database, []byte(jsonData.Key))
+		indent(&newtext)
+		jsonData.Enc = false
+
+		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
+		WriteFile("databases/"+*target+"/config.json", &output, 0644)
+		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+
+		return "Decryption successful for " + *target
+	} else {
+		return "Following data is already decrypted. Do not decrypt again."
+	}
+}
+
+func indent(input *[]byte) {
+	var output interface{}
+	sonic.ConfigDefault.Unmarshal(*input, &output)
+	*input, _ = sonic.ConfigDefault.MarshalIndent(&output, "", "    ")
+}
+
+// This code takes normal code from previous functions and uses Ownership + Borrowing
+// Memory Efficiency
+// $5 Subway
+func ParseJSON(sample *[]byte) (gabs.Container, error) {
+	var gab interface{}
+	if err := sonic.Unmarshal(*sample, &gab); err != nil {
+		return *gabs.Wrap(gab), err
+	}
+	return *gabs.Wrap(gab), nil
+}
+
+func ParseJSONFile(path string) (*gabs.Container, error) {
+
+	cBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	container, err := ParseJSON(&cBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &container, nil
+}
+
+// This is from the OS function. It does the same thing but data now takes in a pointer to make it use less memory
+func WriteFile(name string, data *[]byte, perm os.FileMode) error {
+	f, err := os.OpenFile(name, 1|64|512, perm)
+	if err != nil {
 		return err
 	}
-}
-
-// dbname = Name of the Database you are trying to retrieve
-// location = Location inside the Database
-func Retrieve_P(dbname string, location string) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
+	_, err = f.Write(*data)
+	if err1 := f.Close(); err1 != nil && err == nil {
+		err = err1
 	}
-	output := retrieve(&location, &database)
-	return output, nil
+	return err
 }
 
-func Record_P(dbname string, location string, value []byte) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	output, er := record(&location, &database, &value, &dbname)
-	if er != nil {
-		return nil, er
-	} else {
-		return output, nil
-	}
+func deep_encrypt(plaintext, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	ciphertext := make([]byte, len(plaintext))
+	cipher.XORKeyStream(ciphertext, plaintext)
+	return ciphertext
 }
 
-func Search_P(dbname string, location string, value []byte) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	output := search(&location, &database, &value)
-	return output, nil
-}
-
-func Append_P(dbname string, location string, value []byte) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	output := append_p(&location, &database, &value, &location)
-	return output, nil
-}
-
-type Polygon struct {
-	data gabs.Container
-	name string
-}
-
-// If a user wants a "polygon" database and from there modify that, then they can use the following commands:
-func Get(dbname string) (Polygon, error) {
-	var database Polygon
-	er := datacheck(&dbname, &database.data)
-	if er != nil {
-		return database, er
-	}
-	database.name = dbname
-	return database, nil
-}
-
-func (g Polygon) Retrieve(location string) any {
-	output := retrieve(&location, &g.data)
-	return output
-}
-
-func (g Polygon) Record(location string, value []byte) any {
-	_, output := record(&location, &g.data, &value, &g.name)
-	return output
-}
-
-func (g Polygon) Search(location string, value []byte) map[string]interface{} {
-	output := search(&location, &g.data, &value)
-	if output == "Cannot find value." {
-		return nil
-	} else {
-		return output.(map[string]interface{})
-	}
-
-}
-
-func (g Polygon) Append(location string, value []byte) any {
-	output := append_p(&location, &g.data, &value, &g.name)
-	return output
+func deep_decrypt(ciphertext *[]byte, key []byte) []byte {
+	cipher, _ := rc4.NewCipher(key)
+	plaintext := make([]byte, len(*ciphertext))
+	cipher.XORKeyStream(plaintext, *ciphertext)
+	return plaintext
 }
 
 func checkenc(location *string) bool {
@@ -587,4 +740,21 @@ func checkenc(location *string) bool {
 		return false
 	}
 	return jsonData.Enc
+}
+
+// Locking System
+func clearScreen() {
+
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	cmd.Run()
+	//Runs twice because sometimes pterodactyl servers needs a 2nd clear
 }
