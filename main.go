@@ -852,12 +852,10 @@ func checkenc(location *string) bool {
 
 // Locking System
 func clearScreen() {
-	// Get the OS name
-	osName := runtime.GOOS
 
 	var cmd *exec.Cmd
 
-	if osName == "windows" {
+	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/c", "cls")
 	} else {
 		cmd = exec.Command("clear")

@@ -43,7 +43,7 @@ type config struct {
 }
 
 // Settings.json parsing
-type settings struct {
+type Settings struct {
 	Addr     string        `json:"addr"`
 	Port     string        `json:"port"`
 	Logb     bool          `json:"log"`
@@ -53,7 +53,7 @@ type settings struct {
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
-	var set settings
+	var set Settings
 	portgrab(&set)
 
 	http.HandleFunc("/ws", datahandler)
@@ -69,7 +69,7 @@ func main() {
 
 // Parses the data
 // Grabs the informatin from settings.json
-func portgrab(set *settings) {
+func portgrab(set *Settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
 	file = nil
@@ -683,7 +683,7 @@ func chpassword(name, pass *string) {
 
 func setup() {
 	var w []interface{}
-	defaultset := settings{
+	defaultset := Settings{
 		Addr:     "0.0.0.0",
 		Port:     "25565",
 		Logb:     false,
