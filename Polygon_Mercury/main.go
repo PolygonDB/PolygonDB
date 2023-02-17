@@ -312,6 +312,8 @@ func datacheck(location *string, database *gabs.Container) error {
 
 // This gets the database file
 func data(location *string) (gabs.Container, error) {
+	decrypt(location)
+	defer encrypt(location)
 
 	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
@@ -510,10 +512,6 @@ func mainterm(parts []string) string {
 			return setup()
 		case "resync":
 			return resync(&parts[1])
-		case "encrypt":
-			return encrypt(&parts[1])
-		case "decrypt":
-			return decrypt(&parts[1])
 		case "change_password":
 			return chpassword(&parts[1], &parts[2])
 		case "lock":
@@ -555,6 +553,7 @@ func datacreate(name, pass *string) string {
 
 	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
 	WriteFile(path+"/database.json", &dinput, 0644)
+	encrypt(name)
 
 	return "File has been created"
 }
@@ -568,13 +567,13 @@ func chpassword(name, pass *string) string {
 	sonic.Unmarshal(content, &conf)
 
 	if conf.Enc {
-		fmt.Print()
-		return "Turn off encryption first before changing password as it can break the database!"
+		decrypt(name)
 	}
 	conf.Key = *pass
 
 	content, _ = sonic.ConfigFastest.MarshalIndent(&conf, "", "    ")
 	WriteFile("databases/"+*name+"/config.json", &content, 0644)
+	encrypt(name)
 
 	return "Password successfully changed!"
 }
@@ -597,6 +596,8 @@ func resync(name *string) string {
 	if !st {
 		return "There appears to be no databases previous synced"
 	} else {
+		decrypt(name)
+		defer encrypt(name)
 		value, err := ParseJSONFile("databases/" + *name + "/database.json")
 		if err != nil {
 			return err.Error()
@@ -705,6 +706,7 @@ func ParseJSONFile(path string) (*gabs.Container, error) {
 
 // This is from the OS function. It does the same thing but data now takes in a pointer to make it use less memory
 func WriteFile(name string, data *[]byte, perm os.FileMode) error {
+
 	f, err := os.OpenFile(name, 1|64|512, perm)
 	if err != nil {
 		return err
