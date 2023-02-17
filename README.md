@@ -114,6 +114,7 @@ async function main() {
 </div>
 <div style="display: flex; justify-content: center;">
 	<img src="https://discordapp.com/api/guilds/1046141941387116565/widget.png?style=banner2" alt="Discord Banner 2"/>
+	<img src="https://discordapp.com/api/guilds/1076152760719900732/widget.png?style=banner2" alt="Discord Banner 2"/>
 </div>
 
 
