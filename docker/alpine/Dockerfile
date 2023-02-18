@@ -14,7 +14,6 @@ ENV         USER=container HOME=/home/container
 
 WORKDIR     /home/container
 
-RUN         apk add --no-cache wget
 CMD         wget -O - https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/script/for_ptero.bash | bash
 
 COPY        ./entrypoint.sh /entrypoint.sh
