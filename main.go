@@ -75,6 +75,15 @@ func portgrab(set *settings) {
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
 	file = nil
+
+	if _, err := os.Stat("databases"); os.IsNotExist(err) {
+		err = os.Mkdir("databases", 0755)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("Folder 'databases' created successfully.")
+	}
 }
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
