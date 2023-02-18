@@ -59,7 +59,7 @@ func main() {
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
-	http.HandleFunc("/ws", terminalsock)
+	http.HandleFunc("/terminal", terminalsock)
 	go processQueue(queue)
 	logb = set.Logb
 	whitelist = set.Whiteadd
@@ -627,7 +627,6 @@ func encrypt(target *string) string {
 		}
 
 		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
-		fmt.Print(string(newtext), "\n")
 
 		jsonData.Enc = true
 
