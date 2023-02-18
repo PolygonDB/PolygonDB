@@ -60,7 +60,7 @@ func main() {
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
 	go mainterm()
-	go processQueue(queue)
+	go processQueue()
 	logb = set.Logb
 	whitelist = set.Whiteadd
 
@@ -213,7 +213,7 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 // Processes the Queue. One at a time.
 // Both Websocket Handler and Processes Queue work semi-independently
 // a Mutex.Lock() is made so it can prevent any possible global variable manipulation and ensures safety
-func processQueue(queue chan wsMessage) {
+func processQueue() {
 	for {
 		msg := <-queue
 		mutex.Lock()
@@ -465,7 +465,7 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 // Starts Polygon Server
 func Start(target string) error {
 	http.HandleFunc("/ws", datahandler)
-	go processQueue(queue)
+	go processQueue()
 	fmt.Print("Server starting on => " + target)
 	er := http.ListenAndServe(target, nil)
 	if er != nil {
