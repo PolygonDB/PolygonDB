@@ -1,3 +1,11 @@
+<div align="center">
+	
+![GitHub all releases](https://img.shields.io/github/downloads/JewishLewish/PolygonDB/total?color=63C9A4&style=for-the-badge)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/Jewishlewish/PolygonDB?color=63C9A4&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/JewishLewish/PolygonDB?color=63C9A4&style=for-the-badge)
+	
+</div>
+
 <div align="center"><h1>Polygon</h1></div>
 <div align="center"><h4>Database System Designed to be Fast, Performant and Minimal</h4></div>
 <hr>
@@ -106,6 +114,7 @@ async function main() {
 </div>
 <div style="display: flex; justify-content: center;">
 	<img src="https://discordapp.com/api/guilds/1046141941387116565/widget.png?style=banner2" alt="Discord Banner 2"/>
+	<img src="https://discordapp.com/api/guilds/1076152760719900732/widget.png?style=banner2" alt="Discord Banner 2"/>
 </div>
 
 
