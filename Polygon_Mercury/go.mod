@@ -1,11 +1,11 @@
-module PolygonMercury
+module PolygonDB
 
 go 1.19
 
 require (
-	github.com/Jeffail/gabs/v2 v2.7.0
-	github.com/bytedance/sonic v1.8.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/Jeffail/gabs/v2 v2.6.1
+	github.com/bytedance/sonic v1.7.0
+	nhooyr.io/websocket v1.7.3
 )
 
 require (

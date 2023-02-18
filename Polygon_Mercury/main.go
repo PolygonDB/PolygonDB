@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/rc4"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -17,7 +17,8 @@ import (
 
 	"github.com/Jeffail/gabs/v2"
 
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 
 	"github.com/bytedance/sonic"
 )
@@ -34,6 +35,7 @@ var (
 	logb      bool
 	lock      string
 	locked    = false
+	ctx       = context.Background()
 )
 
 // Config for databases only holds key
@@ -133,8 +135,8 @@ func log(r *http.Request, msg input) {
 
 func datahandler(w http.ResponseWriter, r *http.Request) {
 
-	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
-	defer ws.Close()
+	ws, _ := websocket.Accept(w, r, nil)
+	defer ws.Close(websocket.StatusNormalClosure, "")
 
 	if address(&r.RemoteAddr) {
 		for {
@@ -143,7 +145,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		ws.Close()
+		ws.Close(websocket.StatusNormalClosure, "")
 	}
 
 }
@@ -178,34 +180,25 @@ From there it does checking to see if it's a valid message or not. If it's not t
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
-	messageType, reader, err := ws.NextReader()
+	_, reader, err := ws.Read(r.Context())
 	if err != nil {
 		return false
 	}
 
-	switch messageType {
-	case websocket.TextMessage:
-		message, err := io.ReadAll(reader)
-		if err != nil {
-			return false
-		}
-		var msg input
-		if err := sonic.Unmarshal(message, &msg); err != nil {
-			return false
-		}
-
-		//add message to the queue
-		mutex.Lock()
-		queue <- wsMessage{ws: ws, msg: msg}
-		mutex.Unlock()
-		if logb {
-			log(r, msg)
-		}
-		defer nullify(&msg)
-
-	default:
+	var msg input
+	if err = sonic.Unmarshal(reader, &msg); err != nil {
 		return false
 	}
+
+	//add message to the queue
+	mutex.Lock()
+	queue <- wsMessage{ws: ws, msg: msg}
+	mutex.Unlock()
+	if logb {
+		log(r, msg)
+	}
+	defer nullify(&msg)
+
 	return true
 }
 
@@ -228,37 +221,36 @@ func process(msg *input, ws *websocket.Conn) {
 	var confdata config
 	var database gabs.Container
 
-	er := cd(&msg.Dbname, &confdata, &database)
-	if er != nil {
-		ws.WriteJSON("{Error: " + er.Error() + ".}")
+	err := cd(&msg.Dbname, &confdata, &database)
+	if err != nil {
+		wsjson.Write(ctx, ws, "{Error: "+err.Error()+".}")
 		return
 	}
 	if msg.Pass != confdata.Key {
-		ws.WriteJSON("{Error: Password Error.}")
+		wsjson.Write(ctx, ws, "{Error: Password Error.}")
 		return
 	}
 	defer nullify(&confdata)
 	defer nullify(&database)
 
 	if msg.Act == "retrieve" {
-		output := retrieve(&msg.Loc, &database)
-		ws.WriteJSON(&output)
+		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else {
 		value := []byte(msg.Val)
 		if msg.Act == "record" {
 			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
 			if err != nil {
-				ws.WriteJSON("{\"Error\": \"" + err.Error() + "\"}")
+				wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
 			} else {
-				ws.WriteJSON("{\"Status\": \"" + output + "\"}")
+				wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
 			}
 
 		} else if msg.Act == "search" {
 			output := search(&msg.Loc, &database, &value)
-			ws.WriteJSON(&output)
+			wsjson.Write(ctx, ws, &output)
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
-			ws.WriteJSON("{\"Status\": \"" + output + "\"}")
+			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
 		}
 		nullify(&value)
 	}
@@ -461,25 +453,20 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 
 // Terminal
 func terminalsock(w http.ResponseWriter, r *http.Request) {
-	ws, _ := (&websocket.Upgrader{EnableCompression: true, ReadBufferSize: 0, WriteBufferSize: 0}).Upgrade(w, r, nil)
-	defer ws.Close()
+	ws, _ := websocket.Accept(w, r, nil)
+	defer ws.Close(websocket.StatusNormalClosure, "")
 
 	if address(&r.RemoteAddr) {
 		for {
-			_, reader, err := ws.NextReader()
+			_, reader, err := ws.Read(r.Context())
 			if err != nil {
-				ws.WriteJSON(err)
+				wsjson.Write(ctx, ws, err)
 				break
 			}
-			message, err := io.ReadAll(reader)
-			if err != nil {
-				ws.WriteJSON(err)
-				break
-			}
-			ws.WriteJSON(mainterm(strings.Fields(string(message))))
+			wsjson.Write(ctx, ws, mainterm(strings.Fields(string(reader))))
 		}
 	} else {
-		ws.Close()
+		ws.Close(websocket.StatusNormalClosure, "")
 	}
 }
 
