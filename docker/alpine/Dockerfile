@@ -14,7 +14,8 @@ ENV         USER=container HOME=/home/container
 
 WORKDIR     /home/container
 
-CMD         ["sh", "-c", "wget -O - https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/script/for_ptero.bash | bash"]
+CMD         ["wget -O - https://raw.githubusercontent.com/JewishLewish/PolygonDB/main/script/for_ptero.bash | bash"]
+CMD         ["./PolygonDB"]
 
 COPY        ./entrypoint.sh /entrypoint.sh
 CMD         [ "/bin/bash", "/entrypoint.sh", "-l", "-c" ]
