@@ -1,7 +1,7 @@
 name: Alpine Push
 
 on:
-  push:
+  release:
     branches:
       - main
 
