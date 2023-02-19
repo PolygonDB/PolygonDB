@@ -532,6 +532,9 @@ help									This displays all the possible executable lines for Polygon\n
 create_database (name) (password)		This will create a database for you with name and password\n
 setup									Creates settings.json for you\n
 resync (name)							Re-syncs a database. For Manual Editing of a database\n
+chpassword (name)						Change password to a database\n")
+lock (passcode)							Locks the Terminal and Clears Screen\n")
+unlock (passcode)						Unlocks Terminal\n")
 ========================
 	`
 }

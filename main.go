@@ -641,6 +641,11 @@ func help() {
 	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
 	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
 	fmt.Print("resync (name)\t\t\t\t\tRe-syncs a database. For Manual Editing of a database\n")
+	fmt.Print("encrypt (name)\t\t\t\t\tEncrypts a database\n")
+	fmt.Print("decrypt (name)\t\t\t\t\tDecrypts a database\n")
+	fmt.Print("chpassword (name)\t\t\t\tChange password to a database\n")
+	fmt.Print("lock (passcode)\t\t\t\t\tLocks the Terminal and Clears Screen\n")
+	fmt.Print("unlock (passcode)\t\t\t\tUnlocks Terminal\n")
 	fmt.Print("========================\n\n")
 }
 
