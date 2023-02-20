@@ -1,4 +1,4 @@
-module PolygonDB
+module Mercury_PolygonDB
 
 go 1.19
 
