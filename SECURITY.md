@@ -13,5 +13,3 @@ currently being supported with security updates.
 ## Reporting a Vulnerability
 
 Reach out to me via Email: ``lenny@lunes.host`` or via Discord ``ЧеёнYoung#7428``
-
-Explain the problem AND the code used to reach that security flaw. 
