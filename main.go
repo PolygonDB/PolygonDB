@@ -688,14 +688,13 @@ func chpassword(name, pass *string) {
 }
 
 func setup() {
-	var w []interface{}
 	defaultset := settings{
 		Addr:     "0.0.0.0",
 		Port:     "25565",
 		Logb:     false,
-		Whiteadd: w,
+		Whiteadd: make([]interface{}, 0),
 	}
-	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
+	data, _ := sonic.ConfigFastest.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
 	fmt.Print("Settings.json has been setup. \n")
 }
