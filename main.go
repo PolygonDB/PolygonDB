@@ -72,6 +72,11 @@ func main() {
 // Parses the data
 // Grabs the informatin from settings.json
 func portgrab(set *settings) {
+	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
+		setup()
+
+	}
+
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
 	file = nil
