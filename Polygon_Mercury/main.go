@@ -72,6 +72,10 @@ func main() {
 // Parses the data
 // Grabs the informatin from settings.json
 func portgrab(set *settings) {
+	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
+		setup()
+	}
+
 	file, _ := os.ReadFile("settings.json")
 	sonic.Unmarshal(file, &set)
 	file = nil
@@ -578,12 +582,11 @@ func chpassword(name, pass *string) string {
 }
 
 func setup() string {
-	var w []interface{}
 	defaultset := settings{
 		Addr:     "0.0.0.0",
 		Port:     "25565",
 		Logb:     false,
-		Whiteadd: w,
+		Whiteadd: make([]interface{}, 0),
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)

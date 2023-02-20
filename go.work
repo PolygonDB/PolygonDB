@@ -1,7 +1,3 @@
 go 1.19
 
-use (
-	.
-	./GoPackage
-	./Polygon_Mercury
-)
+use .

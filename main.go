@@ -74,7 +74,6 @@ func main() {
 func portgrab(set *settings) {
 	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
 		setup()
-
 	}
 
 	file, _ := os.ReadFile("settings.json")
