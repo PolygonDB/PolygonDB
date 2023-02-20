@@ -376,9 +376,8 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	target, _ := unmarshalJSONValue(&targ)
 	targ = nil
 
-	it := jsonParsed.Path(*direct).Children()
-	for i, user := range it {
-		if user.Path(parts[0]).Data() == fmt.Sprint(target) {
+	for i, user := range jsonParsed.Path(*direct).Children() {
+		if user.Path(parts[0]).Data() == target {
 			return map[string]interface{}{"Index": i, "Value": user.Data()}
 		}
 	}
