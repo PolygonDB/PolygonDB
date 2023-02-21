@@ -194,7 +194,7 @@ From there it does checking to see if it's a valid message or not. If it's not t
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
-	_, reader, err := ws.Read(r.Context())
+	_, reader, err := ws.Read(ctx)
 	if err != nil {
 		return false
 	}
