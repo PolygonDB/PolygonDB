@@ -109,6 +109,7 @@ async function main() {
 		<a href="https://discord.gg/muXKEkbRwp">
 
 <img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
+<img src="https://discordapp.com/api/guilds/879344703689064499/widget.png?style=banner2" alt="Discord Banner 2"/>
 		</a>
 	<a href="https://discord.gg/MHEAwNjKb2"><img src="https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2" alt="Discord Banner 2"/></a>
 </div>
