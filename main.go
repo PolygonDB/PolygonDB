@@ -323,8 +323,15 @@ func data(location *string) (gabs.Container, error) {
 	if err != nil {
 		go fmt.Println("Error unmarshalling Database JSON:", err)
 	}
-	databases.Store(*location, value.Bytes())
+	databases.Store(*location, GabtoBytes(value))
 	return *value, nil
+}
+
+func GabtoBytes(g *gabs.Container) []byte {
+	if bytes, err := sonic.ConfigFastest.Marshal(g.Data()); err == nil {
+		return bytes
+	}
+	return []byte("null")
 }
 
 func conf(err *error, location *string, jsonData *config) {
