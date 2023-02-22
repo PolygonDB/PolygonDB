@@ -277,11 +277,10 @@ func process(msg *input, ws *websocket.Conn) {
 // Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *gabs.Container) error {
 	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
-		var conferr error
 
-		conf(&conferr, location, jsonData)
-		if conferr != nil {
-			return conferr
+		err = conf(location, jsonData)
+		if err != nil {
+			return err
 		}
 
 		if jsonData.Enc { //if encrypted
@@ -334,17 +333,18 @@ func GabtoBytes(g *gabs.Container) []byte {
 	return []byte("null")
 }
 
-func conf(err *error, location *string, jsonData *config) {
+func conf(location *string, jsonData *config) error {
 
 	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
 	// Unmarshal the JSON data for config
-	*err = sonic.Unmarshal(content, &jsonData)
+	err := sonic.Unmarshal(content, &jsonData)
 
 	//*err = json.NewDecoder(file).Decode(&jsonData)
-	if *err != nil {
-		go fmt.Println("Error unmarshalling Config JSON:", err)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 // Types of Actions
