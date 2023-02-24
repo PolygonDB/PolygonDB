@@ -320,7 +320,7 @@ func data(location *string) (gabs.Container, error) {
 
 	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
-		go fmt.Println("Error unmarshalling Database JSON:", err)
+		return *value, err
 	}
 	databases.Store(*location, GabtoBytes(value))
 	return *value, nil
