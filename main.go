@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Jeffail/gabs/v2"
+	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
