@@ -14,7 +14,8 @@
 
 ## Wiki
 [HERE](https://github.com/JewishLewish/PolygonDB/wiki)
-
+## Discord/Support
+[HERE](https://discord.gg/heWJfMSMTm)
 ## Usage
 (more examples in wiki)
 Config.json Example
@@ -83,7 +84,7 @@ ws.send(json.dumps(
 ))
 print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 ```
-Javascript Code via [PloyConJS](https://github.com/NekaouMike/PloyConJS)
+Javascript Code via [PolyConJS](https://github.com/NekaouMike/PolyConJS)
 ```js
 const ploycon = require('ployconjs');
 
@@ -103,23 +104,24 @@ async function main() {
         db.close()
 }
 ```
+## Modules / Packages for Certain Langs
+Javascript - [PolyconJS](https://github.com/NekaouMike/PolyConJS)
+
+## Utilities 
+Dashboard - [PolyDash](https://github.com/NekaouMike/PolyDash)
+
 ## Companies that uses PolygonDB 
 
 <div style="display: flex; justify-content: center;">
 		<a href="https://discord.gg/muXKEkbRwp">
 
 <img src="https://discordapp.com/api/guilds/692451473698586704/widget.png?style=banner2" alt="Discord Banner 2"/>
+<img src="https://discordapp.com/api/guilds/879344703689064499/widget.png?style=banner2" alt="Discord Banner 2"/>
 		</a>
 	<a href="https://discord.gg/MHEAwNjKb2"><img src="https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2" alt="Discord Banner 2"/></a>
-</div>
-<div style="display: flex; justify-content: center;">
 	<img src="https://discordapp.com/api/guilds/1046141941387116565/widget.png?style=banner2" alt="Discord Banner 2"/>
 	<img src="https://discordapp.com/api/guilds/1076152760719900732/widget.png?style=banner2" alt="Discord Banner 2"/>
 </div>
 
-
-## Modules / Packages for Certain Langs
-Javascript - https://github.com/NekaouMike/PloyConJS
-
 ## notice
-If you wish for your company / module to be placed here then open a pull request
+If you wish for your company / module / Utility to be placed here make a request on our discord server.
