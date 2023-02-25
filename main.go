@@ -151,6 +151,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 
 	ws, _ := websocket.Accept(w, r, nil)
 	defer ws.Close(websocket.StatusNormalClosure, "")
+	defer nullify(&ws)
 
 	if address(&r.RemoteAddr) {
 		for {
@@ -160,6 +161,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		ws.Close(websocket.StatusNormalClosure, "")
+		ws = nil
 	}
 
 }
@@ -260,8 +262,7 @@ func process(msg *input, ws *websocket.Conn) {
 			}
 
 		} else if msg.Act == "search" {
-			output := search(&msg.Loc, &database, &value)
-			wsjson.Write(ctx, ws, &output)
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
