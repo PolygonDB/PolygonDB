@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rc4"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Jeffail/gabs/v2"
+	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -158,6 +159,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
+		ws = nil
 		ws.Close(websocket.StatusNormalClosure, "")
 	}
 
@@ -193,13 +195,14 @@ From there it does checking to see if it's a valid message or not. If it's not t
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
-	_, reader, err := ws.Read(r.Context())
+	_, reader, err := ws.Reader(ctx)
 	if err != nil {
 		return false
 	}
 
 	var msg input
-	if err = sonic.Unmarshal(reader, &msg); err != nil {
+	message, _ := io.ReadAll(reader)
+	if err = sonic.Unmarshal(message, &msg); err != nil {
 		return false
 	}
 
@@ -219,20 +222,21 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 // Both Websocket Handler and Processes Queue work semi-independently
 // a Mutex.Lock() is made so it can prevent any possible global variable manipulation and ensures safety
 func processQueue() {
+	var output wsMessage
 	for {
-		msg := <-queue
+		output = <-queue
 		mutex.Lock()
-		process(&msg.msg, msg.ws)
+		process(&output.msg, output.ws)
 		mutex.Unlock()
 	}
 }
 
 // Processes the request
 // Once request is done, it cleans up out-of-scope variables
-func process(msg *input, ws *websocket.Conn) {
+var confdata config
+var database gabs.Container
 
-	var confdata config
-	var database gabs.Container
+func process(msg *input, ws *websocket.Conn) {
 
 	err := cd(&msg.Dbname, &confdata, &database)
 	if err != nil {
@@ -259,8 +263,7 @@ func process(msg *input, ws *websocket.Conn) {
 			}
 
 		} else if msg.Act == "search" {
-			output := search(&msg.Loc, &database, &value)
-			wsjson.Write(ctx, ws, &output)
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
