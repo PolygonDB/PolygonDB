@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned v0.0.0-20230224181305-33dce473fafd
-	github.com/bytedance/sonic v1.8.2
+	github.com/bytedance/sonic v1.7.0
 	nhooyr.io/websocket v1.8.7
 )
 
