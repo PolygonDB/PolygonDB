@@ -329,15 +329,8 @@ func data(location *string) (gabs.Container, error) {
 	if err != nil {
 		return *value, err
 	}
-	databases.Store(*location, GabtoBytes(value))
+	databases.Store(*location, value.Bytes())
 	return *value, nil
-}
-
-func GabtoBytes(g *gabs.Container) []byte {
-	if bytes, err := sonic.ConfigFastest.Marshal(g.Data()); err == nil {
-		return bytes
-	}
-	return []byte("null")
 }
 
 func conf(location *string, jsonData *config) error {
