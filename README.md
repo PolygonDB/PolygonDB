@@ -10,41 +10,12 @@
 <div align="center"><h4>Database System Designed to be Fast, Performant and Minimal</h4></div>
 <hr>
 
-![Frame 2](https://user-images.githubusercontent.com/65754609/215379958-d8f02d22-fec4-4200-85c1-0177a62e661d.png)
+[![Frame 2](https://user-images.githubusercontent.com/65754609/215379958-d8f02d22-fec4-4200-85c1-0177a62e661d.png)](https://discord.gg/heWJfMSMTm)
 
 ## Wiki
 [HERE](https://github.com/JewishLewish/PolygonDB/wiki)
-## Discord/Support
-[HERE](https://discord.gg/heWJfMSMTm)
-## Usage
-(more examples in wiki)
-Config.json Example
-```json
-{
-    "key":"Better_Password"
-}
-```
 
-Database.json example
-```json
-{
-	"rows": [
-		{
-			"age": 5,
-			"name": "A"
-		},
-		{
-			"age": 20,
-			"name": "B"
-		},
-		{
-			"age": 30,
-			"name": "C"
-		}
-	]
-}
-```
-Python code for accessing the server
+## ⚡️ Quickstart
 ```python
 import json
 from websocket import create_connection
@@ -61,56 +32,17 @@ ws.send(json.dumps(
     }
 ))
 print(json.loads(ws.recv()))  # "A"
-
-ws.send(json.dumps(
-    {
-        'password': 'Secret_Password', 
-        'dbname': 'CatoDB',
-        'location' :'rows.0.age',
-        'action' : 'record',
-        'value':'5'
-    }
-))
-print(json.loads(ws.recv())) # {Status: Success}
-
-ws.send(json.dumps(
-    {
-        'password': 'Secret_Password', 
-        'dbname': 'CatoDB',
-        'location' :'rows',
-        'action' : 'search',
-        'value':'age:30'
-    }
-))
-print(json.loads(ws.recv())) # {'Index': 2, 'Value': {'age': 30, 'name': 'C'}}
 ```
-Javascript Code via [PolyConJS](https://github.com/NekaouMike/PolyConJS)
-```js
-const ploycon = require('ployconjs');
 
-const db = new ploycon("localhost:8000","Secret_Password");
+## 🎯 Features
+* Low Memory Usage
+* Developer-Friendly
+* Compatible with any lang (C to Python)
+* Easy-to-Setup
+* Customizable Password Security
+* Takes Advantage of Synchronization
 
-main();
-async function main() {
-    await db.open().catch(err => console.log(err))
-    console.log(await db.retrieve('CatoDB',0,"name"))
-    console.log(db.record('CatoDB',0,"age",5))
-    console.log(await db.search('CatoDB','age',30))
-    console.log(await db.getschema('CatoDB'))
-    console.log(await db.append('CatoDB',{
-        "age": 20,
-        "name": "Example"
-    }))
-        db.close()
-}
-```
-## Modules / Packages for Certain Langs
-Javascript - [PolyconJS](https://github.com/NekaouMike/PolyConJS)
-
-## Utilities 
-Dashboard - [PolyDash](https://github.com/NekaouMike/PolyDash)
-
-## Companies that uses PolygonDB 
+## 💡 Companies Who Use it
 
 <div style="display: flex; justify-content: center;">
 		<a href="https://discord.gg/muXKEkbRwp">
@@ -123,6 +55,12 @@ Dashboard - [PolyDash](https://github.com/NekaouMike/PolyDash)
 	<img src="https://discordapp.com/api/guilds/1076152760719900732/widget.png?style=banner2" alt="Discord Banner 2"/>
     <img src="https://discordapp.com/api/guilds/1067868449826685060/widget.png?style=banner2" alt="Discord Banner 2"/>
 </div>
+
+## 👀 Community Projects
+| Name & Link | Description | Type |
+|---------------|---------------------------------------------------| ------- |
+| [PloyconJS](https://github.com/NekaouMike/PolyConJS) | NodeJS Package for Polygon | Package |
+| [PolyDash](https://github.com/NekaouMike/PolyDash) | Polygon | Utility| 
 
 ## notice
 If you wish for your company / module / Utility to be placed here make a request on our discord server.
