@@ -125,11 +125,11 @@ type wsMessage struct {
 
 // Parses Input that the Websocket would recieve
 type input struct {
-	Pass   string `json:"password"`
-	Dbname string `json:"dbname"`
-	Loc    string `json:"location"`
-	Act    string `json:"action"`
-	Val    string `json:"value"`
+	Pass   string      `json:"password"`
+	Dbname string      `json:"dbname"`
+	Loc    string      `json:"location"`
+	Act    string      `json:"action"`
+	Val    interface{} `json:"value"`
 }
 
 func log(r *http.Request, msg input) {
@@ -258,7 +258,7 @@ func process(msg *input, ws *websocket.Conn) {
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else {
-		value := []byte(msg.Val)
+		value := []byte(fmt.Sprintf("%v", msg.Val))
 		if msg.Act == "record" {
 			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
 			if err != nil {
@@ -434,8 +434,8 @@ func unmarshalJSONValue(data *[]byte) (interface{}, error) {
 		err = sonic.Unmarshal(*data, &v)
 	default:
 		b, e := strconv.ParseBool(string(*data))
-		if e != nil {
-			return b, err
+		if e == nil {
+			return b, nil
 		}
 
 		i, e := strconv.Atoi(string(*data))
