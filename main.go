@@ -433,6 +433,11 @@ func unmarshalJSONValue(data *[]byte) (interface{}, error) {
 		}
 		err = sonic.Unmarshal(*data, &v)
 	default:
+		b, e := strconv.ParseBool(string(*data))
+		if e != nil {
+			return b, err
+		}
+
 		i, e := strconv.Atoi(string(*data))
 		if e != nil {
 			v = string(*data)

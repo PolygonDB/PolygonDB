@@ -1,39 +1,25 @@
 {
-    "rows": [
-        {
-            "age": 17,
-            "name": "A"
-        },
-        {
-            "age": 20,
-            "name": "B"
-        },
-        {
-            "age": 30,
-            "name": "C"
-        },
-        {
-            "age": 40,
-            "name": "d"
-        },
-        {
-            "age": 40,
-            "name": "D"
-        },
-        {
-            "age": 39,
-            "name": "E"
-        },
-        {
-            "age": 39,
-            "name": "E"
-        },
-        {
-            "age": 39,
-            "name": "E"
+    "glossary": {
+        "title": "example glossary",
+        "GlossDiv": {
+            "title": "S",
+            "GlossList": {
+                "GlossEntry": {
+                    "Acronym": "SGML",
+                    "Abbrev": "ISO 8879:1986",
+                    "GlossDef": {
+                        "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                        "GlossSeeAlso": [
+                            "GML",
+                            "XML"
+                        ]
+                    },
+                    "GlossSee": "markup",
+                    "ID": "SGML",
+                    "SortAs": "SGML",
+                    "GlossTerm": "Standard Generalized Markup Language"
+                }
+            }
         }
-    ],
-    "schema": [
-        "name"
-    ]
+    }
 }
