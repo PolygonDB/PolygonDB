@@ -41,6 +41,7 @@ print(json.loads(ws.recv()))  # "A"
 * Easy-to-Setup
 * Customizable Password Security
 * Takes Advantage of Synchronization
+* Multi-thread safe
 
 ## 💡 Companies Who Use it
 
