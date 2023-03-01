@@ -12,7 +12,7 @@
 
 [![Frame 2](https://user-images.githubusercontent.com/65754609/215379958-d8f02d22-fec4-4200-85c1-0177a62e661d.png)](https://discord.gg/heWJfMSMTm)
 
-## Wiki
+## 📖 Wiki
 [HERE](https://github.com/JewishLewish/PolygonDB/wiki)
 
 ## ⚡️ Quickstart
