@@ -257,6 +257,14 @@ func process(msg *input, ws *websocket.Conn) {
 
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
+	} else if { msg.act == "remove" {
+		output, err := record(&msg.Loc, &database, "", &msg.Dbname)
+		if err != nil {
+			wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
+		} else {
+			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
+		}
+
 	} else {
 		value := []byte(fmt.Sprintf("%v", msg.Val))
 		if msg.Act == "record" {
