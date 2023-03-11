@@ -756,14 +756,11 @@ func encrypt(target *string) {
 			return
 		}
 
-		newtext := deep_encrypt(database.Bytes(), []byte(jsonData.Key))
-		fmt.Print(string(newtext), "\n")
-
 		jsonData.Enc = true
 
 		output, _ := sonic.ConfigDefault.MarshalIndent(&jsonData, "", "    ")
 		WriteFile("databases/"+*target+"/config.json", &output, 0644)
-		WriteFile("databases/"+*target+"/database.json", &newtext, 0644)
+		os.WriteFile("databases/"+*target+"/database.json", deep_encrypt(database.Bytes(), []byte(jsonData.Key)), 0644)
 
 		fmt.Print("Encryption successful for " + *target + ".\n")
 	} else {
