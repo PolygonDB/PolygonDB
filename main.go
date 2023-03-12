@@ -680,8 +680,7 @@ func datacreate(name, pass *string) {
 }`, *pass))
 	WriteFile(path+"/config.json", &cinput, 0644)
 
-	dinput := []byte("{\n\t\"Example\": \"Hello world\"\n}")
-	WriteFile(path+"/database.json", &dinput, 0644)
+	os.WriteFile(path+"/database.json",  []byte("{\n\t\"Example\": \"Hello world\"\n}"), 0644)
 
 	fmt.Println("File has been created.")
 }
