@@ -37,7 +37,7 @@ var (
 	logb      bool
 	lock      string
 	ctx       context.Context = context.Background()
-	null = []byte("")
+	null                      = []byte("")
 )
 
 // Config for databases only holds key
@@ -259,7 +259,7 @@ func process(msg *input, ws *websocket.Conn) {
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else if msg.Act == "remove" {
-		
+
 		output, err := record(&msg.Loc, &database, &null, &msg.Dbname)
 		if err != nil {
 			wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
@@ -682,7 +682,7 @@ func datacreate(name, pass *string) {
 }`, *pass))
 	WriteFile(path+"/config.json", &cinput, 0644)
 
-	os.WriteFile(path+"/database.json",  []byte("{\n\t\"Example\": \"Hello world\"\n}"), 0644)
+	os.WriteFile(path+"/database.json", []byte("{\n\t\"Example\": \"Hello world\"\n}"), 0644)
 
 	fmt.Println("File has been created.")
 }
