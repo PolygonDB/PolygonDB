@@ -503,7 +503,7 @@ func Create(name, password string) error {
 		os.Mkdir("databases", 0777)
 	}
 
-	if _, err := os.Stat("databases/" + name); err != nil {
+	if _, err = os.Stat("databases/" + name); err != nil {
 		datacreate(&name, &password)
 		return nil
 	} else {
