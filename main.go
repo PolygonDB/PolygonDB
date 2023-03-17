@@ -135,7 +135,6 @@ type input struct {
 
 func log(r *http.Request, msg input) {
 	output, _ := sonic.ConfigDefault.MarshalIndent(&msg, "", "    ")
-	data := "\n\tAddress: " + r.RemoteAddr + "\n\tContent:" + string(output) + "\n"
 
 	f, err := os.OpenFile("History.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -143,7 +142,7 @@ func log(r *http.Request, msg input) {
 	}
 	defer f.Close()
 
-	if _, err := f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), data)); err != nil {
+	if _, err = f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), "\n\tAddress: "+r.RemoteAddr+"\n\tContent:"+string(output)+"\n")); err != nil {
 		panic(err)
 	}
 }
