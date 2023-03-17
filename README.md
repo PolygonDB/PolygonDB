@@ -63,5 +63,7 @@ print(json.loads(ws.recv()))  # "A"
 | [PolyDash](https://github.com/NekaouMike/PolyDash) | Polygon | Utility| 
 | [PolygonPy](https://github.com/DWAA1660/PolyWrapper) | Python Package for Polygon | Package |
 
-## notice
+## Contact me
 If you wish for your company / module / Utility to be placed here make a request on our discord server.
+
+Email: ``lenny@lunes.host``
