@@ -520,8 +520,7 @@ func Retrieve_P(dbname string, location string) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	output := retrieve(&location, &database)
-	return output, nil
+	return retrieve(&location, &database), nil
 }
 
 func Record_P(dbname string, location string, value []byte) (any, error) {
@@ -720,8 +719,8 @@ func setup() {
 }
 
 func resync(name *string) {
-	_, st := databases.Load(*name)
-	if !st {
+	_, err := databases.Load(*name)
+	if !err {
 		fmt.Print("There appears to be no databases previous synced...\n")
 		return
 	} else {
