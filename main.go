@@ -391,14 +391,19 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	targ := []byte(parts[1])
 	target, _ := unmarshalJSONValue(&targ)
 	targ = nil
+	result := make([]interface{}, 0)
 
 	for i, user := range jsonParsed.Path(*direct).Children() {
 		if user.Path(parts[0]).Data() == target {
-			return map[string]interface{}{"Index": i, "Value": user.Data()}
+			result = append(result, map[string]interface{}{"Index": i, "Value": user.Data()})
+			//  map[string]interface{}{"Index": i, "Value": user.Data()}
 		}
 	}
-
+	if len(result) > 0 {
+		return result
+	}else{
 	return "Cannot find value."
+	}
 }
 
 func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
