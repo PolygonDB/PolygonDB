@@ -6,12 +6,14 @@ import (
 	"crypto/rc4"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"reflect"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -387,14 +389,46 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
+	// Parse the search key and target value
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
-	target, _ := unmarshalJSONValue(&targ)
-	targ = nil
+	targetValue, _ := unmarshalJSONValue(&targ)
 
-	for i, user := range jsonParsed.Path(*direct).Children() {
-		if fmt.Sprintf("%v", user.Path(parts[0]).Data()) == fmt.Sprintf("%v", target) {
-			return map[string]interface{}{"Index": i, "Value": user.Data()}
+	children := jsonParsed.Path(*direct).Children()
+	if int(math.Log2(float64(len(children)))) < 5 {
+		return index(children, parts[0], targetValue)
+	} else {
+		return binary(children, parts[0], targetValue)
+	}
+}
+
+func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	for i, child := range children {
+		if child.Path(searchKey).Data() == targetValue {
+			return i
+		}
+	}
+	return "Cannot find value"
+}
+
+func binary(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	// Sort the JSON data by the search key
+	sort.Slice(children, func(i, j int) bool {
+		return fmt.Sprint(children[i].Path(searchKey).Data()) < fmt.Sprint(children[j].Path(searchKey).Data())
+	})
+
+	// Perform binary search
+	low := 0
+	high := len(children) - 1
+	for low <= high {
+		mid := (low + high) / 2
+		midValue := children[mid].Path(searchKey).Data()
+		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+			return map[string]interface{}{"Index": mid, "Value": children[mid].Data()}
+		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+			low = mid + 1
+		} else {
+			high = mid - 1
 		}
 	}
 
