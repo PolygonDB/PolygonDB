@@ -32,7 +32,7 @@ var (
 		data: make(map[string][]byte),
 	}
 
-	queue = make(chan wsMessage, 100)
+	queue = make(chan wsMessage)
 
 	mutex     = &sync.Mutex{}
 	whitelist []interface{}
