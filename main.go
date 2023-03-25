@@ -393,7 +393,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	targ = nil
 
 	for i, user := range jsonParsed.Path(*direct).Children() {
-		if user.Path(parts[0]).Data() == target {
+		if fmt.Sprintf("%v", user.Path(parts[0]).Data()) == fmt.Sprintf("%v", target) {
 			return map[string]interface{}{"Index": i, "Value": user.Data()}
 		}
 	}
