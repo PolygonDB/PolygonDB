@@ -280,6 +280,8 @@ func process(msg *input, ws *websocket.Conn) {
 
 		} else if msg.Act == "search" {
 			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
+		else if msg.Act == "index" {
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, &value))
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
@@ -389,6 +391,56 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
+	// Parse the search key and target value
+	parts := strings.Split(string(*value), ":")
+	targ := []byte(parts[1])
+	targetValue, _ := unmarshalJSONValue(&targ)
+
+	children := jsonParsed.Path(*direct).Children()
+	if int(math.Log2(float64(len(children)))) < 5 {
+		fmt.Print("Using index.")
+		return index(children, parts[0], targetValue)
+	} else {
+		fmt.Print("Using binary.")
+		return binary(children, parts[0], targetValue)
+	}
+}
+
+func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	for i, child := range children {
+		if child.Path(searchKey).Data() == targetValue {
+			return map[string]interface{}{"Index": i, "Value": children[i].Data()}
+		}
+	}
+	return "Cannot find value"
+}
+
+func binary(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	// Sort the JSON data by the search key
+	sort.Slice(children, func(i, j int) bool {
+		return fmt.Sprint(children[i].Path(searchKey).Data()) < fmt.Sprint(children[j].Path(searchKey).Data())
+	})
+
+	// Perform binary search
+	low := 0
+	high := len(children) - 1
+	for low <= high {
+		mid := (low + high) / 2
+		midValue := children[mid].Path(searchKey).Data()
+		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+			return map[string]interface{}{"Index": mid, "Value": children[mid].Data()}
+		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+			low = mid + 1
+		} else {
+			high = mid - 1
+		}
+	}
+
+	return "Cannot find value."
+}
+
+
+func indexsearch(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
 	// Parse the search key and target value
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
