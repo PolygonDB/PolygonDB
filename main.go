@@ -418,29 +418,57 @@ func index(children []*gabs.Container, searchKey string, targetValue interface{}
 }
 
 func binary(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
-	// Sort the JSON data by the search key
-	sort.Slice(children, func(i, j int) bool {
-		return fmt.Sprint(children[i].Path(searchKey).Data()) < fmt.Sprint(children[j].Path(searchKey).Data())
-	})
-	result := make([]interface{}, 0)
+	    // Make a copy of the original list with the indexes included
+		var originalList []map[string]interface{}
+		for i, child := range children {
+			originalList = append(originalList, map[string]interface{}{"Index": i, "Value": child.Data()})
+		}
+	
+	// Sort the original list by the search key
+    sort.Slice(originalList, func(i, j int) bool {
+        return fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) < fmt.Sprint(originalList[j]["Value"].(map[string]interface{})[searchKey])
+    })
+	results := make([]interface{}, 0)
 
 	// Perform binary search
 	low := 0
 	high := len(children) - 1
 	for low <= high {
-		mid := (low + high) / 2
-		midValue := children[mid].Path(searchKey).Data()
-		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
-			result = append(result, map[string]interface{}{"Index": mid, "Value": children[mid].Data()})
-		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
-			low = mid + 1
-		} else {
-			high = mid - 1
-		}
-	}
+        mid := (low + high) / 2
+        midValue := originalList[mid]["Value"].(map[string]interface{})[searchKey]
+        if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+            // Collect the matching items
+            results = append(results, originalList[mid])
+            // Check for other matching items to the left
+            for i := mid - 1; i >= low; i-- {
+                if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+                    results = append(results, originalList[i])
+                } else {
+                    break
+                }
+            }
+            // Check for other matching items to the right
+            for i := mid + 1; i <= high; i++ {
+                if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+                    results = append(results, originalList[i])
+                } else {
+                    break
+                }
+            }
+            sort.Slice(results, func(i, j int) bool {
+                return results[i]["Index"].(int) < results[j]["Index"].(int)
+            })
+            return results
+        } else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+    return results
 
-	if len(result) > 0 {
-		return result
+	if len(results) > 0 {
+		return results
 	}else{
 	return "Cannot find value."
 	}
