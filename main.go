@@ -398,10 +398,8 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 
 	children := jsonParsed.Path(*direct).Children()
 	if int(math.Log2(float64(len(children)))) < 5 {
-		fmt.Print("Using index.")
 		return index_s(children, parts[0], targetValue)
 	} else {
-		fmt.Print("Using binary.")
 		return binary_s(children, parts[0], targetValue)
 	}
 }
@@ -447,10 +445,8 @@ func indexsearch(direct *string, jsonParsed *gabs.Container, value *[]byte) inte
 
 	children := jsonParsed.Path(*direct).Children()
 	if int(math.Log2(float64(len(children)))) < 5 {
-		fmt.Print("Using index.")
 		return index(children, parts[0], targetValue)
 	} else {
-		fmt.Print("Using binary.")
 		return binary(children, parts[0], targetValue)
 	}
 }
