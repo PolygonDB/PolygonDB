@@ -280,6 +280,8 @@ func process(msg *input, ws *websocket.Conn) {
 
 		} else if msg.Act == "search" {
 			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
+		else if msg.Act == "index" {
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, &value))
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
@@ -435,6 +437,95 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 	}
 
 	return "Cannot find value."
+}
+
+
+func indexsearch(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
+	// Parse the search key and target value
+	parts := strings.Split(string(*value), ":")
+	targ := []byte(parts[1])
+	targetValue, _ := unmarshalJSONValue(&targ)
+
+	children := jsonParsed.Path(*direct).Children()
+	if int(math.Log2(float64(len(children)))) < 5 {
+		fmt.Print("Using index.")
+		return index(children, parts[0], targetValue)
+	} else {
+		fmt.Print("Using binary.")
+		return binary(children, parts[0], targetValue)
+	}
+}
+
+func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	result := make([]interface{}, 0)
+
+	for i, child := range children {
+		if child.Path(searchKey).Data() == targetValue {
+			result = append(result, map[string]interface{}{"Index": i, "Value": children[i].Data()})
+		}
+	}
+	if len(result) > 0 {
+		return result
+	}else{
+	return "Cannot find value."
+	}
+}
+
+func binary(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	    // Make a copy of the original list with the indexes included
+		var originalList []map[string]interface{}
+		for i, child := range children {
+			originalList = append(originalList, map[string]interface{}{"Index": i, "Value": child.Data()})
+		}
+	
+	// Sort the original list by the search key
+    sort.Slice(originalList, func(i, j int) bool {
+        return fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) < fmt.Sprint(originalList[j]["Value"].(map[string]interface{})[searchKey])
+    })
+	results := make([]interface{}, 0)
+
+	// Perform binary search
+	low := 0
+	high := len(children) - 1
+	for low <= high {
+        mid := (low + high) / 2
+        midValue := originalList[mid]["Value"].(map[string]interface{})[searchKey]
+        if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+            // Collect the matching items
+            results = append(results, originalList[mid])
+            // Check for other matching items to the left
+            for i := mid - 1; i >= low; i-- {
+                if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+                    results = append(results, originalList[i])
+                } else {
+                    break
+                }
+            }
+            // Check for other matching items to the right
+            for i := mid + 1; i <= high; i++ {
+                if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+                    results = append(results, originalList[i])
+                } else {
+                    break
+                }
+            }
+            sort.Slice(results, func(i, j int) bool {
+                return results[i]["Index"].(int) < results[j]["Index"].(int)
+            })
+            return results
+        } else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }
+    }
+    return results
+
+	if len(results) > 0 {
+		return results
+	}else{
+	return "Cannot find value."
+	}
 }
 
 func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
