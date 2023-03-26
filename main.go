@@ -403,12 +403,18 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 }
 
 func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	result := make([]interface{}, 0)
+
 	for i, child := range children {
 		if child.Path(searchKey).Data() == targetValue {
-			return i
+			result = append(result, map[string]interface{}{"Index": i, "Value": children[i].Data()})
 		}
 	}
-	return "Cannot find value"
+	if len(result) > 0 {
+		return result
+	}else{
+	return "Cannot find value."
+	}
 }
 
 func binary(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
@@ -416,6 +422,7 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 	sort.Slice(children, func(i, j int) bool {
 		return fmt.Sprint(children[i].Path(searchKey).Data()) < fmt.Sprint(children[j].Path(searchKey).Data())
 	})
+	result := make([]interface{}, 0)
 
 	// Perform binary search
 	low := 0
@@ -424,7 +431,7 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 		mid := (low + high) / 2
 		midValue := children[mid].Path(searchKey).Data()
 		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
-			return map[string]interface{}{"Index": mid, "Value": children[mid].Data()}
+			result = append(result, map[string]interface{}{"Index": mid, "Value": children[mid].Data()})
 		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
 			low = mid + 1
 		} else {
@@ -432,7 +439,11 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 		}
 	}
 
+	if len(result) > 0 {
+		return result
+	}else{
 	return "Cannot find value."
+	}
 }
 
 func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
