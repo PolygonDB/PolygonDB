@@ -407,7 +407,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
 	for i, child := range children {
 		if child.Path(searchKey).Data() == targetValue {
-			return map[string]interface{}{"Index": i, "Value": child.Path(searchKey).Data()}
+			return map[string]interface{}{"Index": i, "Value": children[i].Data()}
 		}
 	}
 	return "Cannot find value"
