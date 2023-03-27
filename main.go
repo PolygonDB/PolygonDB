@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
+	"github.com/smasher164/mem"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -83,9 +84,10 @@ func portgrab(set *settings) {
 		setup()
 	}
 
-	file, _ := os.ReadFile("settings.json")
-	sonic.Unmarshal(file, &set)
-	file = nil
+	file := mem.Alloc(getFileSize("settings.json") + 10)
+	*(*[]byte)(file) = getFilecontent("settings.json")
+	sonic.Unmarshal(*(*[]byte)(file), &set)
+	mem.Free(file)
 
 	if _, err := os.Stat("databases"); os.IsNotExist(err) {
 		err = os.Mkdir("databases", 0755)
@@ -95,6 +97,16 @@ func portgrab(set *settings) {
 		}
 		fmt.Println("Folder 'databases' created successfully.")
 	}
+}
+
+func getFileSize(filename string) uint {
+	fileInfo, _ := os.Stat(filename)
+	return uint(fileInfo.Size())
+}
+
+func getFilecontent(filename string) []byte {
+	file, _ := os.ReadFile("settings.json")
+	return file
 }
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
