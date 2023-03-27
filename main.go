@@ -1,5 +1,3 @@
-//go:build goexperiment.arenas
-
 package main
 
 import (
