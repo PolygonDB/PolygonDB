@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
 	"github.com/smasher164/mem"
@@ -269,8 +270,6 @@ func process(msg *input, ws *websocket.Conn) {
 		wsjson.Write(ctx, ws, "{Error: Password Error.}")
 		return
 	}
-	defer nullify(&confdata)
-	defer nullify(&database)
 
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
@@ -284,9 +283,10 @@ func process(msg *input, ws *websocket.Conn) {
 		}
 
 	} else {
-		value := []byte(fmt.Sprintf("%v", msg.Val))
+		value := mem.Alloc(uint(unsafe.Sizeof(msg.Val)))
+		*(*[]byte)(value) = []byte(fmt.Sprintf("%v", msg.Val))
 		if msg.Act == "record" {
-			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
+			output, err := record(&msg.Loc, &database, &*(*[]byte)(value), &msg.Dbname)
 			if err != nil {
 				wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
 			} else {
@@ -294,14 +294,14 @@ func process(msg *input, ws *websocket.Conn) {
 			}
 
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &*(*[]byte)(value)))
 		} else if msg.Act == "index" {
-			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, &value))
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, &*(*[]byte)(value)))
 		} else if msg.Act == "append" {
-			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
+			output := append_p(&msg.Loc, &database, &*(*[]byte)(value), &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
 		}
-		nullify(&value)
+		mem.Free(value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
@@ -409,6 +409,7 @@ func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface
 	// Parse the search key and target value
 	parts := strings.Split(string(*value), ":")
 	targ := []byte(parts[1])
+
 	targetValue, _ := unmarshalJSONValue(&targ)
 
 	children := jsonParsed.Path(*direct).Children()
