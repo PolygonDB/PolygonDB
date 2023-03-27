@@ -3,7 +3,6 @@
 package main
 
 import (
-	"arena"
 	"bufio"
 	"context"
 	"crypto/rc4"
@@ -62,8 +61,6 @@ type settings struct {
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
-	mem := arena.NewArena()
-	defer mem.Free()
 
 	var set settings
 	portgrab(&set)
