@@ -263,11 +263,11 @@ func process(msg *input, ws *websocket.Conn) {
 
 	err := cd(&msg.Dbname, &confdata, &database)
 	if err != nil {
-		wsjson.Write(ctx, ws, "{Error: "+err.Error()+".}")
+		wsjson.Write(ctx, ws, `{"Error": "`+err.Error()+`".}`)
 		return
 	}
 	if msg.Pass != confdata.Key {
-		wsjson.Write(ctx, ws, "{Error: Password Error.}")
+		wsjson.Write(ctx, ws, `{"Error": "Incorrect Password"}`)
 		return
 	}
 
@@ -288,8 +288,8 @@ func process(msg *input, ws *websocket.Conn) {
 		}
 	}
 
-	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-	runtime.GC()
+	//Cleans up any out-of-scope variables
+	defer runtime.GC()
 }
 
 // Config and Database Getting
