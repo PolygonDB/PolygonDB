@@ -18,7 +18,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
 
 	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
 	"github.com/smasher164/mem"
@@ -41,7 +40,6 @@ var (
 	logb      bool
 	lock      string
 	ctx       context.Context = context.Background()
-	null                      = []byte("")
 )
 
 // Config for databases only holds key
@@ -173,13 +171,13 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	if address(&r.RemoteAddr) {
 		for {
 			if !takein(ws, r) {
-				ws = nil
+				//ws = nil
 				break
 			}
 		}
 	} else {
 		ws.Close(websocket.StatusNormalClosure, "")
-		ws = nil
+		//ws = nil
 	}
 
 }
@@ -273,7 +271,7 @@ func process(msg *input, ws *websocket.Conn) {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else if msg.Act == "remove" {
 
-		output, err := record(&msg.Loc, &database, &null, &msg.Dbname)
+		output, err := record(&msg.Loc, &database, []byte(""), &msg.Dbname)
 		if err != nil {
 			wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
 		} else {
@@ -281,10 +279,8 @@ func process(msg *input, ws *websocket.Conn) {
 		}
 
 	} else {
-		value := mem.Alloc(uint(unsafe.Sizeof(msg.Val)))
-		*(*[]byte)(value) = []byte(fmt.Sprintf("%v", msg.Val))
 		if msg.Act == "record" {
-			output, err := record(&msg.Loc, &database, &*(*[]byte)(value), &msg.Dbname)
+			output, err := record(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)
 			if err != nil {
 				wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
 			} else {
@@ -292,14 +288,13 @@ func process(msg *input, ws *websocket.Conn) {
 			}
 
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &*(*[]byte)(value)))
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
 		} else if msg.Act == "index" {
-			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, &*(*[]byte)(value)))
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
 		} else if msg.Act == "append" {
-			output := append_p(&msg.Loc, &database, &*(*[]byte)(value), &msg.Dbname)
+			output := append_p(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)
 			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
 		}
-		mem.Free(value)
 	}
 
 	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
@@ -382,11 +377,11 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (string, error) {
-	if string(*value) == "" {
+func record(direct *string, jsonParsed *gabs.Container, value []byte, location *string) (string, error) {
+	if string(value) == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
-		val, err := unmarshalJSONValue(value)
+		val, err := unmarshalJSONValue(&value)
 		if err != nil {
 			return "", err
 		}
@@ -403,9 +398,9 @@ func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location 
 	return "Success", nil
 }
 
-func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
+func search(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
 	// Parse the search key and target value
-	parts := strings.Split(string(*value), ":")
+	parts := strings.Split(string(value), ":")
 	targ := []byte(parts[1])
 
 	targetValue, _ := unmarshalJSONValue(&targ)
@@ -451,9 +446,9 @@ func binary_s(children []*gabs.Container, searchKey string, targetValue interfac
 	return "Cannot find value."
 }
 
-func indexsearch(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
+func indexsearch(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
 	// Parse the search key and target value
-	parts := strings.Split(string(*value), ":")
+	parts := strings.Split(string(value), ":")
 	targ := []byte(parts[1])
 	targetValue, _ := unmarshalJSONValue(&targ)
 
@@ -532,9 +527,9 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 	return results
 }
 
-func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
+func append_p(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
 
-	val, err := unmarshalJSONValue(value)
+	val, err := unmarshalJSONValue(&value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
@@ -660,7 +655,7 @@ func Record_P(dbname string, location string, value []byte) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	output, er := record(&location, &database, &value, &dbname)
+	output, er := record(&location, &database, value, &dbname)
 	if er != nil {
 		return nil, er
 	} else {
@@ -674,7 +669,7 @@ func Search_P(dbname string, location string, value []byte) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	output := search(&location, &database, &value)
+	output := search(&location, &database, value)
 	return output, nil
 }
 
@@ -684,7 +679,7 @@ func Append_P(dbname string, location string, value []byte) (any, error) {
 	if er != nil {
 		return nil, er
 	}
-	output := append_p(&location, &database, &value, &location)
+	output := append_p(&location, &database, value, &location)
 	return output, nil
 }
 
@@ -710,12 +705,12 @@ func (g Polygon) Retrieve(location string) any {
 }
 
 func (g Polygon) Record(location string, value []byte) any {
-	_, output := record(&location, &g.data, &value, &g.name)
+	_, output := record(&location, &g.data, value, &g.name)
 	return output
 }
 
 func (g Polygon) Search(location string, value []byte) map[string]interface{} {
-	output := search(&location, &g.data, &value)
+	output := search(&location, &g.data, value)
 	if output == "Cannot find value." {
 		return nil
 	} else {
@@ -725,7 +720,7 @@ func (g Polygon) Search(location string, value []byte) map[string]interface{} {
 }
 
 func (g Polygon) Append(location string, value []byte) any {
-	output := append_p(&location, &g.data, &value, &g.name)
+	output := append_p(&location, &g.data, value, &g.name)
 	return output
 }
 
