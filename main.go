@@ -293,7 +293,7 @@ func process(msg *input, ws *websocket.Conn) {
 			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
 		} else if msg.Act == "append" {
 			output := append_p(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)
-			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
+			wsjson.Write(ctx, ws, `{"Status": "`+output+`"}`)
 		}
 	}
 
