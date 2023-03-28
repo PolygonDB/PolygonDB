@@ -171,6 +171,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	if address(&r.RemoteAddr) {
 		for {
 			if !takein(ws, r) {
+				ws.Close(websocket.StatusInternalError, "")
 				//ws = nil
 				break
 			}
@@ -218,20 +219,22 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		return false
 	}
 
-	var msg input
+	//var msg input
+	msg := mem.Alloc(80)
+	defer mem.Free(msg)
+
 	message, _ := io.ReadAll(reader)
-	if err = sonic.Unmarshal(message, &msg); err != nil {
+	if err = sonic.Unmarshal(message, (*input)(msg)); err != nil {
 		return false
 	}
 
 	//add message to the queue
 	mutex.Lock()
-	queue <- wsMessage{ws: ws, msg: msg}
+	queue <- wsMessage{ws: ws, msg: *(*input)(msg)}
 	mutex.Unlock()
 	if logb {
-		log(r, msg)
+		log(r, *(*input)(msg))
 	}
-	defer nullify(&msg)
 
 	return true
 }
