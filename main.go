@@ -254,7 +254,8 @@ func processQueue() {
 }
 
 // Processes the request
-// Once request is done, it cleans up out-of-scope variables
+// Global Variables Being Used Here to Limit the amt of stuff for GC to clean up
+// Global Variables aren't harmed since mutex.Lock() is protecting them from any memory screw ups
 var confdata config
 var database gabs.Container
 
@@ -273,23 +274,10 @@ func process(msg *input, ws *websocket.Conn) {
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else if msg.Act == "remove" {
-
-		output, err := record(&msg.Loc, &database, []byte(""), &msg.Dbname)
-		if err != nil {
-			wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
-		} else {
-			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
-		}
-
+		wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(""), &msg.Dbname)+`"}`)
 	} else {
 		if msg.Act == "record" {
-			output, err := record(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)
-			if err != nil {
-				wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
-			} else {
-				wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
-			}
-
+			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)+`"}`)
 		} else if msg.Act == "search" {
 			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
 		} else if msg.Act == "index" {
@@ -380,25 +368,25 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value []byte, location *string) (string, error) {
+func record(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
 	if string(value) == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
 		val, err := unmarshalJSONValue(&value)
 		if err != nil {
-			return "", err
+			return err.Error()
 		}
 
 		_, err = jsonParsed.SetP(&val, *direct)
 
 		if err != nil {
-			return "", err
+			return err.Error()
 		}
 	}
 
 	syncupdate(jsonParsed, location)
 
-	return "Success", nil
+	return "Success"
 }
 
 func search(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
@@ -652,18 +640,14 @@ func Retrieve_P(dbname string, location string) (any, error) {
 	return retrieve(&location, &database), nil
 }
 
-func Record_P(dbname string, location string, value []byte) (any, error) {
+func Record_P(dbname string, location string, value []byte) any {
 	var database gabs.Container
 	er := datacheck(&dbname, &database)
 	if er != nil {
-		return nil, er
+		return er
 	}
-	output, er := record(&location, &database, value, &dbname)
-	if er != nil {
-		return nil, er
-	} else {
-		return output, nil
-	}
+	output := record(&location, &database, value, &dbname)
+	return output
 }
 
 func Search_P(dbname string, location string, value []byte) (any, error) {
@@ -708,7 +692,7 @@ func (g Polygon) Retrieve(location string) any {
 }
 
 func (g Polygon) Record(location string, value []byte) any {
-	_, output := record(&location, &g.data, value, &g.name)
+	output := record(&location, &g.data, value, &g.name)
 	return output
 }
 
