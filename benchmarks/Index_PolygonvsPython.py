@@ -44,7 +44,7 @@ def Python_Method():
 
 def benchmark(func, *args, **kwargs):
     total_time = 0
-    num_runs = 30
+    num_runs = 90
     
     for i in range(num_runs):
         start_time = time.time()
