@@ -28,13 +28,46 @@ function polyMethod() {
 }
 
 function nodeMethod() {
-  const { spawn } = require('child_process');
-  const pyProg = spawn('python', ['./python/benchmark.py']);
+  const data = {
+    'password': 'B123',
+    'dbname': 'Search_Benchmark',
+    'location': 'data',
+    'action': 'retrieve'
+  };
 
-  pyProg.stdout.on('data', function(data) {
-    console.log(`Python output: ${data}`);
+  const sendData = () => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(data));
+    } else {
+      setTimeout(sendData, 10);
+    }
+  };
+
+  sendData();
+
+  ws.on('message', message => {
+    const response = JSON.parse(message);
+
+    // Create an empty list to store the male people
+    const males = [];
+
+    // Iterate through each person in the response data
+    for (let index = 0; index < response.length; index++) {
+      const person = response[index];
+
+      // Check if the person's gender is male
+      if (person["gender"] == "male") {
+        // If so, add the person to the list of males in the desired format
+        males.push({"Index": index, "Value": person});
+      }
+    }
+    
+    // Do whatever you need to do with the males list
+    console.log(males);
   });
 }
+
+
 
 function benchmark(func) {
   const numRuns = 90;
@@ -50,9 +83,10 @@ function benchmark(func) {
   }
 
   const averageTime = totalTime / numRuns;
-  console.log(`\nAverage execution time over ${numRuns} runs: ${averageTime.toFixed(6)} milliseconds`);
+  console.log(`\nAverage execution time over ${numRuns} runs: ${averageTime.toFixed(6)} seconds`);
   return averageTime;
 }
 
-const polyResult = benchmark(polyMethod);
-const pyResult = benchmark(nodeMethod);
+
+benchmark(polyMethod);
+benchmark(nodeMethod);
