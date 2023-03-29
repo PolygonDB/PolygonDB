@@ -1,59 +1,52 @@
 //Node.js v18.15.0
 //Using https://github.com/JewishLewish/PolygonDB/blob/main/databases/Search_Benchmark/database.json
+const Benchmarkify = require("benchmarkify");
+const benchmark = new Benchmarkify("Polygon vs NodeJS via Index").printHeader();
+const bench1 = benchmark.createSuite("Polygon vs NodeJS");
+
+
+
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:25565/ws');
 
+const sendData = (e) => {
+    ws.on('open', () => {
+      ws.send(JSON.stringify(e));
+    });
+    };
+
+
 function polyMethod() {
-  const data = {
+    const data1 = {
     password: 'B123',
     dbname: 'Search_Benchmark',
     location: 'data',
     action: 'index',
     value: 'gender:male'
   };
-
-  const sendData = () => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
-    } else {
-      setTimeout(sendData, 10);
-    }
-  };
-
-  sendData();
-  
-  ws.on('message', message => {
-    const response = JSON.parse(message);
-  });
+  sendData(data1);
 }
 
 function nodeMethod() {
-  const data = {
+  const data2 = {
     'password': 'B123',
     'dbname': 'Search_Benchmark',
     'location': 'data',
     'action': 'retrieve'
   };
 
-  const sendData = () => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
-    } else {
-      setTimeout(sendData, 10);
-    }
-  };
-
-  sendData();
+  sendData(data2);
 
   ws.on('message', message => {
     const response = JSON.parse(message);
 
     // Create an empty list to store the male people
-    const males = [];
+    var males = [];
+
+    var person = response[index];
 
     // Iterate through each person in the response data
     for (let index = 0; index < response.length; index++) {
-      const person = response[index];
 
       // Check if the person's gender is male
       if (person["gender"] == "male") {
@@ -65,22 +58,18 @@ function nodeMethod() {
   });
 }
 
-function benchmark(func) {
-  const numRuns = 30;
-  var totalTime = 0;
-
-  for (let i = 0; i < numRuns; i++) {
-    const startTime = performance.now();
-    func();
-    const endTime = performance.now();
-    totalTime += endTime - startTime;
-    //console.log(`Run ${i + 1}: Function ${func.name} took ${elapsedTime} milliseconds to execute.`);
+bench1.add("Using PolygonDB", () => {
+  for (let i = 0; i < 90; i++) {
+    polyMethod();
   }
+});
 
-  const averageTime = totalTime / numRuns;
-  console.log(`\nAverage execution time over ${numRuns} runs: ${averageTime.toFixed(6)} seconds`);
-  return averageTime;
-}
+bench1.ref("Using NodeJS", () => {
+  for (let i = 0; i < 90; i++) {
+    nodeMethod();
+  }
+});
 
-benchmark(nodeMethod);
-benchmark(polyMethod);
+
+
+bench1.run();
