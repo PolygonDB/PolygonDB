@@ -67,7 +67,7 @@ function nodeMethod() {
 
 function benchmark(func) {
   const numRuns = 30;
-  let totalTime = 0;
+  var totalTime = 0;
 
   for (let i = 0; i < numRuns; i++) {
     const startTime = performance.now();
