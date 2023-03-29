@@ -210,6 +210,7 @@ func contains(s *[]interface{}, str *string) bool {
 /*\
 From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
 */
+var msg input
 
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
@@ -219,21 +220,18 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		return false
 	}
 
-	//var msg input
-	msg := mem.Alloc(80)
-	defer mem.Free(msg)
-
 	message, _ := io.ReadAll(reader)
-	if err = sonic.Unmarshal(message, (*input)(msg)); err != nil {
+
+	mutex.Lock()
+	if err = sonic.Unmarshal(message, &msg); err != nil {
 		return false
 	}
 
 	//add message to the queue
-	mutex.Lock()
-	queue <- wsMessage{ws: ws, msg: *(*input)(msg)}
+	queue <- wsMessage{ws: ws, msg: msg}
 	mutex.Unlock()
 	if logb {
-		log(r, *(*input)(msg))
+		log(r, msg)
 	}
 
 	return true
