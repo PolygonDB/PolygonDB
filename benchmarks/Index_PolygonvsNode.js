@@ -61,24 +61,19 @@ function nodeMethod() {
         males.push({"Index": index, "Value": person});
       }
     }
-    
-    // Do whatever you need to do with the males list
-    console.log(males);
+  
   });
 }
 
-
-
 function benchmark(func) {
-  const numRuns = 90;
+  const numRuns = 30;
   let totalTime = 0;
 
   for (let i = 0; i < numRuns; i++) {
-    const startTime = new Date().getTime();
+    const startTime = performance.now();
     func();
-    const endTime = new Date().getTime();
-    const elapsedTime = endTime - startTime;
-    totalTime += elapsedTime;
+    const endTime = performance.now();
+    totalTime += endTime - startTime;
     //console.log(`Run ${i + 1}: Function ${func.name} took ${elapsedTime} milliseconds to execute.`);
   }
 
@@ -87,6 +82,5 @@ function benchmark(func) {
   return averageTime;
 }
 
-
-benchmark(polyMethod);
 benchmark(nodeMethod);
+benchmark(polyMethod);
