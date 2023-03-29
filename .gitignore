@@ -1,6 +1,9 @@
-*.py
+main.py
 *.exe
 PolygonDB
 pteroegg.json
 .vscode
 compiled
+package-lock.json
+package.json
+node_modules
