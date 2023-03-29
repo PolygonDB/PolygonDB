@@ -1,3 +1,5 @@
+//Node.js v18.15.0
+//Using https://github.com/JewishLewish/PolygonDB/blob/main/databases/Search_Benchmark/database.json
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:25565/ws');
 

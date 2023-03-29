@@ -1,3 +1,5 @@
+#Python 3.10.9
+#Using https://github.com/JewishLewish/PolygonDB/blob/main/databases/Search_Benchmark/database.json
 import json
 from websocket import create_connection
 import time
