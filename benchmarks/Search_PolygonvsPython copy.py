@@ -4,7 +4,7 @@ import json
 from websocket import create_connection
 import time
 
-
+#Searching through database for certain ID
 
 ws = create_connection("ws://localhost:25565/ws")
 
@@ -15,8 +15,8 @@ def Poly_Method():
             'password': 'B123', 
             'dbname': 'Search_Benchmark',
             'location' :'data',
-            'action' : 'index',
-            'value' : 'gender:male'
+            'action' : 'search',
+            'value' : 'guid:147bd43a-338c-450b-a293-4999dba1f367'
         }
     ))
     ws_data = json.loads(ws.recv())
@@ -37,9 +37,8 @@ def Python_Method():
     # Iterate through each person in the data
     for index, person in enumerate(data):
         # Check if the person's gender is male
-        if person["gender"] == "male":
-            # If so, add the person to the list of males in the desired format
-            males.append({"Index": index, "Value": person})
+        if person['guid'] == "147bd43a-338c-450b-a293-4999dba1f367":
+            return
 
 
 def benchmark(func, *args, **kwargs):
