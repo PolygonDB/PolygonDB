@@ -59,8 +59,7 @@ type settings struct {
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
 
-	var set settings
-	portgrab(&set)
+	set := portgrab()
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -75,21 +74,22 @@ func main() {
 
 // Parses the data
 // Grabs the informatin from settings.json
-func portgrab(set *settings) {
+func portgrab() settings {
 	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
 		setup()
 	}
-
-	sonic.Unmarshal(getFilecontent("settings.json"), &set)
 
 	if _, err := os.Stat("databases"); os.IsNotExist(err) {
 		err = os.Mkdir("databases", 0755)
 		if err != nil {
 			fmt.Println(err)
-			return
 		}
 		fmt.Println("Folder 'databases' created successfully.")
 	}
+
+	var set settings
+	sonic.Unmarshal(getFilecontent("settings.json"), &set)
+	return set
 }
 
 func getFilecontent(filename string) []byte {
