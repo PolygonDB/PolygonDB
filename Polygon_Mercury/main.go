@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/rc4"
 	"fmt"
@@ -19,7 +20,6 @@ import (
 	"time"
 
 	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
-
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 
@@ -64,7 +64,7 @@ func main() {
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
-	http.HandleFunc("/terminal", terminalsock)
+	go mainterm()
 	go processQueue()
 	logb = set.Logb
 	whitelist = set.Whiteadd
@@ -575,68 +575,58 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 }
 
 // Terminal
-func terminalsock(w http.ResponseWriter, r *http.Request) {
-	ws, _ := websocket.Accept(w, r, nil)
-	defer ws.Close(websocket.StatusNormalClosure, "")
-
-	if address(&r.RemoteAddr) {
-		for {
-			_, reader, err := ws.Read(r.Context())
-			if err != nil {
-				wsjson.Write(ctx, ws, err)
-				break
-			}
-			wsjson.Write(ctx, ws, mainterm(strings.Fields(string(reader))))
+func mainterm() {
+	scanner := bufio.NewScanner(os.Stdin)
+	locked := false
+	for {
+		scanner.Scan()
+		parts := strings.Fields(scanner.Text())
+		if len(parts) == 0 {
+			continue
 		}
-	} else {
-		ws.Close(websocket.StatusNormalClosure, "")
-	}
-}
 
-func mainterm(parts []string) string {
-	if len(parts) == 0 {
-		return ""
-	}
-
-	if locked {
-		if parts[0] == "unlock" {
-			if len(parts) == 1 {
-				return ""
-			} else {
-				if parts[1] == lock {
-					lock = ""
-					locked = false
-					return "Terminal has been unlocked."
+		if locked {
+			if parts[0] == "unlock" {
+				if len(parts) == 1 {
+					continue
+				} else {
+					if parts[1] == lock {
+						lock = ""
+						locked = false
+					}
 				}
-			}
-		} else {
-			clearScreen()
-		}
-	} else {
-		switch strings.ToLower(parts[0]) {
-		case "help":
-			return help()
-		case "create_database":
-			return datacreate(&parts[1], &parts[2])
-		case "setup":
-			return setup()
-		case "resync":
-			return resync(&parts[1])
-		case "change_password":
-			return chpassword(&parts[1], &parts[2])
-		case "lock":
-			if len(parts) == 1 {
-				return ""
 			} else {
-				lock = parts[1]
-				locked = true
 				clearScreen()
 			}
-		}
+		} else {
+			switch strings.ToLower(parts[0]) {
+			case "help":
+				help()
+			case "create_database":
+				datacreate(&parts[1], &parts[2])
+			case "setup":
+				setup()
+			case "resync":
+				resync(&parts[1])
+			case "encrypt":
+				encrypt(&parts[1])
+			case "decrypt":
+				decrypt(&parts[1])
+			case "change_password":
+				chpassword(&parts[1], &parts[2])
+			case "lock":
+				if len(parts) == 1 {
+					continue
+				} else {
+					lock = parts[1]
+					locked = true
+					clearScreen()
+				}
+			}
 
+		}
+		parts = nil
 	}
-	parts = nil
-	return ""
 }
 
 func help() string {
