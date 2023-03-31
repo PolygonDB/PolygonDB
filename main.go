@@ -163,13 +163,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 		for {
 			if !takein(ws, r) {
 				ws.Close(websocket.StatusInternalError, "")
-				//ws = nil
 				break
 			}
 		}
 	} else {
 		ws.Close(websocket.StatusNormalClosure, "")
-		//ws = nil
 	}
 
 }

@@ -5,12 +5,14 @@ import (
 	"crypto/rc4"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"reflect"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -56,8 +58,8 @@ type settings struct {
 // main
 // When using a Go Package. This will be ignored. This code is designed for the standalone executable
 func main() {
-	var set settings
-	portgrab(&set)
+
+	var set settings = portgrab()
 
 	http.HandleFunc("/ws", datahandler)
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
@@ -72,23 +74,27 @@ func main() {
 
 // Parses the data
 // Grabs the informatin from settings.json
-func portgrab(set *settings) {
+func portgrab() settings {
 	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
 		setup()
 	}
-
-	file, _ := os.ReadFile("settings.json")
-	sonic.Unmarshal(file, &set)
-	file = nil
 
 	if _, err := os.Stat("databases"); os.IsNotExist(err) {
 		err = os.Mkdir("databases", 0755)
 		if err != nil {
 			fmt.Println(err)
-			return
 		}
 		fmt.Println("Folder 'databases' created successfully.")
 	}
+
+	var set settings
+	sonic.Unmarshal(getFilecontent("settings.json"), &set)
+	return set
+}
+
+func getFilecontent(filename string) []byte {
+	file, _ := os.ReadFile("settings.json")
+	return file
 }
 
 // Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
@@ -134,7 +140,6 @@ type input struct {
 
 func log(r *http.Request, msg input) {
 	output, _ := sonic.ConfigDefault.MarshalIndent(&msg, "", "    ")
-	data := "\n\tAddress: " + r.RemoteAddr + "\n\tContent:" + string(output) + "\n"
 
 	f, err := os.OpenFile("History.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -142,7 +147,7 @@ func log(r *http.Request, msg input) {
 	}
 	defer f.Close()
 
-	if _, err := f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), data)); err != nil {
+	if _, err = f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), "\n\tAddress: "+r.RemoteAddr+"\n\tContent:"+string(output)+"\n")); err != nil {
 		panic(err)
 	}
 }
@@ -155,11 +160,11 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 	if address(&r.RemoteAddr) {
 		for {
 			if !takein(ws, r) {
+				ws.Close(websocket.StatusInternalError, "")
 				break
 			}
 		}
 	} else {
-		ws = nil
 		ws.Close(websocket.StatusNormalClosure, "")
 	}
 
@@ -192,6 +197,8 @@ func contains(s *[]interface{}, str *string) bool {
 /*\
 From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
 */
+var msg input
+
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
 	//Reads input
@@ -200,20 +207,19 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 		return false
 	}
 
-	var msg input
 	message, _ := io.ReadAll(reader)
+
+	mutex.Lock()
 	if err = sonic.Unmarshal(message, &msg); err != nil {
 		return false
 	}
 
 	//add message to the queue
-	mutex.Lock()
 	queue <- wsMessage{ws: ws, msg: msg}
 	mutex.Unlock()
 	if logb {
 		log(r, msg)
 	}
-	defer nullify(&msg)
 
 	return true
 }
@@ -240,50 +246,42 @@ func process(msg *input, ws *websocket.Conn) {
 
 	err := cd(&msg.Dbname, &confdata, &database)
 	if err != nil {
-		wsjson.Write(ctx, ws, "{Error: "+err.Error()+".}")
+		wsjson.Write(ctx, ws, `{"Error": "`+err.Error()+`".}`)
 		return
 	}
 	if msg.Pass != confdata.Key {
-		wsjson.Write(ctx, ws, "{Error: Password Error.}")
+		wsjson.Write(ctx, ws, `{"Error": "Incorrect Password"}`)
 		return
 	}
-	defer nullify(&confdata)
-	defer nullify(&database)
 
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
+	} else if msg.Act == "remove" {
+		wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(""), &msg.Dbname)+`"}`)
 	} else {
-		value := []byte(msg.Val)
 		if msg.Act == "record" {
-			output, err := record(&msg.Loc, &database, &value, &msg.Dbname)
-			if err != nil {
-				wsjson.Write(ctx, ws, "{\"Error\": \""+err.Error()+"\"}")
-			} else {
-				wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
-			}
-
+			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)+`"}`)
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, &value))
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
+		} else if msg.Act == "index" {
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
 		} else if msg.Act == "append" {
-			output := append_p(&msg.Loc, &database, &value, &msg.Dbname)
-			wsjson.Write(ctx, ws, "{\"Status\": \""+output+"\"}")
+			wsjson.Write(ctx, ws, `{"Status": "`+append_p(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)+`"}`)
 		}
-		nullify(&value)
 	}
 
-	//When the request is done, it sets everything to either nil or nothing. Easier for GC.
-	runtime.GC()
+	//Cleans up any out-of-scope variables
+	defer runtime.GC()
 }
 
 // Config and Database Getting
 // Uses Concurrency to speed up this process and more precised error handling
 func cd(location *string, jsonData *config, database *gabs.Container) error {
 	if _, err := os.Stat("databases/" + *location); !os.IsNotExist(err) {
-		var conferr error
 
-		conf(&conferr, location, jsonData)
-		if conferr != nil {
-			return conferr
+		err = conf(location, jsonData)
+		if err != nil {
+			return err
 		}
 
 		if jsonData.Enc { //if encrypted
@@ -320,28 +318,27 @@ func datacheck(location *string, database *gabs.Container) error {
 
 // This gets the database file
 func data(location *string) (gabs.Container, error) {
-	decrypt(location)
-	defer encrypt(location)
 
 	value, err := ParseJSONFile("databases/" + *location + "/database.json")
 	if err != nil {
-		go fmt.Println("Error unmarshalling Database JSON:", err)
+		return *value, err
 	}
 	databases.Store(*location, value.Bytes())
 	return *value, nil
 }
 
-func conf(err *error, location *string, jsonData *config) {
+func conf(location *string, jsonData *config) error {
 
 	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
 	// Unmarshal the JSON data for config
-	*err = sonic.Unmarshal(content, &jsonData)
+	err := sonic.Unmarshal(content, &jsonData)
 
 	//*err = json.NewDecoder(file).Decode(&jsonData)
-	if *err != nil {
-		go fmt.Println("Error unmarshalling Config JSON:", err)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 // Types of Actions
@@ -353,49 +350,159 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) (string, error) {
-	if string(*value) == "" {
+func record(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
+	if string(value) == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
-		val, err := unmarshalJSONValue(value)
+		val, err := unmarshalJSONValue(&value)
 		if err != nil {
-			return "", err
+			return err.Error()
 		}
 
 		_, err = jsonParsed.SetP(&val, *direct)
 
 		if err != nil {
-			return "", err
+			return err.Error()
 		}
 	}
 
 	syncupdate(jsonParsed, location)
 
-	return "Success", nil
+	return "Success"
 }
 
-func search(direct *string, jsonParsed *gabs.Container, value *[]byte) interface{} {
-	parts := strings.Split(string(*value), ":")
+func search(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
+	// Parse the search key and target value
+	parts := strings.Split(string(value), ":")
 	targ := []byte(parts[1])
-	target, _ := unmarshalJSONValue(&targ)
-	targ = nil
 
-	var output interface{}
+	targetValue, _ := unmarshalJSONValue(&targ)
 
-	it := jsonParsed.Path(*direct).Children()
-	for i, user := range it {
-		if strings.EqualFold(fmt.Sprint(user.Path(parts[0]).Data()), fmt.Sprint(target)) {
-			output = map[string]interface{}{"Index": i, "Value": user.Data()}
-			return output
+	children := jsonParsed.Path(*direct).Children()
+	if int(math.Log2(float64(len(children)))) < 5 {
+		return index_s(children, parts[0], targetValue)
+	} else {
+		return binary_s(children, parts[0], targetValue)
+	}
+}
+
+func index_s(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	for i, child := range children {
+		if child.Path(searchKey).Data() == targetValue {
+			return map[string]interface{}{"Index": i, "Value": children[i].Data()}
+		}
+	}
+	return "Cannot find value"
+}
+
+func binary_s(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	// Sort the JSON data by the search key
+	sort.Slice(children, func(i, j int) bool {
+		return fmt.Sprint(children[i].Path(searchKey).Data()) < fmt.Sprint(children[j].Path(searchKey).Data())
+	})
+
+	// Perform binary search
+	low := 0
+	high := len(children) - 1
+	for low <= high {
+		mid := (low + high) / 2
+		midValue := children[mid].Path(searchKey).Data()
+		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+			return map[string]interface{}{"Index": mid, "Value": children[mid].Data()}
+		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+			low = mid + 1
+		} else {
+			high = mid - 1
 		}
 	}
 
 	return "Cannot find value."
 }
 
-func append_p(direct *string, jsonParsed *gabs.Container, value *[]byte, location *string) string {
+func indexsearch(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
+	// Parse the search key and target value
+	parts := strings.Split(string(value), ":")
+	targ := []byte(parts[1])
+	targetValue, _ := unmarshalJSONValue(&targ)
 
-	val, err := unmarshalJSONValue(value)
+	children := jsonParsed.Path(*direct).Children()
+	if int(math.Log2(float64(len(children)))) < 5 {
+		return index(children, parts[0], targetValue)
+	} else {
+		return binary(children, parts[0], targetValue)
+	}
+}
+
+func index(children []*gabs.Container, searchKey string, targetValue interface{}) interface{} {
+	result := make([]interface{}, 0)
+
+	for i, child := range children {
+		if child.Path(searchKey).Data() == targetValue {
+			result = append(result, map[string]interface{}{"Index": i, "Value": children[i].Data()})
+		}
+	}
+	if len(result) > 0 {
+		return result
+	} else {
+		return "Cannot find value."
+	}
+}
+
+func binary(children []*gabs.Container, searchKey string, targetValue interface{}) []map[string]interface{} {
+	// Make a copy of the original list with the indexes included
+	var originalList []map[string]interface{}
+	for i, child := range children {
+		originalList = append(originalList, map[string]interface{}{"Index": i, "Value": child.Data()})
+	}
+
+	// Sort the original list by the search key
+	sort.Slice(originalList, func(i, j int) bool {
+		return fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) < fmt.Sprint(originalList[j]["Value"].(map[string]interface{})[searchKey])
+	})
+
+	// Perform binary search on the sorted list
+	low := 0
+	high := len(originalList) - 1
+	var results []map[string]interface{}
+	for low <= high {
+		mid := (low + high) / 2
+		midValue := originalList[mid]["Value"].(map[string]interface{})[searchKey]
+		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
+			// Collect the matching items
+			results = append(results, originalList[mid])
+			// Check for other matching items to the left
+			for i := mid - 1; i >= low; i-- {
+				if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+					results = append(results, originalList[i])
+				} else {
+					break
+				}
+			}
+			// Check for other matching items to the right
+			for i := mid + 1; i <= high; i++ {
+				if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+					results = append(results, originalList[i])
+				} else {
+					break
+				}
+			}
+			sort.Slice(results, func(i, j int) bool {
+				return results[i]["Index"].(int) < results[j]["Index"].(int)
+			})
+			return results
+		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
+			low = mid + 1
+		} else {
+			high = mid - 1
+		}
+	}
+
+	return results
+}
+
+func append_p(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
+
+	val, err := unmarshalJSONValue(&value)
 	if err != nil {
 		return "Failure. Value cannot be unmarshal to json."
 	}
