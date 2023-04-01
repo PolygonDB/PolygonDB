@@ -39,6 +39,9 @@ var (
 	logb      bool
 	lock      string
 	ctx       context.Context = context.Background()
+	msg       input
+	confdata  config
+	database  gabs.Container
 )
 
 // Config for databases only holds key
@@ -199,7 +202,6 @@ func contains(s *[]interface{}, str *string) bool {
 /*\
 From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
 */
-var msg input
 
 func takein(ws *websocket.Conn, r *http.Request) bool {
 
@@ -243,8 +245,6 @@ func processQueue() {
 // Processes the request
 // Global Variables Being Used Here to Limit the amt of stuff for GC to clean up
 // Global Variables aren't harmed since mutex.Lock() is protecting them from any memory screw ups
-var confdata config
-var database gabs.Container
 
 func process(msg *input, ws *websocket.Conn) {
 
