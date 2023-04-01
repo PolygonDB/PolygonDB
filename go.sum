@@ -1,6 +1,12 @@
 github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned v0.0.0-20230226215649-54e6026e344d h1:elzw0iGgFAHHDmqCb0JYWkeYKVBwwNyoTvSWNYqZKQY=
 github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned v0.0.0-20230226215649-54e6026e344d/go.mod h1:cJy85Z+tCm2ebJC2eRxUOFGpzx+YJoo+mRXYCxivocE=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
+github.com/bytedance/sonic v1.7.0 h1:P7DyGrkLbVDzcuqagPsSFnAwwljjhmB3qVF5wzmHOxE=
+github.com/bytedance/sonic v1.7.0/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
+github.com/bytedance/sonic v1.7.1 h1:UYWEKUHQDye89c2U6zvrvuxWdGCI/wCrZITFQmKGtGc=
+github.com/bytedance/sonic v1.7.1/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
+github.com/bytedance/sonic v1.8.0 h1:ea0Xadu+sHlu7x5O3gKhRpQ1IKiMrSiHttPF0ybECuA=
+github.com/bytedance/sonic v1.8.0/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
 github.com/bytedance/sonic v1.8.2 h1:Eq1oE3xWIBE3tj2ZtJFK1rDAx7+uA4bRytozVhXMHKY=
 github.com/bytedance/sonic v1.8.2/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
 github.com/bytedance/sonic v1.8.6 h1:aUgO9S8gvdN6SyW2EhIpAw5E4ChworywIEndZCkCVXk=
