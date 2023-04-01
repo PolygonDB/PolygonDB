@@ -4,7 +4,7 @@ if [ ! -d /mnt/server/ ]; then
 mkdir -p /mnt/server/
 fi
 cd /mnt/server
-TAR=v1.4
+TAR=v1.5
 curl -o main.go https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/main.go
 curl -o go.mod https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/go.mod
 curl -o go.sum https://raw.githubusercontent.com/JewishLewish/PolygonDB/$TAR/go.sum
