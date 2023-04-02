@@ -33,12 +33,11 @@ var (
 
 	queue = make(chan wsMessage, 100)
 
-	mutex     = &sync.Mutex{}
-	whitelist []interface{}
-	logb      bool
-	lock      string
-	locked    = false
-	ctx       = context.Background()
+	mutex  = &sync.Mutex{}
+	logb   bool
+	lock   string
+	locked = false
+	ctx    = context.Background()
 )
 
 // Config for databases only holds key
@@ -49,10 +48,9 @@ type config struct {
 
 // Settings.json parsing
 type settings struct {
-	Addr     string        `json:"addr"`
-	Port     string        `json:"port"`
-	Logb     bool          `json:"log"`
-	Whiteadd []interface{} `json:"whitelist_addresses"`
+	Addr string `json:"addr"`
+	Port string `json:"port"`
+	Logb bool   `json:"log"`
 }
 
 // main
@@ -67,7 +65,6 @@ func main() {
 	go mainterm()
 	go processQueue()
 	logb = set.Logb
-	whitelist = set.Whiteadd
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -171,26 +168,12 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func address(r *string) bool {
-	if len(whitelist) == 0 {
+	host, _, _ := net.SplitHostPort(*r)
+	if host == "[::1]" {
 		return true
 	} else {
-		host, _, _ := net.SplitHostPort(*r)
-		defer nullify(&host)
-		if contains(&whitelist, &host) {
-			return true
-		} else {
-			return false
-		}
+		return false
 	}
-}
-
-func contains(s *[]interface{}, str *string) bool {
-	for _, v := range *s {
-		if v == *str {
-			return true
-		}
-	}
-	return false
 }
 
 //Take in takes in the Websocket Message
@@ -683,10 +666,9 @@ func chpassword(name, pass *string) string {
 
 func setup() string {
 	defaultset := settings{
-		Addr:     "0.0.0.0",
-		Port:     "25565",
-		Logb:     false,
-		Whiteadd: make([]interface{}, 0),
+		Addr: "0.0.0.0",
+		Port: "25565",
+		Logb: false,
 	}
 	data, _ := sonic.ConfigDefault.MarshalIndent(&defaultset, "", "    ")
 	WriteFile("settings.json", &data, 0644)
