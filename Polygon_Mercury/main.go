@@ -612,21 +612,21 @@ func mainterm() {
 	}
 }
 
-func help() string {
-	return `
-\n====Polygon Terminal====\n
-help									This displays all the possible executable lines for Polygon\n
-create_database (name) (password)		This will create a database for you with name and password\n
-setup									Creates settings.json for you\n
-resync (name)							Re-syncs a database. For Manual Editing of a database\n
-chpassword (name)						Change password to a database\n")
-lock (passcode)							Locks the Terminal and Clears Screen\n")
-unlock (passcode)						Unlocks Terminal\n")
-========================
-	`
+func help() {
+	fmt.Print("\n====Polygon Terminal====\n")
+	fmt.Print("help\t\t\t\t\t\tThis displays all the possible executable lines for Polygon\n")
+	fmt.Print("create_database (name) (password)\t\tThis will create a database for you with name and password\n")
+	fmt.Print("setup\t\t\t\t\t\tCreates settings.json for you\n")
+	fmt.Print("resync (name)\t\t\t\t\tRe-syncs a database. For Manual Editing of a database\n")
+	fmt.Print("encrypt (name)\t\t\t\t\tEncrypts a database\n")
+	fmt.Print("decrypt (name)\t\t\t\t\tDecrypts a database\n")
+	fmt.Print("chpassword (name)\t\t\t\tChange password to a database\n")
+	fmt.Print("lock (passcode)\t\t\t\t\tLocks the Terminal and Clears Screen\n")
+	fmt.Print("unlock (passcode)\t\t\t\tUnlocks Terminal\n")
+	fmt.Print("========================\n\n")
 }
 
-func datacreate(name, pass *string) string {
+func datacreate(name, pass *string) {
 	path := "databases/" + *name
 	os.Mkdir(path, 0777)
 
@@ -641,13 +641,14 @@ func datacreate(name, pass *string) string {
 	WriteFile(path+"/database.json", &dinput, 0644)
 	encrypt(name)
 
-	return "File has been created"
+	fmt.Print("File has been created")
 }
 
-func chpassword(name, pass *string) string {
+func chpassword(name, pass *string) {
 	content, er := os.ReadFile("databases/" + *name + "/config.json")
 	if er != nil {
-		return er.Error()
+		fmt.Print(er)
+		return
 	}
 	var conf config
 	sonic.Unmarshal(content, &conf)
@@ -661,7 +662,7 @@ func chpassword(name, pass *string) string {
 	WriteFile("databases/"+*name+"/config.json", &content, 0644)
 	encrypt(name)
 
-	return "Password successfully changed!"
+	fmt.Print("Password successfully changed!")
 }
 
 func setup() string {

@@ -261,16 +261,16 @@ func process(msg *input, ws *websocket.Conn) {
 	if msg.Act == "retrieve" {
 		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
 	} else if msg.Act == "remove" {
-		wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(""), &msg.Dbname)+`"}`)
+		wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, "", &msg.Dbname)+`"}`)
 	} else {
 		if msg.Act == "record" {
-			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)+`"}`)
+			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprint(msg.Val))))
 		} else if msg.Act == "index" {
-			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val))))
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprint(msg.Val))))
 		} else if msg.Act == "append" {
-			wsjson.Write(ctx, ws, `{"Status": "`+append_p(&msg.Loc, &database, []byte(fmt.Sprintf("%v", msg.Val)), &msg.Dbname)+`"}`)
+			wsjson.Write(ctx, ws, `{"Status": "`+append_p(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
 		}
 	}
 
@@ -354,16 +354,12 @@ func retrieve(direct *string, jsonParsed *gabs.Container) interface{} {
 	}
 }
 
-func record(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
-	if string(value) == "" {
+func record(direct *string, jsonParsed *gabs.Container, value interface{}, location *string) string {
+	if value == "" {
 		jsonParsed.DeleteP(*direct)
 	} else {
-		val, err := unmarshalJSONValue(&value)
-		if err != nil {
-			return err.Error()
-		}
 
-		_, err = jsonParsed.SetP(&val, *direct)
+		_, err := jsonParsed.SetP(&value, *direct)
 
 		if err != nil {
 			return err.Error()
@@ -504,16 +500,11 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 	return results
 }
 
-func append_p(direct *string, jsonParsed *gabs.Container, value []byte, location *string) string {
+func append_p(direct *string, jsonParsed *gabs.Container, value interface{}, location *string) string {
 
-	val, err := unmarshalJSONValue(&value)
+	err := jsonParsed.ArrayAppendP(&value, *direct)
 	if err != nil {
-		return "Failure. Value cannot be unmarshal to json."
-	}
-
-	err = jsonParsed.ArrayAppendP(&val, *direct)
-	if err != nil {
-		return "Failure!"
+		return "Failure"
 	}
 
 	syncupdate(jsonParsed, location)
