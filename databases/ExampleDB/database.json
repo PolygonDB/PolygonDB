@@ -1,45 +1,45 @@
 {
-    "data" : {
-        "_id": "642b2f999869d759f256f4db",
-        "index": 0,
-        "guid": "9bc0bde6-f4dd-4824-8bda-e5cb5e78d766",
-        "isActive": true,
-        "balance": 2246.67,
-        "picture": "http://placehold.it/32x32",
-        "age": 26,
-        "eyeColor": "brown",
-        "name": "Cash Clayton",
-        "gender": "male",
-        "company": "COMBOT",
-        "address": "917 Church Avenue, Irwin, Ohio, 7943",
-        "about": "Id non et labore aute pariatur sunt. Culpa cupidatat commodo aliqua officia irure do occaecat fugiat veniam eiusmod ipsum ad. Exercitation amet sit ad tempor commodo in aliquip minim. Veniam adipisicing sit aute laboris aute excepteur nostrud amet cupidatat culpa aliquip do. Ad tempor non esse nisi tempor ea officia.\r\n",
-        "registered": "2022-04-02T03:29:35 +07:00",
-        "latitude": -8.058594,
-        "longitude": -8.208336,
-        "tags": [
-          "irure",
-          "laboris",
-          "sint",
-          "consectetur",
-          "laboris",
-          "ut",
-          "cillum"
-        ],
-        "friends": [
-          {
-            "id": 0,
-            "name": "Gail Carey"
-          },
-          {
-            "id": 1,
-            "name": "Foley Woods"
-          },
-          {
-            "id": 2,
-            "name": "Stephanie Mayer"
-          }
-        ],
-        "greeting": "Hello, Cash Clayton! You have 2 unread messages.",
-        "favoriteFruit": "strawberry"
-      }
+  "data" : {
+      "_id": "642b2f999869d759f256f4db",
+      "index": 0,
+      "guid": "9bc0bde6-f4dd-4824-8bda-e5cb5e78d766",
+      "isActive": true,
+      "balance": 2246.67,
+      "picture": "http://placehold.it/32x32",
+      "age": 26,
+      "eyeColor": "brown",
+      "name": "Cash Clayton",
+      "gender": "male",
+      "company": "COMBOT",
+      "address": "917 Church Avenue, Irwin, Ohio, 7943",
+      "about": "Id non et labore aute pariatur sunt. Culpa cupidatat commodo aliqua officia irure do occaecat fugiat veniam eiusmod ipsum ad. Exercitation amet sit ad tempor commodo in aliquip minim. Veniam adipisicing sit aute laboris aute excepteur nostrud amet cupidatat culpa aliquip do. Ad tempor non esse nisi tempor ea officia.\r\n",
+      "registered": "2022-04-02T03:29:35 +07:00",
+      "latitude": -8.058594,
+      "longitude": -8.208336,
+      "tags": [
+        "irure",
+        "laboris",
+        "sint",
+        "consectetur",
+        "laboris",
+        "ut",
+        "cillum"
+      ],
+      "friends": [
+        {
+          "name": "Gail Carey",
+          "client":true
+        },
+        {
+          "name": "Foley Woods",
+          "client":false
+        },
+        {
+          "name": "Stephanie Mayer",
+          "client":true
+        }
+      ],
+      "greeting": "Hello, Cash Clayton! You have 2 unread messages.",
+      "favoriteFruit": "strawberry"
     }
+  }
