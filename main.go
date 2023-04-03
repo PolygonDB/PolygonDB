@@ -460,39 +460,54 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 	// Perform binary search on the sorted list
 	low := 0
 	high := len(originalList) - 1
-	var results []map[string]interface{}
+	mid := -1
 	for low <= high {
-		mid := (low + high) / 2
+		mid = (low + high) / 2
 		midValue := originalList[mid]["Value"].(map[string]interface{})[searchKey]
 		if fmt.Sprint(midValue) == fmt.Sprint(targetValue) {
-			// Collect the matching items
-			results = append(results, originalList[mid])
-			// Check for other matching items to the left
-			for i := mid - 1; i >= low; i-- {
-				if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
-					results = append(results, originalList[i])
-				} else {
-					break
-				}
-			}
-			// Check for other matching items to the right
-			for i := mid + 1; i <= high; i++ {
-				if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
-					results = append(results, originalList[i])
-				} else {
-					break
-				}
-			}
-			sort.Slice(results, func(i, j int) bool {
-				return results[i]["Index"].(int) < results[j]["Index"].(int)
-			})
-			return results
+			break
 		} else if fmt.Sprint(midValue) < fmt.Sprint(targetValue) {
 			low = mid + 1
 		} else {
 			high = mid - 1
 		}
 	}
+
+	// Collect the matching items using goroutines and channels
+	resultsChan := make(chan []map[string]interface{}, 2)
+	go func() {
+		leftResults := []map[string]interface{}{}
+		for i := mid - 1; i >= low; i-- {
+			if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+				leftResults = append(leftResults, originalList[i])
+			} else {
+				break
+			}
+		}
+		resultsChan <- leftResults
+	}()
+	go func() {
+		rightResults := []map[string]interface{}{}
+		for i := mid + 1; i <= high; i++ {
+			if fmt.Sprint(originalList[i]["Value"].(map[string]interface{})[searchKey]) == fmt.Sprint(targetValue) {
+				rightResults = append(rightResults, originalList[i])
+			} else {
+				break
+			}
+		}
+		resultsChan <- rightResults
+	}()
+
+	// Wait for both channels to return results
+	leftResults := <-resultsChan
+	rightResults := <-resultsChan
+	close(resultsChan)
+
+	// Combine and sort the results
+	results := append(leftResults, rightResults...)
+	sort.Slice(results, func(i, j int) bool {
+		return results[i]["Index"].(int) < results[j]["Index"].(int)
+	})
 
 	return results
 }

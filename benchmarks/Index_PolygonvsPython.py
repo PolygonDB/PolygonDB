@@ -2,12 +2,9 @@
 #Using https://github.com/JewishLewish/PolygonDB/blob/main/databases/Search_Benchmark/database.json
 import json
 from websocket import create_connection
-import time
-
-
+import timeit
 
 ws = create_connection("ws://localhost:25565/ws")
-
 
 def Poly_Method():
     ws.send(json.dumps(
@@ -41,21 +38,9 @@ def Python_Method():
             # If so, add the person to the list of males in the desired format
             males.append({"Index": index, "Value": person})
 
+def benchmark(func, num_runs=90):
+    total_time = timeit.timeit(func, number=num_runs)
+    print(f"\nAverage execution time over 90 runs: {total_time / num_runs:.6f} seconds")
 
-def benchmark(func, *args, **kwargs):
-    total_time = 0
-    num_runs = 90
-    
-    for i in range(num_runs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        total_time += time.time() - start_time
-        #print(f"Run {i+1}: Function {func.__name__} took {elapsed_time:.6f} seconds to execute.")
-    
-    avg_time = total_time / num_runs
-    print(f"\nAverage execution time over {num_runs} runs: {avg_time:.6f} seconds")
-    return avg_time
-
-Poly_Result = benchmark(Poly_Method)
-
-Py_Result = benchmark(Python_Method)
+benchmark(Poly_Method)
+benchmark(Python_Method)
