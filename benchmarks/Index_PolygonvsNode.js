@@ -8,6 +8,7 @@ const bench1 = benchmark.createSuite("Polygon vs NodeJS");
 
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:25565/ws');
+ws.setMaxListeners(0);
 
 const sendData = (e) => {
     ws.on('open', () => {

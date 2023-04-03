@@ -1,13 +1,14 @@
 //Node.js v18.15.0
 //Using https://github.com/JewishLewish/PolygonDB/blob/main/databases/Search_Benchmark/database.json
 const Benchmarkify = require("benchmarkify");
-const benchmark = new Benchmarkify("Polygon vs NodeJS via Index").printHeader();
+const benchmark = new Benchmarkify("Polygon vs NodeJS via Search").printHeader();
 const bench1 = benchmark.createSuite("Polygon vs NodeJS");
 
 
 
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:25565/ws');
+ws.setMaxListeners(0);
 
 const sendData = (e) => {
     ws.on('open', () => {
