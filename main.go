@@ -374,9 +374,7 @@ func record(direct *string, jsonParsed *gabs.Container, value interface{}, locat
 func search(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
 	// Parse the search key and target value
 	parts := strings.Split(string(value), ":")
-	targ := []byte(parts[1])
-
-	targetValue, _ := unmarshalJSONValue(&targ)
+	targetValue, _ := unmarshalJSONValue([]byte(parts[1]))
 
 	children := jsonParsed.Path(*direct).Children()
 	if int(math.Log2(float64(len(children)))) < 5 {
@@ -422,8 +420,7 @@ func binary_s(children []*gabs.Container, searchKey string, targetValue interfac
 func indexsearch(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
 	// Parse the search key and target value
 	parts := strings.Split(string(value), ":")
-	targ := []byte(parts[1])
-	targetValue, _ := unmarshalJSONValue(&targ)
+	targetValue, _ := unmarshalJSONValue([]byte(parts[1]))
 
 	children := jsonParsed.Path(*direct).Children()
 	if int(math.Log2(float64(len(children)))) < 5 {
@@ -513,37 +510,37 @@ func append_p(direct *string, jsonParsed *gabs.Container, value interface{}, loc
 }
 
 // Unmarhsals the value into an appropriate json input
-func unmarshalJSONValue(data *[]byte) (interface{}, error) {
+func unmarshalJSONValue(data []byte) (interface{}, error) {
 	var v interface{}
 	var err error
-	if len(*data) == 0 {
+	if len(data) == 0 {
 		return nil, fmt.Errorf("json data is empty")
 	}
-	switch (*data)[0] {
+	switch (data)[0] {
 	case '"':
-		if (*data)[len(*data)-1] != '"' {
+		if (data)[len(data)-1] != '"' {
 			return nil, fmt.Errorf("json string is not properly formatted")
 		}
-		v = string((*data)[1 : len(*data)-1])
+		v = string((data)[1 : len(data)-1])
 	case '{':
-		if (*data)[len(*data)-1] != '}' {
+		if (data)[len(data)-1] != '}' {
 			return nil, fmt.Errorf("json object is not properly formatted")
 		}
-		err = sonic.Unmarshal(*data, &v)
+		err = sonic.Unmarshal(data, &v)
 	case '[':
-		if (*data)[len(*data)-1] != ']' {
+		if (data)[len(data)-1] != ']' {
 			return nil, fmt.Errorf("json array is not properly formatted")
 		}
-		err = sonic.Unmarshal(*data, &v)
+		err = sonic.Unmarshal(data, &v)
 	default:
-		b, e := strconv.ParseBool(string(*data))
+		b, e := strconv.ParseBool(string(data))
 		if e == nil {
 			return b, nil
 		}
 
-		i, e := strconv.Atoi(string(*data))
+		i, e := strconv.Atoi(string(data))
 		if e != nil {
-			v = string(*data)
+			v = string(data)
 			return v, err
 		}
 		v = i
