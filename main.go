@@ -266,9 +266,9 @@ func process(msg *input, ws *websocket.Conn) {
 		if msg.Act == "record" {
 			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, []byte(fmt.Sprint(msg.Val))))
+			wsjson.Write(ctx, ws, search(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
 		} else if msg.Act == "index" {
-			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, []byte(fmt.Sprint(msg.Val))))
+			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
 		} else if msg.Act == "append" {
 			wsjson.Write(ctx, ws, `{"Status": "`+append_p(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
 		}
@@ -371,9 +371,9 @@ func record(direct *string, jsonParsed *gabs.Container, value interface{}, locat
 	return "Success"
 }
 
-func search(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
+func search(direct *string, jsonParsed *gabs.Container, value string) interface{} {
 	// Parse the search key and target value
-	parts := strings.Split(string(value), ":")
+	parts := strings.Split(value, ":")
 	targetValue, _ := unmarshalJSONValue([]byte(parts[1]))
 
 	children := jsonParsed.Path(*direct).Children()
@@ -417,9 +417,9 @@ func binary_s(children []*gabs.Container, searchKey string, targetValue interfac
 	return "Cannot find value."
 }
 
-func indexsearch(direct *string, jsonParsed *gabs.Container, value []byte) interface{} {
+func indexsearch(direct *string, jsonParsed *gabs.Container, value string) interface{} {
 	// Parse the search key and target value
-	parts := strings.Split(string(value), ":")
+	parts := strings.Split(value, ":")
 	targetValue, _ := unmarshalJSONValue([]byte(parts[1]))
 
 	children := jsonParsed.Path(*direct).Children()
@@ -569,120 +569,6 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 	}
 
 	databases.Store(*location, jsonParsed.Bytes())
-}
-
-//Embeddable Section
-//If the code is being used to embed into another Go Lang project then these functions are designed to that.
-//This re-uses the code shown above but re-purposes certain functions for an embed. project
-
-// Starts Polygon Server
-func Start(target string) error {
-	http.HandleFunc("/ws", datahandler)
-	go processQueue()
-	fmt.Print("Server starting on => " + target)
-	er := http.ListenAndServe(target, nil)
-	if er != nil {
-		return er
-	} else {
-		fmt.Print("Server started on -> "+target, "\n")
-		return nil
-	}
-}
-
-// Creates a database for you
-func Create(name, password string) error {
-	if _, err := os.Stat("databases"); os.IsNotExist(err) {
-		os.Mkdir("databases", 0777)
-	}
-
-	if _, err := os.Stat("databases/" + name); err != nil {
-		datacreate(&name, &password)
-		return nil
-	} else {
-		return err
-	}
-}
-
-// dbname = Name of the Database you are trying to retrieve
-// location = Location inside the Database
-func Retrieve_P(dbname string, location string) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	return retrieve(&location, &database), nil
-}
-
-func Record_P(dbname string, location string, value []byte) any {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return er
-	}
-	output := record(&location, &database, value, &dbname)
-	return output
-}
-
-func Search_P(dbname string, location string, value []byte) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	output := search(&location, &database, value)
-	return output, nil
-}
-
-func Append_P(dbname string, location string, value []byte) (any, error) {
-	var database gabs.Container
-	er := datacheck(&dbname, &database)
-	if er != nil {
-		return nil, er
-	}
-	output := append_p(&location, &database, value, &location)
-	return output, nil
-}
-
-type Polygon struct {
-	data gabs.Container
-	name string
-}
-
-// If a user wants a "polygon" database and from there modify that, then they can use the following commands:
-func Get(dbname string) (Polygon, error) {
-	var database Polygon
-	er := datacheck(&dbname, &database.data)
-	if er != nil {
-		return database, er
-	}
-	database.name = dbname
-	return database, nil
-}
-
-func (g Polygon) Retrieve(location string) any {
-	output := retrieve(&location, &g.data)
-	return output
-}
-
-func (g Polygon) Record(location string, value []byte) any {
-	output := record(&location, &g.data, value, &g.name)
-	return output
-}
-
-func (g Polygon) Search(location string, value []byte) map[string]interface{} {
-	output := search(&location, &g.data, value)
-	if output == "Cannot find value." {
-		return nil
-	} else {
-		return output.(map[string]interface{})
-	}
-
-}
-
-func (g Polygon) Append(location string, value []byte) any {
-	output := append_p(&location, &g.data, value, &g.name)
-	return output
 }
 
 // Terminal
