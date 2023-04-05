@@ -359,9 +359,7 @@ func record(direct *string, jsonParsed *gabs.Container, value interface{}, locat
 		jsonParsed.DeleteP(*direct)
 	} else {
 
-		_, err := jsonParsed.SetP(&value, *direct)
-
-		if err != nil {
+		if _, err := jsonParsed.SetP(&value, *direct); err != nil {
 			return err.Error()
 		}
 	}
