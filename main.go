@@ -514,8 +514,7 @@ func binary(children []*gabs.Container, searchKey string, targetValue interface{
 
 func append_p(direct *string, jsonParsed *gabs.Container, value interface{}, location *string) string {
 
-	err := jsonParsed.ArrayAppendP(&value, *direct)
-	if err != nil {
+	if jsonParsed.ArrayAppendP(&value, *direct) != nil {
 		return "Failure"
 	}
 
