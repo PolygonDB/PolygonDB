@@ -332,16 +332,13 @@ func data(location *string) (gabs.Container, error) {
 
 func conf(location *string, jsonData *config) error {
 
-	content, _ := os.ReadFile("databases/" + *location + "/config.json")
+    content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
-	// Unmarshal the JSON data for config
-	err := sonic.Unmarshal(content, &jsonData)
-
-	//*err = json.NewDecoder(file).Decode(&jsonData)
-	if err != nil {
-		return err
-	}
-	return nil
+    // Unmarshal the JSON data for config
+    if err := sonic.Unmarshal(content, &jsonData); err != nil {
+        return err
+    }
+    return nil
 }
 
 // Types of Actions
