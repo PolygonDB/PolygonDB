@@ -248,8 +248,7 @@ func processQueue() {
 
 func process(msg *input, ws *websocket.Conn) {
 
-	err := cd(&msg.Dbname, &confdata, &database)
-	if err != nil {
+	if err := cd(&msg.Dbname, &confdata, &database); err != nil {
 		wsjson.Write(ctx, ws, `{"Error": "`+err.Error()+`".}`)
 		return
 	}
