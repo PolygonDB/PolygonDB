@@ -179,9 +179,7 @@ func address(r *string) bool {
 	if len(whitelist) == 0 {
 		return true
 	} else {
-		host, _, _ := net.SplitHostPort(*r)
-		defer nullify(&host)
-		if contains(&whitelist, &host) {
+		if host, _, _ := net.SplitHostPort(*r); contains(&whitelist, &host) {
 			return true
 		} else {
 			return false
@@ -332,13 +330,13 @@ func data(location *string) (gabs.Container, error) {
 
 func conf(location *string, jsonData *config) error {
 
-    content, _ := os.ReadFile("databases/" + *location + "/config.json")
+	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
-    // Unmarshal the JSON data for config
-    if err := sonic.Unmarshal(content, &jsonData); err != nil {
-        return err
-    }
-    return nil
+	// Unmarshal the JSON data for config
+	if err := sonic.Unmarshal(content, &jsonData); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Types of Actions
