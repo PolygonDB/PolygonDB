@@ -295,9 +295,9 @@ func cd(location *string, jsonData *config, database *gabs.Container) error {
 
 		if err != nil {
 			return err
-		} else {
-			return nil
 		}
+		return nil
+
 	} else {
 		return err
 	}
