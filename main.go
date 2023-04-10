@@ -179,11 +179,8 @@ func address(r *string) bool {
 	if len(whitelist) == 0 {
 		return true
 	} else {
-		if host, _, _ := net.SplitHostPort(*r); contains(&whitelist, &host) {
-			return true
-		} else {
-			return false
-		}
+		host, _, _ := net.SplitHostPort(*r)
+		return contains(&whitelist, &host)
 	}
 }
 
