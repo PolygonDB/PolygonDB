@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"reflect"
 	"runtime"
 	"sort"
 	"strconv"
@@ -31,8 +30,6 @@ var (
 	databases = &atomicDatabase{
 		data: make(map[string][]byte),
 	}
-
-	queue = make(chan wsMessage)
 
 	mutex     = &sync.Mutex{}
 	whitelist []interface{}
@@ -68,7 +65,6 @@ func main() {
 	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
 
 	go mainterm()
-	go processQueue()
 	logb = set.Logb
 	whitelist = set.Whiteadd
 
@@ -124,12 +120,6 @@ func (ad *atomicDatabase) Store(location string, value []byte) {
 	defer ad.mu.RUnlock()
 
 	ad.data[location] = value
-}
-
-// Websocket Message. Each wsMessage is placed in queue
-type wsMessage struct {
-	ws  *websocket.Conn
-	msg input
 }
 
 // Parses Input that the Websocket would recieve
@@ -214,27 +204,13 @@ func takein(ws *websocket.Conn, r *http.Request) bool {
 	}
 
 	//add message to the queue
-	queue <- wsMessage{ws: ws, msg: msg}
+	process(&msg, ws)
 	mutex.Unlock()
 	if logb {
 		log(r, msg)
 	}
 
 	return true
-}
-
-// Processes the Queue. One at a time.
-// Both Websocket Handler and Processes Queue work semi-independently
-// a Mutex.Lock() is made so it can prevent any possible global variable manipulation and ensures safety
-
-func processQueue() {
-	var output wsMessage
-	for {
-		output = <-queue
-		mutex.Lock()
-		process(&output.msg, output.ws)
-		mutex.Unlock()
-	}
 }
 
 // Processes the request
@@ -549,14 +525,6 @@ func unmarshalJSONValue(data []byte) (interface{}, error) {
 		v = i
 	}
 	return v, err
-}
-
-// Nullify basically helps with the memory management when it comes to websockets
-func nullify(ptr interface{}) {
-	val := reflect.ValueOf(ptr)
-	if val.Kind() == reflect.Ptr {
-		val.Elem().Set(reflect.Zero(val.Elem().Type()))
-	}
 }
 
 // Sync Update
