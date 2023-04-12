@@ -53,7 +53,6 @@ print(json.loads(ws.recv()))  # "A"
 	<a href="https://discord.gg/MHEAwNjKb2"><img src="https://discordapp.com/api/guilds/1024761808407498893/widget.png?style=banner2" alt="Discord Banner 2"/></a>
 	<img src="https://discordapp.com/api/guilds/1046141941387116565/widget.png?style=banner2" alt="Discord Banner 2"/>
 	<img src="https://discordapp.com/api/guilds/1076152760719900732/widget.png?style=banner2" alt="Discord Banner 2"/>
-    <img src="https://discordapp.com/api/guilds/1067868449826685060/widget.png?style=banner2" alt="Discord Banner 2"/>
 </div>
 
 ## 👀 Community Projects
