@@ -59,7 +59,7 @@ print(json.loads(ws.recv()))  # "A"
 | Name & Link | Description | Type |
 |---------------|---------------------------------------------------| ------- |
 | [PloyconJS](https://github.com/NekaouMike/PolyConJS) | NodeJS Package for Polygon | Package |
-| [PolyDash](https://github.com/NekaouMike/PolyDash) | Polygon | Utility| 
+| [PolyDash](https://github.com/NekaouMike/PolyDash) | Polygon Dashboard for Data Displaying | Utility| 
 | [PolygonPy](https://github.com/DWAA1660/PolyWrapper) | Python Package for Polygon | Package |
 
 ## Contact me
