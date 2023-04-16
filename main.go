@@ -807,8 +807,7 @@ func checkenc(location *string) bool {
 	content, _ := os.ReadFile("databases/" + *location + "/config.json")
 
 	// Unmarshal the JSON data for config
-	err := sonic.Unmarshal(content, &jsonData)
-	if err != nil {
+	if sonic.Unmarshal(content, &jsonData) != nil {
 		return false
 	}
 	return jsonData.Enc
