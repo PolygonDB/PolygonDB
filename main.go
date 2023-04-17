@@ -39,6 +39,7 @@ var (
 	msg       input
 	confdata  config
 	database  gabs.Container
+	wsize     int
 )
 
 // Config for databases only holds key
@@ -67,6 +68,7 @@ func main() {
 	go mainterm()
 	logb = set.Logb
 	whitelist = set.Whiteadd
+	wsize = len(set.Whiteadd)
 
 	http.ListenAndServe(set.Addr+":"+set.Port, nil)
 }
@@ -166,7 +168,7 @@ func datahandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func address(r *string) bool {
-	if len(whitelist) == 0 {
+	if wsize == 0 {
 		return true
 	} else {
 		host, _, _ := net.SplitHostPort(*r)
