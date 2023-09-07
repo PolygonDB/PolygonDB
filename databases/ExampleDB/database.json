@@ -1,11 +1,29 @@
 {
     "data": {
+        "isActive": true,
+        "guid": "9bc0bde6-f4dd-4824-8bda-e5cb5e78d766",
+        "greeting": "Hello, Cash Clayton! You have 2 unread messages.",
+        "picture": "http://placehold.it/32x32",
         "address": "917 Church Avenue, Irwin, Ohio, 7943",
+        "registered": "2022-04-02T03:29:35 +07:00",
+        "age": 26,
+        "company": {
+            "Workers": [
+                "Mike",
+                "Tite"
+            ],
+            "CompanyName": "COMBOT",
+            "Years_of_Service": 1962
+        },
         "index": 0,
+        "name": "Cash Clayton",
+        "_id": "642b2f999869d759f256f4db",
+        "latitude": -8.058594,
+        "longitude": -8.208336,
+        "eyeColor": "brown",
+        "balance": 2196.67,
         "gender": "male",
         "about": "Id non et labore aute pariatur sunt. Culpa cupidatat commodo aliqua officia irure do occaecat fugiat veniam eiusmod ipsum ad. Exercitation amet sit ad tempor commodo in aliquip minim. Veniam adipisicing sit aute laboris aute excepteur nostrud amet cupidatat culpa aliquip do. Ad tempor non esse nisi tempor ea officia.\r\n",
-        "registered": "2022-04-02T03:29:35 +07:00",
-        "_id": "642b2f999869d759f256f4db",
         "tags": [
             "irure",
             "laboris",
@@ -15,9 +33,6 @@
             "ut",
             "cillum"
         ],
-        "guid": "9bc0bde6-f4dd-4824-8bda-e5cb5e78d766",
-        "longitude": -8.208336,
-        "latitude": -8.058594,
         "friends": [
             {
                 "name": "Gail Carey",
@@ -28,28 +43,18 @@
                 "client": false
             },
             {
-                "name": "Stephanie Mayer",
-                "client": true
+                "client": true,
+                "name": "Stephanie Mayer"
             },
             {
-                "name": "Carson Sudo",
-                "client": true
+                "client": true,
+                "name": "Carson Sudo"
             }
-        ],
-        "greeting": "Hello, Cash Clayton! You have 2 unread messages.",
-        "balance": 2196.67,
-        "name": "Cash Clayton",
-        "isActive": true,
-        "eyeColor": "brown",
-        "age": 26,
-        "company": {
-            "Workers": [
-                "Mike",
-                "Tite"
-            ],
-            "CompanyName": "COMBOT",
-            "Years_of_Service": 1962
-        },
-        "picture": "http://placehold.it/32x32"
+        ]
+    },
+    "rows": {
+        "0": {
+            "age": "5"
+        }
     }
 }

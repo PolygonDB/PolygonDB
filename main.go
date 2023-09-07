@@ -2,13 +2,9 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"crypto/rc4"
 	"fmt"
-	"io"
 	"math"
-	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
@@ -16,12 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/JewishLewish/PolygonDB/GoPackage/gabs.Revisioned"
-
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 
 	"github.com/bytedance/sonic"
 )
@@ -30,17 +22,76 @@ var (
 	databases = &atomicDatabase{
 		data: make(map[string][]byte),
 	}
-
-	mutex     = &sync.Mutex{}
-	whitelist []interface{}
-	logb      bool
-	lock      string
-	ctx       context.Context = context.Background()
-	msg       input
-	confdata  config
-	database  gabs.Container
-	wsize     int
+	lock     string
+	msg      input
+	confdata config
+	database gabs.Container
 )
+
+/*
+Main function
+
+Works as both a terminal and json reader
+*/
+func main() {
+	fmt.Print("Polygon v1.7 +++ \n")
+	scanner := bufio.NewScanner(os.Stdin)
+	locked := false
+
+	for {
+		scanner.Scan()
+		if err := sonic.Unmarshal(scanner.Bytes(), &msg); err == nil {
+			process(&msg)
+			fmt.Print("\n")
+		} else {
+			parts := strings.Fields(scanner.Text())
+			if len(parts) == 0 {
+				continue
+			}
+
+			if locked {
+				if parts[0] == "unlock" {
+					if len(parts) == 1 {
+						continue
+					} else {
+						if parts[1] == lock {
+							lock = ""
+							locked = false
+						}
+					}
+				} else {
+					clearScreen()
+				}
+			} else {
+				switch strings.ToLower(parts[0]) {
+				case "help":
+					help()
+				case "create_database":
+					datacreate(&parts[1], &parts[2])
+				case "resync":
+					resync(&parts[1])
+				case "encrypt":
+					encrypt(&parts[1])
+				case "decrypt":
+					decrypt(&parts[1])
+				case "change_password":
+					chpassword(&parts[1], &parts[2])
+				case "lock":
+					if len(parts) == 1 {
+						continue
+					} else {
+						lock = parts[1]
+						locked = true
+						clearScreen()
+					}
+				}
+
+			}
+			parts = nil
+		}
+
+	}
+}
 
 // Config for databases only holds key
 type config struct {
@@ -48,58 +99,6 @@ type config struct {
 	Enc bool   `json:"encrypted"`
 }
 
-// Settings.json parsing
-type settings struct {
-	Addr     string        `json:"addr"`
-	Port     string        `json:"port"`
-	Logb     bool          `json:"log"`
-	Whiteadd []interface{} `json:"whitelist_addresses"`
-}
-
-// main
-// When using a Go Package. This will be ignored. This code is designed for the standalone executable
-func main() {
-
-	set := portgrab()
-
-	http.HandleFunc("/ws", datahandler)
-	fmt.Print("Server started on -> "+set.Addr+":"+set.Port, "\n")
-
-	go mainterm()
-	logb = set.Logb
-	whitelist = set.Whiteadd
-	wsize = len(set.Whiteadd)
-
-	http.ListenAndServe(set.Addr+":"+set.Port, nil)
-}
-
-// Parses the data
-// Grabs the informatin from settings.json
-func portgrab() settings {
-	if _, err := os.Stat("settings.json"); os.IsNotExist(err) {
-		setup()
-	}
-
-	if _, err := os.Stat("databases"); os.IsNotExist(err) {
-		err = os.Mkdir("databases", 0755)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("Folder 'databases' created successfully.")
-	}
-
-	var set settings
-	sonic.Unmarshal(getFilecontent("settings.json"), &set)
-	return set
-}
-
-func getFilecontent(filename string) []byte {
-	file, _ := os.ReadFile("settings.json")
-	return file
-}
-
-// Uses Atomic Sync for Low Level Sync Pooling and High Memory Efficiency
-// Instead of Constantly Re-opening the database json file, this would save the database once and re-use it
 type atomicDatabase struct {
 	data map[string][]byte
 	mu   sync.RWMutex
@@ -133,116 +132,34 @@ type input struct {
 	Val    interface{} `json:"value"`
 }
 
-func log(r *http.Request, msg input) {
-	output, _ := sonic.ConfigDefault.MarshalIndent(&msg, "", "    ")
-
-	f, err := os.OpenFile("History.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	if _, err = f.WriteString(fmt.Sprintf("%s - %s\n", time.Now().String(), "\n\tAddress: "+r.RemoteAddr+"\n\tContent:"+string(output)+"\n")); err != nil {
-		panic(err)
-	}
-}
-
-// datahandler is where the mainsocker action occurs.
-
-func datahandler(w http.ResponseWriter, r *http.Request) {
-
-	ws, _ := websocket.Accept(w, r, nil)
-	defer ws.Close(websocket.StatusNormalClosure, "")
-
-	if address(&r.RemoteAddr) {
-		for {
-			if !takein(ws, r) {
-				ws.Close(websocket.StatusInternalError, "")
-				break
-			}
-		}
-	} else {
-		ws.Close(websocket.StatusNormalClosure, "")
-	}
-
-}
-
-func address(r *string) bool {
-	if wsize == 0 {
-		return true
-	} else {
-		host, _, _ := net.SplitHostPort(*r)
-		return contains(&whitelist, &host)
-	}
-}
-
-func contains(s *[]interface{}, str *string) bool {
-	for _, v := range *s {
-		if v == *str {
-			return true
-		}
-	}
-	return false
-}
-
-//Take in takes in the Websocket Message
-/*\
-From there it does checking to see if it's a valid message or not. If it's not then the for loop for that specific request breaks off.
-*/
-
-func takein(ws *websocket.Conn, r *http.Request) bool {
-
-	//Reads input
-	_, reader, err := ws.Reader(ctx)
-	if err != nil {
-		return false
-	}
-
-	message, _ := io.ReadAll(reader)
-
-	mutex.Lock()
-	if err = sonic.Unmarshal(message, &msg); err != nil {
-		return false
-	}
-
-	//add message to the queue
-	process(&msg, ws)
-	mutex.Unlock()
-	if logb {
-		log(r, msg)
-	}
-
-	return true
-}
-
 // Processes the request
 // Global Variables Being Used Here to Limit the amt of stuff for GC to clean up
 // Global Variables aren't harmed since mutex.Lock() is protecting them from any memory screw ups
 
-func process(msg *input, ws *websocket.Conn) {
+func process(msg *input) {
 
 	if err := cd(&msg.Dbname, &confdata, &database); err != nil {
-		wsjson.Write(ctx, ws, `{"Error": "`+err.Error()+`".}`)
+		fmt.Print(`{"Error": "` + err.Error() + `".}`)
 		return
 	}
 	if msg.Pass != confdata.Key {
-		wsjson.Write(ctx, ws, `{"Error": "Incorrect Password"}`)
+		fmt.Print(`{"Error": "Incorrect Password"}`)
 		return
 	}
 
 	if msg.Act == "retrieve" {
-		wsjson.Write(ctx, ws, retrieve(&msg.Loc, &database))
+		fmt.Print(retrieve(&msg.Loc, &database))
 	} else if msg.Act == "remove" {
-		wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, "", &msg.Dbname)+`"}`)
+		fmt.Print(`{"Status": "` + record(&msg.Loc, &database, "", &msg.Dbname) + `"}`)
 	} else {
 		if msg.Act == "record" {
-			wsjson.Write(ctx, ws, `{"Status": "`+record(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
+			fmt.Print(`{"Status": "` + record(&msg.Loc, &database, msg.Val, &msg.Dbname) + `"}`)
 		} else if msg.Act == "search" {
-			wsjson.Write(ctx, ws, search(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
+			fmt.Print(search(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
 		} else if msg.Act == "index" {
-			wsjson.Write(ctx, ws, indexsearch(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
+			fmt.Print(indexsearch(&msg.Loc, &database, (fmt.Sprint(msg.Val))))
 		} else if msg.Act == "append" {
-			wsjson.Write(ctx, ws, `{"Status": "`+append_p(&msg.Loc, &database, msg.Val, &msg.Dbname)+`"}`)
+			fmt.Print(`{"Status": "` + append_p(&msg.Loc, &database, msg.Val, &msg.Dbname) + `"}`)
 		}
 	}
 
@@ -545,61 +462,6 @@ func syncupdate(jsonParsed *gabs.Container, location *string) {
 }
 
 // Terminal
-// This is designed for the standalone executable.
-// However, datacreate() is used in the Create Function for Go Package
-func mainterm() {
-	scanner := bufio.NewScanner(os.Stdin)
-	locked := false
-	for {
-		scanner.Scan()
-		parts := strings.Fields(scanner.Text())
-		if len(parts) == 0 {
-			continue
-		}
-
-		if locked {
-			if parts[0] == "unlock" {
-				if len(parts) == 1 {
-					continue
-				} else {
-					if parts[1] == lock {
-						lock = ""
-						locked = false
-					}
-				}
-			} else {
-				clearScreen()
-			}
-		} else {
-			switch strings.ToLower(parts[0]) {
-			case "help":
-				help()
-			case "create_database":
-				datacreate(&parts[1], &parts[2])
-			case "setup":
-				setup()
-			case "resync":
-				resync(&parts[1])
-			case "encrypt":
-				encrypt(&parts[1])
-			case "decrypt":
-				decrypt(&parts[1])
-			case "change_password":
-				chpassword(&parts[1], &parts[2])
-			case "lock":
-				if len(parts) == 1 {
-					continue
-				} else {
-					lock = parts[1]
-					locked = true
-					clearScreen()
-				}
-			}
-
-		}
-		parts = nil
-	}
-}
 
 func help() {
 	fmt.Print("\n====Polygon Terminal====\n")
@@ -650,18 +512,6 @@ func chpassword(name, pass *string) {
 	WriteFile("databases/"+*name+"/config.json", &content, 0644)
 
 	fmt.Print("Password successfully changed!\n")
-}
-
-func setup() {
-	defaultset := settings{
-		Addr:     "0.0.0.0",
-		Port:     "25565",
-		Logb:     false,
-		Whiteadd: make([]interface{}, 0),
-	}
-	data, _ := sonic.ConfigFastest.MarshalIndent(&defaultset, "", "    ")
-	WriteFile("settings.json", &data, 0644)
-	fmt.Print("Settings.json has been setup. \n")
 }
 
 func resync(name *string) {
