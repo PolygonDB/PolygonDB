@@ -7,3 +7,6 @@ compiled
 package-lock.json
 package.json
 node_modules
+
+#Rust Files
+PolygonDB_Rust/target
