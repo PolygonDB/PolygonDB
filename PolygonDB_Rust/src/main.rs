@@ -1,6 +1,7 @@
 use serde_json::{json, Value, from_str};
 use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead};
+use colored::*;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
@@ -40,11 +41,7 @@ fn main() {
 
         if  target == "CREATE_DATABASE" {
             if byte.count() <= 1 {
-                print!(
-                    "
-                    ERROR: CREATE_DATABASE _________\n
-                                           ^^^^^^^^^
-                                               ");
+                poly_error(0, r#"{"Error":"CREATE_DATABASE TAKES IN TWO ARGS"}"#);
                 return;
             }
             print!("test");
@@ -64,6 +61,11 @@ fn is_json(text: &str) -> bool {
     return false;
 }
 
-fn poly_error(erlevel: i8){
+fn poly_error(erlevel: i8, text: &str){
+    if erlevel == 0 { //Warning; No Real Damage Done
+        print!("{}",text.bright_yellow())
+    } //Mild
+    else if erlevel == 1 {} // Warning
+    else if erlevel == 2 {} //Error;
     return;
 }
