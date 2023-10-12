@@ -56,7 +56,7 @@ fn main() {
             
         } else if (parsed_input.action == "delete") {
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
-            let _previous = ptr.assign(&mut parsed_json, "").unwrap();
+            let _previous = ptr.delete(&mut parsed_json).unwrap();
         } else {
             poly_error(0, "NO ACTION WAS PICKED. [read/create/update/delete]");
         }
