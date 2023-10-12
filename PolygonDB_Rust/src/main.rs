@@ -24,7 +24,7 @@ fn main() {
 
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "update", "value": 20}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
     //Example
 
 
@@ -51,8 +51,17 @@ fn main() {
 
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
 
+            fn update_content(dbname: String, content: String) -> bool {
+                let _ = fs::write(format!("databases/{}.ply",dbname), content);
+                return false;
+            }
 
-            println!("{:?}",parsed_json);
+            let json_str = serde_json::to_string_pretty(&parsed_json);
+
+            update_content(parsed_input.dbname, json_str.unwrap().to_string());
+
+            println!("works");
+            
 
 
         } else if (parsed_input.action == "update") { 
