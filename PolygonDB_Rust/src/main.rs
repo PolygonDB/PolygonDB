@@ -1,6 +1,6 @@
-use serde_json::{json, Value, from_str};
+
 use serde::{Deserialize, Serialize};
-use std::io::{self, BufRead};
+use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
 use colored::*;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -19,6 +19,8 @@ fn main() {
     let mut data = String::new();
     scanner.read_line(&mut data).unwrap();
 
+    let mut args: Vec<&str> = Vec::new();
+
     /*data = r#"
     {
         "dbname": "name_of_database", 
@@ -28,28 +30,37 @@ fn main() {
     }"#.to_string();*/
 
 
-    if is_json(&data) {
+    if is_json(&data) { //json input
         let parsed_json: Input = serde_json::from_str(&data).unwrap();
         if parsed_json.action == "record" {
             println!("record");
         }
         println!("{:?}", parsed_json);
-    } else {
-        let mut byte = data.split_whitespace();
-        let target: String = byte.nth(0).unwrap().to_string();
-        println!("{:?}", target);
 
-        if  target == "CREATE_DATABASE" {
-            if byte.count() <= 1 {
+    } else {
+
+        for byte in data.split_whitespace() {
+            args.push(byte);
+        }
+
+        println!("{:?}", args.first());
+        if  args.first().unwrap().to_string() == "CREATE_DATABASE" {
+            if args.len() <= 1 {
                 poly_error(0, r#"{"Error":"CREATE_DATABASE TAKES IN TWO ARGS"}"#);
                 return;
             }
-            print!("test");
+            create_database(args.get(1).unwrap().to_string());
         }
     }
+}
 
 
-    
+fn create_database(name: String) {
+    if !Path::new("databases").exists() { //Checks if the folder "databases" exists
+        let _ = fs::create_dir("databases");
+    }
+
+    let mut file = File::create(format!("databases/{}.ply", name));
 }
 
 fn is_json(text: &str) -> bool {
