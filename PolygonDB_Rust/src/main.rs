@@ -1,8 +1,7 @@
-#![allow(dead_code)]
-use jsonptr::Pointer;
+use jsonptr::{Pointer, Delete};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, BufWriter}, path::Path, fs::{self, File}, str::FromStr};
+use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -21,10 +20,9 @@ fn main() {
     let mut scanner = stdin.lock();
     let mut data = String::new();
     scanner.read_line(&mut data).unwrap();
-
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "delete", "value": 21}"#.to_string();
     //Example
 
 
@@ -51,30 +49,35 @@ fn main() {
 
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
 
-            fn update_content(dbname: String, content: String) -> bool {
-                let _ = fs::write(format!("databases/{}.ply",dbname), content);
-                return false;
-            }
+
 
             let json_str = serde_json::to_string_pretty(&parsed_json);
 
-            update_content(parsed_input.dbname, json_str.unwrap().to_string());
+            maincore::update_content(parsed_input.dbname, json_str.unwrap().to_string());
 
             println!("works");
             
 
 
         } else if (parsed_input.action == "update") { 
+            
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
             
             let data_to_insert = serde_json::json!(parsed_input.value);
-            let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+            let _previous = ptr.assign(&mut parsed_json, data_to_insert);
+
+            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
             println!("{:?}",parsed_json)
             
         } else if (parsed_input.action == "delete") {
+            println!("DELETE");
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
-            let _previous = ptr.delete(&mut parsed_json).unwrap();
+            parsed_json.delete(&ptr);
+            let _previous = ptr.delete(&mut parsed_json);
+            
+            println!("{:?}",parsed_json);
+            println!("{:?}",_previous);
         } else {
             poly_error(0, "NO ACTION WAS PICKED. [read/create/update/delete]");
         }

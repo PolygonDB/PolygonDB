@@ -1,6 +1,7 @@
+use std::fs;
+
 use jsonptr::Pointer;
 use serde_json::Value;
-use anyhow::Result;
 
 pub fn test(target: &str, db: &Value) -> jsonptr::Pointer{
     let ptr = Pointer::try_from(target).unwrap();
@@ -21,4 +22,9 @@ pub fn test(target: &str, db: &Value) -> jsonptr::Pointer{
 
 fn is_array(value: &Value) -> bool {
     value.is_array()
+}
+
+pub fn update_content(dbname: String, content: String) -> bool {
+    let _ = fs::write(format!("databases/{}.ply",dbname), content);
+    return false;
 }
