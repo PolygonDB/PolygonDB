@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{io::{self, BufRead, BufWriter}, path::Path, fs::{self, File}, str::FromStr};
 
+mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
     dbname: String,
@@ -23,7 +24,7 @@ fn main() {
 
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example/2", "action": "read", "value": 20}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "update", "value": 20}"#.to_string();
     //Example
 
 
@@ -43,16 +44,24 @@ fn main() {
             }
 
         } else if (parsed_input.action == "create") {
-            let ptr = Pointer::try_from(parsed_input.location).unwrap();
+
             
+            let ptr = maincore::test(&parsed_input.location, &parsed_json);
             let data_to_insert = serde_json::json!(parsed_input.value);
+
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+
+
             println!("{:?}",parsed_json);
+
+
         } else if (parsed_input.action == "update") { 
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
             
             let data_to_insert = serde_json::json!(parsed_input.value);
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+
+            println!("{:?}",parsed_json)
             
         } else if (parsed_input.action == "delete") {
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
