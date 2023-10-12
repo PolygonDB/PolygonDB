@@ -1,8 +1,8 @@
-
-use json_pointer::JsonPointer;
+#![allow(dead_code)]
+use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
+use std::{io::{self, BufRead, BufWriter}, path::Path, fs::{self, File}, str::FromStr};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
@@ -15,6 +15,7 @@ struct Input {
 fn main() {
     println!("Polygon v1.7 +++");
 
+
     let stdin = io::stdin();
     let mut scanner = stdin.lock();
     let mut data = String::new();
@@ -22,19 +23,42 @@ fn main() {
 
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "read", "value": 20}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example/2", "action": "read", "value": 20}"#.to_string();
+    //Example
 
 
     if is_json(&data.clone()) { //json input
-        
-        println!("{}",data);
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
+        let raw_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
+        let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
+        
         if parsed_input.action == "read" {
-            let raw_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
-            let parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
 
-            let output = parsed_input.location.parse::<JsonPointer<_, _>>().unwrap().get(&parsed_json).unwrap();
-            println!("{:?}", output);
+            let output = parsed_json.pointer(&parsed_input.location);
+
+            if output == None {
+                println!("None");
+            } else {
+                println!("{:?}", output.unwrap());
+            }
+
+        } else if (parsed_input.action == "create") {
+            let ptr = Pointer::try_from(parsed_input.location).unwrap();
+            
+            let data_to_insert = serde_json::json!(parsed_input.value);
+            let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+            println!("{:?}",parsed_json);
+        } else if (parsed_input.action == "update") { 
+            let ptr = Pointer::try_from(parsed_input.location).unwrap();
+            
+            let data_to_insert = serde_json::json!(parsed_input.value);
+            let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+            
+        } else if (parsed_input.action == "delete") {
+            let ptr = Pointer::try_from(parsed_input.location).unwrap();
+            let _previous = ptr.assign(&mut parsed_json, "").unwrap();
+        } else {
+            poly_error(0, "NO ACTION WAS PICKED. [read/create/update/delete]");
         }
 
     } else {
