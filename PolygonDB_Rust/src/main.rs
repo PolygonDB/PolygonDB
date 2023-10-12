@@ -1,7 +1,8 @@
 
+use json_pointer::JsonPointer;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
-use colored::*;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
@@ -21,7 +22,7 @@ fn main() {
 
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "Home", "location": "", "action": "read", "value": 20}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "read", "value": 20}"#.to_string();
 
 
     if is_json(&data.clone()) { //json input
@@ -29,9 +30,11 @@ fn main() {
         println!("{}",data);
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
         if parsed_input.action == "read" {
-            println!("read");
-            let parsed_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
-            println!("{}", parsed_json);
+            let raw_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
+            let parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
+
+            let output = parsed_input.location.parse::<JsonPointer<_, _>>().unwrap().get(&parsed_json).unwrap();
+            println!("{:?}", output);
         }
 
     } else {
@@ -71,7 +74,7 @@ fn is_json(text: &str) -> bool {
 
 fn poly_error(erlevel: i8, text: &str){
     if erlevel == 0 { //Warning; No Real Damage Done
-        print!("{}",text.bright_yellow())
+        print!("{}",text)
     } //Mild
     else if erlevel == 1 {} // Warning
     else if erlevel == 2 {} //Error;
