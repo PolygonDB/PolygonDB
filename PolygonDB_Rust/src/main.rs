@@ -21,21 +21,18 @@ fn main() {
 
     let mut args: Vec<&str> = Vec::new();
 
-    /*data = r#"
-    {
-        "dbname": "name_of_database", 
-        "location": "location_in_database", 
-        "action": "record", 
-        "value": 20
-    }"#.to_string();*/
+    data = r#"{"dbname": "Home", "location": "", "action": "read", "value": 20}"#.to_string();
 
 
-    if is_json(&data) { //json input
-        let parsed_json: Input = serde_json::from_str(&data).unwrap();
-        if parsed_json.action == "record" {
-            println!("record");
+    if is_json(&data.clone()) { //json input
+        
+        println!("{}",data);
+        let parsed_input: Input = serde_json::from_str(&data).unwrap();
+        if parsed_input.action == "read" {
+            println!("read");
+            let parsed_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
+            println!("{}", parsed_json);
         }
-        println!("{:?}", parsed_json);
 
     } else {
 
@@ -64,8 +61,8 @@ fn create_database(name: String) {
 }
 
 fn is_json(text: &str) -> bool {
-    let f = text.chars().nth(0).unwrap();
-    let l = text.chars().nth(text.chars().count()-1).unwrap();
+    let f = text.chars().nth(0).unwrap().to_ascii_lowercase();
+    let l = text.chars().nth(text.chars().count()-1).unwrap().to_ascii_lowercase();
     if f == '{' && l == '}' {
         return true;
     }
