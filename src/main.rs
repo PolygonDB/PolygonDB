@@ -26,23 +26,24 @@ fn execute() -> String {
     let mut data = String::new();
     scanner.read_line(&mut data).unwrap();
 
-    //data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
+    //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
     //Example
 
 
     if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
-        let raw_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
+        let raw_json = fs::read_to_string(format!("databases/{}.json", parsed_input.dbname)).expect("Unable to read file");
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
         
         if parsed_input.action == "read" {
 
             let output = parsed_json.pointer(&parsed_input.location);
-
+            println!("{}",output.unwrap());
+            
             if output == None {
                 return cleaner_output(1, "None");
             } else {
-                return format!(r#"{{"Status":{}, "Message":"{}"}}"#, 0, output.unwrap());
+                return format!(r#"{{"Status":{}, "Message":{}}}"#, 0, output.unwrap());
             }
 
         } else if parsed_input.action == "create" {
@@ -113,13 +114,17 @@ fn create_database(name: String) {
         let _ = fs::create_dir("databases");
     }
 
-    let _ = File::create(format!("databases/{}.ply", name));
-    let _ = fs::write(format!("databases/{}.ply", name), "{}");
+    let _ = File::create(format!("databases/{}.json", name));
+    let _ = fs::write(format!("databases/{}.json", name), "{}");
 }
 
 fn is_json(text: &str) -> bool {
-    let f = text.chars().nth(0).unwrap().to_ascii_lowercase();
-    let l = text.chars().nth(text.chars().count()-1).unwrap().to_ascii_lowercase();
+    let temp = text.replace("\n", "").replace("\r", "");
+
+
+    let l = temp.chars().rev().nth(0).unwrap();
+    let f = temp.chars().nth(0).unwrap();
+
     if f == '{' && l == '}' {
         return true;
     }
