@@ -1,8 +1,8 @@
 use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
-use std::{io::{self, BufRead}, path::Path, fs::{self, File}, fmt::format};
+use serde_json::Value;
+use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -14,8 +14,10 @@ struct Input {
 }
 
 
-
-fn main() -> String{
+fn main() {
+    print!("{}",execute());
+}
+fn execute() -> String {
     println!("Polygon v1.7 +++");
 
 
@@ -23,7 +25,6 @@ fn main() -> String{
     let mut scanner = stdin.lock();
     let mut data = String::new();
     scanner.read_line(&mut data).unwrap();
-    let mut args: Vec<&str> = Vec::new();
 
     data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
     //Example
@@ -39,7 +40,7 @@ fn main() -> String{
             let output = parsed_json.pointer(&parsed_input.location);
 
             if output == None {
-                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 1, None);
+                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 1, "None");
             } else {
                 return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 0, output.unwrap());
             }
@@ -51,8 +52,6 @@ fn main() -> String{
             let data_to_insert = serde_json::json!(parsed_input.value);
 
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
-
-
 
             let json_str = serde_json::to_string_pretty(&parsed_json);
 
@@ -87,6 +86,8 @@ fn main() -> String{
         }
 
     } else {
+
+        let mut args: Vec<&str> = Vec::new();
 
         for byte in data.split_whitespace() {
             args.push(byte);
