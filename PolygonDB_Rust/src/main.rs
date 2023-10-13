@@ -1,8 +1,8 @@
 use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value};
-use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
+use serde_json::{Value, json};
+use std::{io::{self, BufRead}, path::Path, fs::{self, File}, fmt::format};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -13,7 +13,9 @@ struct Input {
     value: serde_json::Value,
 }
 
-fn main() {
+
+
+fn main() -> String{
     println!("Polygon v1.7 +++");
 
 
@@ -23,11 +25,11 @@ fn main() {
     scanner.read_line(&mut data).unwrap();
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "delete", "value": "Example"}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
     //Example
 
 
-    if is_json(&data.clone()) { //json input
+    if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
         let raw_json = fs::read_to_string(format!("databases/{}.ply", parsed_input.dbname)).expect("Unable to read file");
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
@@ -37,9 +39,9 @@ fn main() {
             let output = parsed_json.pointer(&parsed_input.location);
 
             if output == None {
-                println!("None");
+                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 1, None);
             } else {
-                println!("{:?}", output.unwrap());
+                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 0, output.unwrap());
             }
 
         } else if parsed_input.action == "create" {
@@ -56,7 +58,7 @@ fn main() {
 
             maincore::update_content(parsed_input.dbname, json_str.unwrap().to_string());
 
-            println!("works");
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Created");
             
 
 
@@ -69,7 +71,7 @@ fn main() {
 
             maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
-            println!("{:?}",parsed_json)
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Updated");
             
         } else if parsed_input.action == "delete" {
 
@@ -78,9 +80,10 @@ fn main() {
             maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
 
-            println!("{:?}",parsed_json)
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Deleted");
+
         } else {
-            poly_error(0, "NO ACTION WAS PICKED. [read/create/update/delete]");
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 1, "Please Pick Appropriate Command [READ/CREATE/UPDATE/DELETE]");
         }
 
     } else {
@@ -93,9 +96,14 @@ fn main() {
         if  args.first().unwrap().to_string() == "CREATE_DATABASE" {
             if args.len() <= 1 {
                 poly_error(0, r#"{"Error":"CREATE_DATABASE TAKES IN TWO ARGS"}"#);
-                return;
+                return format!("{{\"status\": {}, \"message\": \"{}\"}}", 1, "CREATE_DATABASE TAKES IN TWO ARGS");
             }
+
             create_database(args.get(1).unwrap().to_string());
+
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Created Database");
+        } else {
+            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "No Appropriate Command Selected");
         }
     }
 }
@@ -116,6 +124,28 @@ fn is_json(text: &str) -> bool {
         return true;
     }
     return false;
+}
+
+trait MyTrait {
+    fn describe(&self) -> String;
+}
+
+// Implement the trait for i32 and String
+impl MyTrait for i32 {
+    fn describe(&self) -> String {
+        format!("This is an i32: {}", self)
+    }
+}
+
+impl MyTrait for String {
+    fn describe(&self) -> String {
+        format!("This is a String: {}", self)
+    }
+}
+
+
+fn cleaner_output (code: i8, text: Value) -> String {
+    return format!("{{\"status\": {}, \"message\": \"{}\"}}", code, text);
 }
 
 fn poly_error(erlevel: i8, text: &str){
