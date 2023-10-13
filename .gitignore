@@ -10,3 +10,7 @@ node_modules
 
 #Rust Files
 PolygonDB_Rust/target
+
+# Added by cargo
+
+/target

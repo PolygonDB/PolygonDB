@@ -93,10 +93,8 @@ fn execute() -> String {
             args.push(byte);
         }
 
-        println!("{:?}", args.first());
         if  args.first().unwrap().to_string() == "CREATE_DATABASE" {
             if args.len() <= 1 {
-                poly_error(0, r#"{"Error":"CREATE_DATABASE TAKES IN TWO ARGS"}"#);
                 return format!("{{\"status\": {}, \"message\": \"{}\"}}", 1, "CREATE_DATABASE TAKES IN TWO ARGS");
             }
 
