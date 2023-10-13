@@ -1,5 +1,5 @@
 [package]
-name = "PolygonDB-1"
+name = "polygondb"
 version = "0.1.0"
 edition = "2021"
 

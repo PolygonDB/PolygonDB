@@ -14,3 +14,7 @@ PolygonDB_Rust/target
 # Added by cargo
 
 /target
+
+#Wrappers of other langs but I wanna push them here
+
+wrapper.py

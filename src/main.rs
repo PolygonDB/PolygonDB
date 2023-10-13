@@ -15,11 +15,11 @@ struct Input {
 
 
 fn main() {
-    print!("{}",execute());
+
+    println!("{}",execute());
+    
 }
 fn execute() -> String {
-    println!("Polygon v1.7 +++");
-
 
     let stdin = io::stdin();
     let mut scanner = stdin.lock();
@@ -40,9 +40,9 @@ fn execute() -> String {
             let output = parsed_json.pointer(&parsed_input.location);
 
             if output == None {
-                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 1, "None");
+                return cleaner_output(1, "None");
             } else {
-                return format!("{{\"status\": {}, \"message\": \"{:?}\"}}", 0, output.unwrap());
+                return format!(r#"{{"Status":{}, "Message":"{}"}}"#, 0, output.unwrap());
             }
 
         } else if parsed_input.action == "create" {
@@ -57,7 +57,7 @@ fn execute() -> String {
 
             maincore::update_content(parsed_input.dbname, json_str.unwrap().to_string());
 
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Created");
+            return cleaner_output(0, "Successfully CREATED json content");
             
 
 
@@ -70,7 +70,7 @@ fn execute() -> String {
 
             maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Updated");
+            return cleaner_output(0, "Successfully UPDATED json content");
             
         } else if parsed_input.action == "delete" {
 
@@ -79,10 +79,10 @@ fn execute() -> String {
             maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
 
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Deleted");
+            return cleaner_output(0, "Successfully DELETED json content");
 
         } else {
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 1, "Please Pick Appropriate Command [READ/CREATE/UPDATE/DELETE]");
+            return cleaner_output(1, "PLEASE USE THE FOLLOWING: [read/create/update/delete]");
         }
 
     } else {
@@ -95,14 +95,14 @@ fn execute() -> String {
 
         if  args.first().unwrap().to_string() == "CREATE_DATABASE" {
             if args.len() <= 1 {
-                return format!("{{\"status\": {}, \"message\": \"{}\"}}", 1, "CREATE_DATABASE TAKES IN TWO ARGS");
+                return cleaner_output(1, "CREATE_DATABASE _______ <= TAKES IN ONE ARGUEMENT");
             }
 
             create_database(args.get(1).unwrap().to_string());
 
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "Successfully Created Database");
+            return cleaner_output(0, "Successfully Created Database");
         } else {
-            return format!("{{\"status\": {}, \"message\": \"{}\"}}", 0, "No Appropriate Command Selected");
+            return cleaner_output(1, "No Appropriate Function was used");
         }
     }
 }
@@ -114,6 +114,7 @@ fn create_database(name: String) {
     }
 
     let _ = File::create(format!("databases/{}.ply", name));
+    let _ = fs::write(format!("databases/{}.ply", name), "{}");
 }
 
 fn is_json(text: &str) -> bool {
@@ -143,15 +144,15 @@ impl MyTrait for String {
 }
 
 
-fn cleaner_output (code: i8, text: Value) -> String {
-    return format!("{{\"status\": {}, \"message\": \"{}\"}}", code, text);
+fn cleaner_output (code: i8, text: &str) -> String {
+    return format!(r#"{{"Status":{}, "Message":"{}"}}"#, code, text);
 }
 
-fn poly_error(erlevel: i8, text: &str){
+/*fn poly_error(erlevel: i8, text: &str){
     if erlevel == 0 { //Warning; No Real Damage Done
         print!("{}",text)
     } //Mild
     else if erlevel == 1 {} // Warning
     else if erlevel == 2 {} //Error;
     return;
-}
+}*/
