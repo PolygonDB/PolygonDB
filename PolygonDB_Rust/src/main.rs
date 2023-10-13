@@ -1,6 +1,7 @@
-use jsonptr::{Pointer, Delete};
+use json_value_remove::Remove;
+use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Value};
 use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
 
 mod maincore;
@@ -22,7 +23,7 @@ fn main() {
     scanner.read_line(&mut data).unwrap();
     let mut args: Vec<&str> = Vec::new();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "delete", "value": 21}"#.to_string();
+    data = r#"{"dbname": "home", "location": "/Example", "action": "delete", "value": "Example"}"#.to_string();
     //Example
 
 
@@ -41,7 +42,7 @@ fn main() {
                 println!("{:?}", output.unwrap());
             }
 
-        } else if (parsed_input.action == "create") {
+        } else if parsed_input.action == "create" {
 
             
             let ptr = maincore::test(&parsed_input.location, &parsed_json);
@@ -59,7 +60,7 @@ fn main() {
             
 
 
-        } else if (parsed_input.action == "update") { 
+        } else if parsed_input.action == "update" { 
             
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
             
@@ -70,14 +71,14 @@ fn main() {
 
             println!("{:?}",parsed_json)
             
-        } else if (parsed_input.action == "delete") {
-            println!("DELETE");
-            let ptr = Pointer::try_from(parsed_input.location).unwrap();
-            parsed_json.delete(&ptr);
-            let _previous = ptr.delete(&mut parsed_json);
-            
-            println!("{:?}",parsed_json);
-            println!("{:?}",_previous);
+        } else if parsed_input.action == "delete" {
+
+            let _ = parsed_json.remove(&parsed_input.location);
+
+            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+
+
+            println!("{:?}",parsed_json)
         } else {
             poly_error(0, "NO ACTION WAS PICKED. [read/create/update/delete]");
         }
@@ -105,7 +106,7 @@ fn create_database(name: String) {
         let _ = fs::create_dir("databases");
     }
 
-    let mut file = File::create(format!("databases/{}.ply", name));
+    let _ = File::create(format!("databases/{}.ply", name));
 }
 
 fn is_json(text: &str) -> bool {

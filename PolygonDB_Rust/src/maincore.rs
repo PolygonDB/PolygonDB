@@ -6,7 +6,7 @@ use serde_json::Value;
 pub fn test(target: &str, db: &Value) -> jsonptr::Pointer{
     let ptr = Pointer::try_from(target).unwrap();
     let bar;
-    if let Err(e) =  ptr.resolve(&db) {
+    if let Err(_e) =  ptr.resolve(&db) {
         return Pointer::try_from(target).unwrap(); //if failure, chances are is that it doesn't exist
     } else {
         bar = ptr.resolve(&db).unwrap();
