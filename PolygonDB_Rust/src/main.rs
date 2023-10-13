@@ -26,7 +26,7 @@ fn execute() -> String {
     let mut data = String::new();
     scanner.read_line(&mut data).unwrap();
 
-    data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
+    //data = r#"{"dbname": "home", "location": "/Example", "action": "create", "value": 20}"#.to_string();
     //Example
 
 
