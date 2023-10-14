@@ -2,7 +2,7 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead}, path::Path, fs::{self, File}};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -15,9 +15,10 @@ struct Input {
 
 
 fn main() {
-
-    println!("{}",execute());
-    
+    loop  {
+        println!("{}",execute());
+        io::stdout().flush().unwrap();
+    }
 }
 fn execute() -> String {
 
@@ -120,7 +121,6 @@ fn create_database(name: String) {
 
 fn is_json(text: &str) -> bool {
     let temp = text.replace("\n", "").replace("\r", "");
-
 
     let l = temp.chars().rev().nth(0).unwrap();
     let f = temp.chars().nth(0).unwrap();
