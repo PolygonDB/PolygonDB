@@ -2,7 +2,7 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self, exit}, env};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -15,17 +15,36 @@ struct Input {
 
 
 fn main() {
+
+    let args: Vec<String> = env::args().collect();
+
+    if !args[1].is_empty() { //only once
+        let data = &args[1];
+        println!("{:?}",args);
+        println!("{}",execute(data.clone()));
+        io::stdout().flush().unwrap();
+        exit(0); 
+    }
+
     loop  {
-        println!("{}",execute());
+        let data = String::new();
+        println!("{}",execute(data));
         io::stdout().flush().unwrap();
     }
-}
-fn execute() -> String {
 
-    let stdin = io::stdin();
-    let mut scanner = stdin.lock();
-    let mut data = String::new();
-    scanner.read_line(&mut data).unwrap();
+}
+fn execute(mut data: String) -> String {
+    //let mut data = String::new();
+
+    if data.is_empty() {
+        let stdin = io::stdin();
+        let mut scanner = stdin.lock();
+        scanner.read_line(&mut data).unwrap();
+    }
+
+
+
+   
 
     //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
     //Example
@@ -103,6 +122,8 @@ fn execute() -> String {
             create_database(args.get(1).unwrap().to_string());
 
             return cleaner_output(0, "Successfully Created Database");
+        } else if args.first().unwrap().to_string() == "QUIT" {
+            process::exit(0);
         } else {
             return cleaner_output(1, "No Appropriate Function was used");
         }
