@@ -5,7 +5,7 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, sync::{Arc, Mutex}, collections::HashMap};
 
 mod maincore;
 mod websocket;
@@ -17,7 +17,6 @@ struct Input {
     action: String,
     value: serde_json::Value,
 }
-
 
 fn main() {
 
@@ -33,6 +32,8 @@ fn main() {
     let to_text = args.iter().any(|arg| arg == "-o");
     let ws = args.iter().any(|arg| arg == "-ws");
 
+    let mut shared_data: HashMap<String, Option<&Value>> = HashMap::new();
+    
     if ws {
         websocket::webserver();
     }
@@ -141,7 +142,23 @@ pub fn execute (data: String) -> String {
             return cleaner_output(0, "Successfully Created Database");
         } else if args.first().unwrap().to_string() == "QUIT" {
             process::exit(0);
-        } else {
+        } else if args.first().unwrap().to_string() == "DATABASES" {
+
+
+            let paths = fs::read_dir("databases").unwrap();
+
+            let mut directory_names: Vec<String> = Vec::new();
+
+            for path in paths {
+                if let Ok(entry) = path {
+                    let path_str = entry.path().display().to_string().replace("databases\\", "");
+                    directory_names.push(path_str);
+                }
+            }
+
+            cleaner_output(0, format!("{:?}",directory_names).as_str())
+
+        }  else {
             return cleaner_output(1, "No Appropriate Function was used");
         }
     }
