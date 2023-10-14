@@ -29,12 +29,12 @@ pub fn webserver() {
                 clients.remove(&client_id);
             },
             Event::Message(client_id, message) => {
-                println!("Received a message from client #{}: {:?}", client_id, message);
-                // retrieve this client's `Responder`:
+                //println!("Received a message from client #{}: {:?}", client_id, message);
+
                 let mut input: String = format!("test");
                 match message.clone() {
                     Message::Text(text) => {
-                        // 'text' will contain the String value
+
                         input = text;
                     }
                     Message::Binary(_) => {}
