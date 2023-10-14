@@ -30,18 +30,15 @@ pub fn webserver() {
                 match message.clone() {
                     Message::Text(text) => {
                         // 'text' will contain the String value
-                        println!("User has sent: {}",text);
                         input = text;
                     }
                     Message::Binary(_) => {}
                 }
 
-                println!("New Input {}",input);
-                execute(input);
 
-                //execute(input);
                 let responder = clients.get(&client_id).unwrap();
-                // echo the message back:
+
+                let message: Message = Message::Text(execute(input).to_string());
                 responder.send(message);
             },
         }
