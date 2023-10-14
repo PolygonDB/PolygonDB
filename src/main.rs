@@ -168,7 +168,7 @@ fn is_json(text: &str) -> bool {
 
 
 fn cleaner_output (code: i8, text: &str) -> String {
-    return format!(r#"{{"Status":{}, "Message":"{}"}}"#, code, text);
+    String::from(format!("{{\"Status\":{}, \"Message\":\"{}\"}}", code, text))
 }
 
 /*fn poly_error(erlevel: i8, text: &str){
