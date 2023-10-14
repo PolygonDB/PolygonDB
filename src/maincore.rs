@@ -30,6 +30,6 @@ fn is_array(value: &Value) -> bool {
 }
 
 pub fn update_content(dbname: String, content: String) -> bool {
-    let _ = fs::write(format!("databases/{}.ply",dbname), content);
+    let _ = fs::write(format!("databases/{}.json",dbname), content);
     return false;
 }
