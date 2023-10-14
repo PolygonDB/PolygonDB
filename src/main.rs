@@ -1,8 +1,11 @@
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self, exit}, env};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
 
 mod maincore;
 #[derive(Debug, Deserialize, Serialize)]
@@ -18,33 +21,37 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    if !args[1].is_empty() { //only once
-        let data = &args[1];
-        println!("{:?}",args);
-        println!("{}",execute(data.clone()));
-        io::stdout().flush().unwrap();
-        exit(0); 
-    }
+    //args[0] - location of .exe file
+    /*
+    Arguments:
+    -o -> Output the context to text file 
+    */
+
+    let to_text = args.iter().any(|arg| arg == "-o");
 
     loop  {
-        let data = String::new();
-        println!("{}",execute(data));
+        static mut data: String = String::new();
+
+        if to_text {
+            let input = execute(data);
+            let mut file = File::create("output.txt").unwrap();
+            file.write(format!("{}",input).as_bytes() ).expect("write failed");
+        } else {
+            println!("{}",execute(data));
+        }
+        
         io::stdout().flush().unwrap();
     }
 
 }
 fn execute(mut data: String) -> String {
-    //let mut data = String::new();
-
-    if data.is_empty() {
-        let stdin = io::stdin();
-        let mut scanner = stdin.lock();
-        scanner.read_line(&mut data).unwrap();
-    }
 
 
+    let stdin = io::stdin();
+    let mut scanner = stdin.lock();
+    scanner.read_line(&mut data).unwrap();
 
-   
+
 
     //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
     //Example
@@ -58,7 +65,6 @@ fn execute(mut data: String) -> String {
         if parsed_input.action == "read" {
 
             let output = parsed_json.pointer(&parsed_input.location);
-            println!("{}",output.unwrap());
             
             if output == None {
                 return cleaner_output(1, "None");
