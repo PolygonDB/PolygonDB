@@ -165,24 +165,6 @@ fn is_json(text: &str) -> bool {
     return false;
 }
 
-trait MyTrait {
-    fn describe(&self) -> String;
-}
-
-// Implement the trait for i32 and String
-impl MyTrait for i32 {
-    fn describe(&self) -> String {
-        format!("This is an i32: {}", self)
-    }
-}
-
-impl MyTrait for String {
-    fn describe(&self) -> String {
-        format!("This is a String: {}", self)
-    }
-}
-
-
 fn cleaner_output (code: i8, text: &str) -> String {
     return format!(r#"{{"Status":{}, "Message":"{}"}}"#, code, text);
 }
