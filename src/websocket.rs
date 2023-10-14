@@ -1,3 +1,8 @@
+/*
+Websocket.rs
+
+This is the websocket code
+*/
 use simple_websockets::{Event, Responder, Message};
 use std::collections::HashMap;
 

@@ -82,7 +82,7 @@ pub fn execute(mut data: String) -> String {
         } else if parsed_input.action == "create" {
 
             
-            let ptr = maincore::test(&parsed_input.location, &parsed_json);
+            let ptr = maincore::define_ptr(&parsed_input.location, &parsed_json);
             let data_to_insert = serde_json::json!(parsed_input.value);
 
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();

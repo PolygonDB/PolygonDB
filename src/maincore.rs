@@ -1,9 +1,14 @@
+/*
+maincore.rs
+
+This basically utility code
+*/
 use std::fs;
 
 use jsonptr::Pointer;
 use serde_json::Value;
 
-pub fn test(target: &str, db: &Value) -> jsonptr::Pointer{
+pub fn define_ptr(target: &str, db: &Value) -> jsonptr::Pointer{
     let ptr = Pointer::try_from(target).unwrap();
     let bar;
     if let Err(_e) =  ptr.resolve(&db) {
