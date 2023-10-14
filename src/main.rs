@@ -30,11 +30,8 @@ fn main() {
     */
 
     let to_text = args.iter().any(|arg| arg == "-o");
-    let ws = args.iter().any(|arg| arg == "-ws");
-
-    let mut shared_data: HashMap<String, Option<&Value>> = HashMap::new();
     
-    if ws {
+    if args.iter().any(|arg| arg == "-ws") {
         websocket::webserver();
     }
     
