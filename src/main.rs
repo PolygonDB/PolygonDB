@@ -30,22 +30,20 @@ fn main() {
     let to_text = args.iter().any(|arg| arg == "-o");
 
     loop  {
-        static mut data: String = String::new();
-
         if to_text {
-            let input = execute(data);
+            let input = execute();
             let mut file = File::create("output.txt").unwrap();
             file.write(format!("{}",input).as_bytes() ).expect("write failed");
         } else {
-            println!("{}",execute(data));
+            println!("{}",execute());
         }
         
         io::stdout().flush().unwrap();
     }
 
 }
-fn execute(mut data: String) -> String {
-
+fn execute() -> String {
+    let mut data: String = String::new();
 
     let stdin = io::stdin();
     let mut scanner = stdin.lock();
