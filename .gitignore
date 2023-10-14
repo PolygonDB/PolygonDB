@@ -19,3 +19,6 @@ PolygonDB_Rust/target
 
 wrapper.py
 test.py
+
+#output.txt
+output.txt

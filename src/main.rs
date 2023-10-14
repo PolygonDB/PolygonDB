@@ -52,7 +52,7 @@ fn execute() -> String {
 
 
     //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
-    //Example
+    //Examplec
 
 
     if is_json(&data) { //json input
