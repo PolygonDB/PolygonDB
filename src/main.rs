@@ -51,7 +51,7 @@ fn main() {
 
 pub fn execute(mut data: String) -> String {
 
-    if data != "" {
+    if data == "" {
         let stdin = io::stdin();
         let mut scanner = stdin.lock();
         scanner.read_line(&mut data).unwrap();
