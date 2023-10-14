@@ -8,6 +8,8 @@ use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
 
 mod maincore;
+mod websocket;
+
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
     dbname: String,
@@ -25,29 +27,36 @@ fn main() {
     /*
     Arguments:
     -o -> Output the context to text file 
+    -ws -> Enable Websocket
     */
 
     let to_text = args.iter().any(|arg| arg == "-o");
+    let ws = args.iter().any(|arg| arg == "-ws");
 
     loop  {
         if to_text {
-            let input = execute();
+            let input = execute("".to_string());
             let mut file = File::create("output.txt").unwrap();
             file.write(format!("{}",input).as_bytes() ).expect("write failed");
+        } else if ws {
+            websocket::webserver();
         } else {
-            println!("{}",execute());
+            println!("{}",execute("".to_string()));
         }
         
         io::stdout().flush().unwrap();
     }
 
 }
-fn execute() -> String {
-    let mut data: String = String::new();
 
-    let stdin = io::stdin();
-    let mut scanner = stdin.lock();
-    scanner.read_line(&mut data).unwrap();
+pub fn execute(mut data: String) -> String {
+
+    if data != "" {
+        let stdin = io::stdin();
+        let mut scanner = stdin.lock();
+        scanner.read_line(&mut data).unwrap();
+    }
+
 
 
 
