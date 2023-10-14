@@ -31,7 +31,7 @@ pub fn webserver() {
             Event::Message(client_id, message) => {
                 //println!("Received a message from client #{}: {:?}", client_id, message);
 
-                let mut input: String = format!("test");
+                let mut input = String::new();
                 match message.clone() {
                     Message::Text(text) => {
 

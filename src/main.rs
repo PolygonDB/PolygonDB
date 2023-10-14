@@ -33,15 +33,24 @@ fn main() {
     let to_text = args.iter().any(|arg| arg == "-o");
     let ws = args.iter().any(|arg| arg == "-ws");
 
+    if ws {
+        websocket::webserver();
+    }
+    
+    let mut scanner = io::stdin().lock();
+
     loop  {
+        let mut input = String::new();
+        scanner.read_line(&mut input).unwrap();
+ 
+
         if to_text {
-            let input = execute("".to_string());
+            let input = execute(input);
             let mut file = File::create("output.txt").unwrap();
             file.write(format!("{}",input).as_bytes() ).expect("write failed");
-        } else if ws {
-            websocket::webserver();
+            continue;
         } else {
-            println!("{}",execute("".to_string()));
+            println!("{}",execute(input));
         }
         
         io::stdout().flush().unwrap();
@@ -49,14 +58,8 @@ fn main() {
 
 }
 
-pub fn execute(mut data: String) -> String {
 
-    if data == "" {
-        let stdin = io::stdin();
-        let mut scanner = stdin.lock();
-        scanner.read_line(&mut data).unwrap();
-    }
-
+pub fn execute (data: String) -> String {
 
 
 
@@ -66,6 +69,7 @@ pub fn execute(mut data: String) -> String {
 
     if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
+        
         let raw_json = fs::read_to_string(format!("databases/{}.json", parsed_input.dbname)).expect("Unable to read file");
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
         
@@ -154,16 +158,14 @@ fn create_database(name: String) {
 }
 
 fn is_json(text: &str) -> bool {
-    let temp = text.replace("\n", "").replace("\r", "");
-
-    let l = temp.chars().rev().nth(0).unwrap();
-    let f = temp.chars().nth(0).unwrap();
-
-    if f == '{' && l == '}' {
-        return true;
+    if let Some(first) = text.chars().find(|&c| c != ' ' && c != '\n' && c != '\r') {
+        if let Some(last) = text.chars().rev().find(|&c| c != ' ' && c != '\n' && c != '\r') {
+            return first == '{' && last == '}';
+        }
     }
-    return false;
+    false
 }
+
 
 fn cleaner_output (code: i8, text: &str) -> String {
     return format!(r#"{{"Status":{}, "Message":"{}"}}"#, code, text);
