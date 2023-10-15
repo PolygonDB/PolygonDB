@@ -5,7 +5,8 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, sync::{Arc, Mutex}, collections::HashMap};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
+use bson::{bson, raw, to_vec};
 
 mod maincore;
 mod websocket;
@@ -59,8 +60,6 @@ fn main() {
 
 pub fn execute (data: String) -> String {
 
-
-
     //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
     //Examplec
 
@@ -70,7 +69,7 @@ pub fn execute (data: String) -> String {
         if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
             return cleaner_output(1, "Database doesn't exist")
         }
-        
+
         let raw_json = fs::read_to_string(format!("databases/{}.json", parsed_input.dbname)).expect("Unable to read file");
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
         
@@ -158,7 +157,23 @@ pub fn execute (data: String) -> String {
 
             cleaner_output(0, format!("{:?}",directory_names).as_str())
 
-        }  else {
+        }  else if args.first().unwrap().to_string() == "BSON" {
+            if args.len() <= 1 {
+                return cleaner_output(1, "CREATE_DATABASE _______ <= TAKES IN ONE ARGUEMENT");
+            }
+
+            let raw_json = fs::read_to_string(format!("databases/{}.json", args.get(1).unwrap())).expect("Unable to read file");
+            let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
+
+            let mut file = File::create(format!("databases/{}.bson",args.get(1).unwrap())).unwrap();
+            //let string = bson!(raw_json);
+            let data = bson::to_vec(&parsed_json).unwrap();
+            
+            std::fs::write(format!("databases/{}.bson",args.get(1).unwrap()), data).expect("Failed to create file");
+
+            return cleaner_output(0, "Successful Conversion");
+
+        } else {
             return cleaner_output(1, "No Appropriate Function was used");
         }
     }
