@@ -1,11 +1,13 @@
+use mimalloc_rust::*;
+
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
 
 use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write, BufReader}, path::Path, fs::{self, File}, process::{self}, env};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
 
 
 mod maincore;
