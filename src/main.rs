@@ -6,7 +6,7 @@ use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
-use bson::{bson, raw, to_vec};
+use bson::{bson, Bson, doc, Document, raw, to_document};
 
 mod maincore;
 mod websocket;
@@ -163,22 +163,35 @@ pub fn execute (data: String) -> String {
             }
 
             let raw_json = fs::read_to_string(format!("databases/{}.json", args.get(1).unwrap())).expect("Unable to read file");
-            let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
+            //let parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
 
-            let mut file = File::create(format!("databases/{}.bson",args.get(1).unwrap())).unwrap();
-            //let string = bson!(raw_json);
-            let data = bson::to_vec(&parsed_json).unwrap();
+            let _ = File::create(format!("databases/{}.bson",args.get(1).unwrap())).unwrap();
+
+            //let data = vec![format!("{}",raw_json)];
             
-            std::fs::write(format!("databases/{}.bson",args.get(1).unwrap()), data).expect("Failed to create file");
+            std::fs::write(format!("databases/{}.bson",args.get(1).unwrap()), raw_json.as_bytes()).expect("Failed to create file");
 
             return cleaner_output(0, "Successful Conversion");
 
+        } else if args.first().unwrap().to_string() == "BSONREAD"{
+            
+            if args.len() <= 1 {
+                return cleaner_output(1, "CREATE_DATABASE _______ <= TAKES IN ONE ARGUEMENT");
+            }
+
+            
+
+            let raw_json = fs::read(format!("databases/{}.bson", args.get(1).unwrap())).expect("Unable to read file");
+            let parsed:Value = serde_json::from_slice(&raw_json).unwrap();
+
+            println!("{}",parsed);
+
+            return cleaner_output(0, "test");
         } else {
             return cleaner_output(1, "No Appropriate Function was used");
         }
     }
 }
-
 
 fn create_database(name: String) {
     if !Path::new("databases").exists() { //Checks if the folder "databases" exists
