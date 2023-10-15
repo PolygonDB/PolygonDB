@@ -6,7 +6,6 @@ use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
-use bson::{bson, Bson, doc, Document, raw, to_document};
 
 mod maincore;
 mod websocket;
