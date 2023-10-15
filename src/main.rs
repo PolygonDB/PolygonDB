@@ -5,7 +5,8 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
+use std::{io::{self, BufRead, Write, BufReader}, path::Path, fs::{self, File}, process::{self}, env};
+
 
 mod maincore;
 mod websocket;
@@ -61,7 +62,7 @@ pub fn execute (data: String) -> String {
 
     //let data = r#"{"dbname": "database", "location": "data.test", "action": "read", "value": 20}"#.to_string();
     //Examplec
-
+    
 
     if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
@@ -74,8 +75,7 @@ pub fn execute (data: String) -> String {
         
         if parsed_input.action == "read" {
 
-
-            let output = ajson::get(&raw_json, &parsed_input.location).unwrap();
+            let output = parsed_json.pointer(&parsed_input.location);
             
             if output == None {
                 return cleaner_output(1, "None");
