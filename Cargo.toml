@@ -20,3 +20,4 @@ json_value_remove = "*"
 mimalloc = { version = "0.1.17", default-features = false }
 simple-websockets = "*"
 bson = "2.7.0"
+ajson = "0.3.1"

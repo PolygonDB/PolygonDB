@@ -60,7 +60,7 @@ fn main() {
 
 pub fn execute (data: String) -> String {
 
-    //data = r#"{"dbname": "database", "location": "/data", "action": "read", "value": 20}"#.to_string();
+    //let data = r#"{"dbname": "database", "location": "data.test", "action": "read", "value": 20}"#.to_string();
     //Examplec
 
 
@@ -75,7 +75,8 @@ pub fn execute (data: String) -> String {
         
         if parsed_input.action == "read" {
 
-            let output = parsed_json.pointer(&parsed_input.location);
+
+            let output = ajson::get(&raw_json, &parsed_input.location).unwrap();
             
             if output == None {
                 return cleaner_output(1, "None");
@@ -167,9 +168,7 @@ pub fn execute (data: String) -> String {
 
             let _ = File::create(format!("databases/{}.bson",args.get(1).unwrap())).unwrap();
 
-            //let data = vec![format!("{}",raw_json)];
-            
-            std::fs::write(format!("databases/{}.bson",args.get(1).unwrap()), raw_json.as_bytes()).expect("Failed to create file");
+            fs::write(format!("databases/{}.bson",args.get(1).unwrap()), format!("{:?}", raw_json.as_bytes())).expect("Failed to create file");
 
             return cleaner_output(0, "Successful Conversion");
 
