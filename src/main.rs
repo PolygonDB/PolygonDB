@@ -67,6 +67,9 @@ pub fn execute (data: String) -> String {
 
     if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
+        if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
+            return cleaner_output(1, "Database doesn't exist")
+        }
         
         let raw_json = fs::read_to_string(format!("databases/{}.json", parsed_input.dbname)).expect("Unable to read file");
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
