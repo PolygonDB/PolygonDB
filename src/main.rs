@@ -7,7 +7,7 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
 
 mod maincore;
@@ -94,7 +94,9 @@ pub fn execute (data: String) -> String {
 
             let json_str = serde_json::to_string_pretty(&parsed_json);
 
-            maincore::update_content(parsed_input.dbname, json_str.unwrap().to_string());
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
             return cleaner_output(0, "Successfully CREATED json content");
             
@@ -106,8 +108,10 @@ pub fn execute (data: String) -> String {
             
             let data_to_insert = serde_json::json!(parsed_input.value);
             let _ = ptr.assign(&mut parsed_json, data_to_insert);
-
-            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
             return cleaner_output(0, "Successfully UPDATED json content");
             
@@ -115,7 +119,9 @@ pub fn execute (data: String) -> String {
 
             let _ = parsed_json.remove(&parsed_input.location);
 
-            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
 
             return cleaner_output(0, "Successfully DELETED json content");
