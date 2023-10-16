@@ -1,6 +1,6 @@
 [package]
 name = "polygondb"
-version = "0.1.16"
+version = "1.16.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/PolygonDB/PolygonDB"
