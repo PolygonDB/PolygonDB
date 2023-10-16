@@ -92,8 +92,6 @@ pub fn execute (data: String) -> String {
 
             let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
 
-            let json_str = serde_json::to_string_pretty(&parsed_json);
-
             thread::spawn(move || {
                 maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
             });
