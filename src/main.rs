@@ -56,7 +56,6 @@ fn main() {
         
         io::stdout().flush().unwrap();
     }
-
 }
 
 
@@ -64,7 +63,7 @@ pub fn execute (data: String) -> String {
 
     //let data = r#"{"dbname": "database", "location": "data.test", "action": "read", "value": 20}"#.to_string();
     //Examplec
-    
+
 
     if is_json(&data) { //json input
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
