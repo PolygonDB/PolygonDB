@@ -24,7 +24,7 @@ opt-level = 2
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-jsonptr = "*"
-json_value_remove = "*"
-simple-websockets = "*"
+jsonptr = "0.4.4"
+json_value_remove = "1.0.2"
+simple-websockets = "0.1.6"
 mimalloc-rust = "0.2.1"
