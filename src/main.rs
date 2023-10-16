@@ -105,7 +105,7 @@ pub fn execute (data: String) -> String {
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
             
             let data_to_insert = serde_json::json!(parsed_input.value);
-            let _previous = ptr.assign(&mut parsed_json, data_to_insert);
+            let _ = ptr.assign(&mut parsed_json, data_to_insert);
 
             maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
 
