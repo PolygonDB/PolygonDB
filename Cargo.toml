@@ -6,7 +6,7 @@ readme = "README.md"
 homepage = "https://github.com/PolygonDB/PolygonDB"
 repository = "https://github.com/PolygonDB/PolygonDB"
 license = "Apache-2.0"
-license-file = "LICENSE.txt"
+license-file = "LICENSE"
 publish = true
 package-name = "polygondb_Driver"
 
