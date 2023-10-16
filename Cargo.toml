@@ -2,6 +2,13 @@
 name = "polygondb"
 version = "1.16"
 edition = "2023"
+readme = "README.md"
+homepage = "https://github.com/PolygonDB/PolygonDB"
+repository = "https://github.com/PolygonDB/PolygonDB"
+license = "Apache-2.0"
+license-file = "LICENSE.txt"
+publish = true
+package-name = "polygondb_Driver"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
