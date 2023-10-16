@@ -66,6 +66,7 @@ pub fn execute (data: String) -> String {
 
 
     if is_json(&data) { //json input
+        
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
         if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
             return cleaner_output(1, "Database doesn't exist")
@@ -85,20 +86,17 @@ pub fn execute (data: String) -> String {
             }
 
         } else if parsed_input.action == "create" {
-
             
             let ptr = maincore::define_ptr(&parsed_input.location, &parsed_json);
             let data_to_insert = serde_json::json!(parsed_input.value);
 
-            let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+            let _ = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
 
             thread::spawn(move || {
                 maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
             });
 
             return cleaner_output(0, "Successfully CREATED json content");
-            
-
 
         } else if parsed_input.action == "update" { 
             
