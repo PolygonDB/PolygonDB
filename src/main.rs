@@ -23,16 +23,14 @@ struct Input {
 
 fn main() {
 
+
     let args: Vec<String> = env::args().collect();
 
     //args[0] - location of .exe file
     /*
     Arguments:
-    -o -> Output the context to text file 
     -ws -> Enable Websocket
     */
-
-    let to_text = args.iter().any(|arg| arg == "-o");
     
     if args.iter().any(|arg| arg == "-ws") {
         websocket::webserver();
@@ -43,16 +41,9 @@ fn main() {
     loop  {
         let mut input = String::new();
         scanner.read_line(&mut input).unwrap();
- 
 
-        if to_text {
-            let input = execute(input);
-            let mut file = File::create("output.txt").unwrap();
-            file.write(format!("{}",input).as_bytes() ).expect("write failed");
-            continue;
-        } else {
-            println!("{}",execute(input));
-        }
+        println!("{}",execute(input));
+
         
         io::stdout().flush().unwrap();
     }
