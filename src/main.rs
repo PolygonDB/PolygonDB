@@ -7,7 +7,7 @@ use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env};
+use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
 
 mod maincore;
@@ -57,6 +57,7 @@ pub fn execute (data: String) -> String {
 
 
     if is_json(&data) { //json input
+        
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
         if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
             return cleaner_output(1, "Database doesn't exist")
@@ -76,29 +77,28 @@ pub fn execute (data: String) -> String {
             }
 
         } else if parsed_input.action == "create" {
-
             
             let ptr = maincore::define_ptr(&parsed_input.location, &parsed_json);
             let data_to_insert = serde_json::json!(parsed_input.value);
 
-            let _previous = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
+            let _ = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
 
-            let json_str = serde_json::to_string_pretty(&parsed_json);
-
-            maincore::update_content(parsed_input.dbname, json_str.unwrap().to_string());
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
             return cleaner_output(0, "Successfully CREATED json content");
-            
-
 
         } else if parsed_input.action == "update" { 
             
             let ptr = Pointer::try_from(parsed_input.location).unwrap();
             
             let data_to_insert = serde_json::json!(parsed_input.value);
-            let _previous = ptr.assign(&mut parsed_json, data_to_insert);
-
-            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            let _ = ptr.assign(&mut parsed_json, data_to_insert);
+            
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
             return cleaner_output(0, "Successfully UPDATED json content");
             
@@ -106,7 +106,9 @@ pub fn execute (data: String) -> String {
 
             let _ = parsed_json.remove(&parsed_input.location);
 
-            maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            thread::spawn(move || {
+                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
+            });
 
 
             return cleaner_output(0, "Successfully DELETED json content");
