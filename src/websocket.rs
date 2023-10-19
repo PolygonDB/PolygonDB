@@ -8,12 +8,12 @@ use std::collections::HashMap;
 
 use crate::execute;
 
-pub fn webserver() {
+pub fn webserver(port: u16) {
     // listen for WebSockets on port 8080:
-    let event_hub = simple_websockets::launch(8080)
-        .expect("failed to listen on port 8080");
+    let event_hub = simple_websockets::launch(port)
+        .expect("failed to listen on port");
 
-    println!("Server is launced on port 8080");
+    println!("Server is launced on port {}",port);
     let mut clients: HashMap<u64, Responder> = HashMap::new();
 
     loop {

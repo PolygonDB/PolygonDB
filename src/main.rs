@@ -24,7 +24,7 @@ struct Input {
 fn main() {
 
 
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().skip(1).collect();
 
     //args[0] - location of .exe file
     /*
@@ -32,7 +32,7 @@ fn main() {
     -ws -> Enable Websocket
     */
     
-    if args.iter().any(|arg| arg == "-ws") {websocket::webserver();}
+    if args.iter().any(|arg| arg == "-ws") {websocket::webserver(args[1].parse().unwrap());} // -ws 8080
     
     let mut scanner = io::stdin().lock();
 
