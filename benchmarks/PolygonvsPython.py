@@ -14,9 +14,11 @@ def Python_Json_Methd():
     with open("databases/database.json", "r") as f:
         x= json.load(f)["data"]
 
-def benchmark(func, num_runs=90):
+
+def benchmark(func, num_runs=30):
     total_time = timeit.timeit(func, number=num_runs)
     print(f"\nAverage execution time over 90 runs: {total_time / num_runs:.6f} seconds")
 
-benchmark(Poly_Method)
-benchmark(Python_Json_Methd)
+if __name__ == "__main__":
+    benchmark(Poly_Method)
+    benchmark(Python_Json_Methd)
