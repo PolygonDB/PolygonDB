@@ -32,9 +32,7 @@ fn main() {
     -ws -> Enable Websocket
     */
     
-    if args.iter().any(|arg| arg == "-ws") {
-        websocket::webserver();
-    }
+    if args.iter().any(|arg| arg == "-ws") {websocket::webserver();}
     
     let mut scanner = io::stdin().lock();
 
@@ -44,7 +42,6 @@ fn main() {
 
         println!("{}",execute(input));
 
-        
         io::stdout().flush().unwrap();
     }
 }
@@ -54,7 +51,6 @@ pub fn execute (data: String) -> String {
 
     //let data = r#"{"dbname": "database", "location": "data.test", "action": "read", "value": 20}"#.to_string();
     //Examplec
-
 
     if is_json(&data) { //json input
         
