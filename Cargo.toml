@@ -18,6 +18,7 @@ description = "Driver for PolygonDB"
 [profile.release]
 lto = "fat"
 codegen-units = 1
+incremental = false
 
 [profile.dev.package."*"]
 opt-level = 3

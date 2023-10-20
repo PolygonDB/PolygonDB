@@ -5,14 +5,14 @@ import timeit
 import json
 from polywrapper import *
 
-poly = PolyClient(connection_url="localhost:8080", dbname="database")
+poly = PolyClient(connection_url="localhost:8080", dbname="bin_database")
 
 def Poly_Method():
-    x = poly.read(location="data")
+    x = poly.read(location="/data/0")
 
 def Python_Json_Methd():
     with open("databases/database.json", "r") as f:
-        x= json.load(f)["data"]
+        x= json.load(f)["data"][0]
 
 
 def benchmark(func, num_runs=30):

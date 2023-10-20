@@ -19,7 +19,7 @@ const sendData = (e) => {
 
 function polyMethod() {
     const data1 = {
-    dbname: 'Search_Benchmark',
+    dbname: '/data',
     location: 'database',
     action: 'read',
     value: '_'

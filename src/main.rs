@@ -155,9 +155,9 @@ pub fn execute (data: String) -> String {
             let raw_json = fs::read_to_string(format!("databases/{}.json", args.get(1).unwrap())).expect("Unable to read file");
             //let parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
 
-            let _ = File::create(format!("databases/{}.bson",args.get(1).unwrap())).unwrap();
+            let _ = File::create(format!("databases/bin_{}.json",args.get(1).unwrap())).unwrap();
 
-            fs::write(format!("databases/{}.bson",args.get(1).unwrap()), format!("{:?}", raw_json.as_bytes())).expect("Failed to create file");
+            fs::write(format!("databases/bin_{}.json",args.get(1).unwrap()), format!("{:?}", raw_json.as_bytes())).expect("Failed to create file");
 
             return cleaner_output(0, "Successful Conversion");
 
