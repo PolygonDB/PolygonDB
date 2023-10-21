@@ -70,7 +70,6 @@ pub fn execute (data: String) -> String {
 
         if MUTEX_MAP.lock().unwrap().get(&target).is_some() { //if exists
             raw_json = MUTEX_MAP.lock().unwrap().get(&target).unwrap().to_string();
-            print!("t");
         } else {
             raw_json = fs::read_to_string(format!("databases/{}.json", target)).expect("Unable to read file");
             MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
