@@ -60,7 +60,7 @@ pub fn execute (data: String) -> String {
 
     if is_json(&data) { //json input
         
-        let parsed_input: Input = serde_json::from_str(&data).unwrap();
+        let parsed_input: Input = sonic_rs::from_str(&data).unwrap();
         if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
             return cleaner_output(1, "Database doesn't exist")
         }
@@ -75,7 +75,7 @@ pub fn execute (data: String) -> String {
             MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
         }
 
-        let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
+        let mut parsed_json: Value = sonic_rs::from_str(&raw_json).unwrap();
         
         if parsed_input.action == "read" {
 
