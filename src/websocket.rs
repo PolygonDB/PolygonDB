@@ -43,7 +43,7 @@ pub fn webserver(port: u16) {
 
                 let responder = clients.get(&client_id).unwrap();
 
-                let message: Message = Message::Text(execute(input).to_string());
+                let message: Message = Message::Binary(execute(input).into_bytes());
                 responder.send(message);
             },
         }

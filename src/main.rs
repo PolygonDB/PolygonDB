@@ -13,10 +13,10 @@ use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 mod maincore;
-mod nwebsocket;
+mod websocket;
 
 lazy_static! {
     static ref MUTEX_MAP: Mutex<HashMap<String, String>> = {
@@ -41,7 +41,7 @@ fn main() {
     -ws -> Enable Websocket
     */
     
-    if args.iter().any(|arg| arg == "-ws") {nwebsocket::webserver(args[1].parse().unwrap());} // -ws 8080
+    if args.iter().any(|arg| arg == "-ws") {websocket::webserver(args[1].parse().unwrap());} // -ws 8080
     
     let mut scanner = io::stdin().lock();
 
