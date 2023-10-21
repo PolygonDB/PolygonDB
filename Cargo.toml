@@ -19,6 +19,7 @@ description = "Driver for PolygonDB"
 lto = "fat"
 codegen-units = 1
 incremental = false
+opt-level=3
 
 [profile.dev.package."*"]
 opt-level = 3
@@ -30,3 +31,5 @@ jsonptr = "0.4.4"
 json_value_remove = "1.0.2"
 simple-websockets = "0.1.6"
 mimalloc-rust = "0.2.1"
+tungstenite = "0.20.1"
+lazy_static = "1.4.0"

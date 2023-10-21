@@ -5,7 +5,7 @@ import timeit
 import json
 from polywrapper import *
 
-poly = PolyClient(connection_url="localhost:8080", dbname="bin_database")
+poly = PolyClient(connection_url="localhost:8080", dbname="database")
 
 def Poly_Method():
     x = poly.read(location="/data/0")

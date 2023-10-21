@@ -3,15 +3,26 @@ use mimalloc_rust::*;
 #[global_allocator]
 static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
 
+
+use lazy_static::lazy_static;
+
 use json_value_remove::Remove;
 use jsonptr::Pointer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 mod maincore;
-mod websocket;
+mod nwebsocket;
+
+lazy_static! {
+    static ref MUTEX_MAP: Mutex<HashMap<String, String>> = {
+        Mutex::new(HashMap::new())
+    };
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Input {
@@ -22,8 +33,6 @@ struct Input {
 }
 
 fn main() {
-
-
     let args: Vec<String> = env::args().skip(1).collect();
 
     //args[0] - location of .exe file
@@ -32,7 +41,7 @@ fn main() {
     -ws -> Enable Websocket
     */
     
-    if args.iter().any(|arg| arg == "-ws") {websocket::webserver(args[1].parse().unwrap());} // -ws 8080
+    if args.iter().any(|arg| arg == "-ws") {nwebsocket::webserver(args[1].parse().unwrap());} // -ws 8080
     
     let mut scanner = io::stdin().lock();
 
@@ -49,9 +58,6 @@ fn main() {
 
 pub fn execute (data: String) -> String {
 
-    //let data = r#"{"dbname": "database", "location": "data.test", "action": "read", "value": 20}"#.to_string();
-    //Examplec
-
     if is_json(&data) { //json input
         
         let parsed_input: Input = serde_json::from_str(&data).unwrap();
@@ -59,7 +65,17 @@ pub fn execute (data: String) -> String {
             return cleaner_output(1, "Database doesn't exist")
         }
 
-        let raw_json = fs::read_to_string(format!("databases/{}.json", parsed_input.dbname)).expect("Unable to read file");
+        let raw_json: String;
+        let target = parsed_input.dbname.clone();
+
+        if MUTEX_MAP.lock().unwrap().get(&target).is_some() { //if exists
+            raw_json = MUTEX_MAP.lock().unwrap().get(&target).unwrap().to_string();
+            print!("t");
+        } else {
+            raw_json = fs::read_to_string(format!("databases/{}.json", target)).expect("Unable to read file");
+            MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
+        }
+
         let mut parsed_json: Value = serde_json::from_str(&raw_json).unwrap();
         
         if parsed_input.action == "read" {
