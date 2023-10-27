@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 
 use json_value_remove::Remove;
 use jsonptr::Pointer;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
@@ -24,7 +24,7 @@ lazy_static! {
     };
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct Input {
     dbname: String,
     location: String,
@@ -32,7 +32,7 @@ struct Input {
     value: serde_json::Value,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct JsonDB {
     content: Value,
     location: String
@@ -40,17 +40,14 @@ struct JsonDB {
 
 impl JsonDB {
     fn init(target: String, location: String) -> JsonDB {
-        // Special code goes here ...
-        
-        if MUTEX_MAP.lock().unwrap().get(&target).is_some() { //if exists
-            let target = MUTEX_MAP.lock().unwrap().get(&target).unwrap().to_string();
-            JsonDB { content: (sonic_rs::from_str(&target).unwrap()), location:location }
+        let mut mutex_map = MUTEX_MAP.lock().unwrap();
+        if let Some(target_content) = mutex_map.get(&target) {
+            JsonDB { content: sonic_rs::from_str(target_content).unwrap(), location }
         } else {
-            let raw_json = fs::read_to_string(format!("{}",target)).expect("Unable to read file");
-            MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
-            JsonDB { content: (sonic_rs::from_str(&raw_json).unwrap()), location:location }
+            let raw_json = fs::read_to_string(&target).expect("Unable to read file");
+            mutex_map.insert(target.clone(), raw_json.to_owned());
+            JsonDB { content: sonic_rs::from_str(&raw_json).unwrap(), location }
         }
-
     }
 
     fn read(self) -> String {
