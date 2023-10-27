@@ -62,6 +62,47 @@ impl JsonDB {
             return format!(r#"{{"Status":{}, "Message":{}}}"#, 0, output.unwrap());
         }
     }
+
+    fn create(mut self, val: Value, db: String) -> String {
+            
+        let ptr = maincore::define_ptr(&self.location, &self.content);
+        
+        let data_to_insert = serde_json::json!(val);
+        let _ = ptr.assign(&mut self.content, data_to_insert).unwrap();
+
+        thread::spawn(move || {
+            maincore::update_content(db, serde_json::to_string_pretty(&self.content).unwrap().to_string());
+        });
+
+        return cleaner_output(0, "Successfully CREATED json content");
+    }
+
+    fn update(mut self, val: Value, db: String) -> String {
+        let ptr = Pointer::try_from(self.location.clone()).unwrap();
+            
+        let data_to_insert = serde_json::json!(val);
+        let _ = ptr.assign(&mut self.content, data_to_insert).unwrap();
+        
+        thread::spawn(move || {
+            maincore::update_content(db, serde_json::to_string_pretty(&self.content).unwrap().to_string());
+        });
+
+        return cleaner_output(0, "Successfully UPDATED json content");
+    }
+    
+    fn delete(mut self, db: String) -> String {
+
+        
+        let _ = self.content.remove(&self.location);
+
+        thread::spawn(move || {
+            maincore::update_content(db, serde_json::to_string_pretty(&self.content).unwrap().to_string());
+        });  
+
+
+        return cleaner_output(0, "Successfully DELETED json content");
+
+    }
 }
 
 fn main() {
@@ -93,19 +134,18 @@ pub fn execute (data: String) -> String {
     if is_json(&data) { //json input
         
         let parsed_input: Input = sonic_rs::from_str(&data).unwrap();
-        if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {
-            return cleaner_output(1, "Database doesn't exist")
-        }
+        if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {return cleaner_output(1, "Database doesn't exist")}
 
         let parsed_jso = JsonDB::init(format!("databases/{}.json", parsed_input.dbname), parsed_input.location);
-        //let mut parsed_json = parsed_jso.content;
-
 
         
-        let input = parsed_input.action.as_str();
-        match input {
+
+        match parsed_input.action.as_str() {
             "read"=> return parsed_jso.read(),
-            _=> return "test".to_string()
+            "create"=> return parsed_jso.create(parsed_input.value, parsed_input.dbname),
+            "update"=> return parsed_jso.update(parsed_input.value, parsed_input.dbname),
+            "delete"=> return parsed_jso.delete(parsed_input.dbname),
+            _=> return "FAILED.".to_string()
         }
 
 
