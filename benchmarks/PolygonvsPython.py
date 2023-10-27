@@ -8,7 +8,7 @@ from polywrapper import *
 poly = PolyClient(connection_url="localhost:8080", dbname="database")
 
 def Poly_Method():
-    x = poly.read(location="/data")
+    x = poly.read(location="/")
 
 def Python_Json_Methd():
     with open("databases/database.json", "r") as f:

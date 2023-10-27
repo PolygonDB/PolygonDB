@@ -32,6 +32,38 @@ struct Input {
     value: serde_json::Value,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct JsonDB {
+    content: Value,
+    location: String
+}
+
+impl JsonDB {
+    fn init(target: String, location: String) -> JsonDB {
+        // Special code goes here ...
+        
+        if MUTEX_MAP.lock().unwrap().get(&target).is_some() { //if exists
+            let target = MUTEX_MAP.lock().unwrap().get(&target).unwrap().to_string();
+            JsonDB { content: (sonic_rs::from_str(&target).unwrap()), location:location }
+        } else {
+            let raw_json = fs::read_to_string(format!("{}",target)).expect("Unable to read file");
+            MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
+            JsonDB { content: (sonic_rs::from_str(&raw_json).unwrap()), location:location }
+        }
+
+    }
+
+    fn read(self) -> String {
+        let output = self.content.pointer(&self.location);
+            
+        if output == None {
+            return cleaner_output(1, "None");
+        } else {
+            return format!(r#"{{"Status":{}, "Message":{}}}"#, 0, output.unwrap());
+        }
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
 
@@ -65,68 +97,17 @@ pub fn execute (data: String) -> String {
             return cleaner_output(1, "Database doesn't exist")
         }
 
-        let raw_json: String;
-        let target = parsed_input.dbname.clone();
+        let parsed_jso = JsonDB::init(format!("databases/{}.json", parsed_input.dbname), parsed_input.location);
+        //let mut parsed_json = parsed_jso.content;
 
-        if MUTEX_MAP.lock().unwrap().get(&target).is_some() { //if exists
-            raw_json = MUTEX_MAP.lock().unwrap().get(&target).unwrap().to_string();
-        } else {
-            raw_json = fs::read_to_string(format!("databases/{}.json", target)).expect("Unable to read file");
-            MUTEX_MAP.lock().unwrap().insert(target, raw_json.clone());
-        }
 
-        let mut parsed_json: Value = sonic_rs::from_str(&raw_json).unwrap();
         
-        if parsed_input.action == "read" {
-
-            let output = parsed_json.pointer(&parsed_input.location);
-            
-            if output == None {
-                return cleaner_output(1, "None");
-            } else {
-                return format!(r#"{{"Status":{}, "Message":{}}}"#, 0, output.unwrap());
-            }
-
-        } else if parsed_input.action == "create" {
-            
-            let ptr = maincore::define_ptr(&parsed_input.location, &parsed_json);
-            let data_to_insert = serde_json::json!(parsed_input.value);
-
-            let _ = ptr.assign(&mut parsed_json, data_to_insert).unwrap();
-
-            thread::spawn(move || {
-                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
-            });
-
-            return cleaner_output(0, "Successfully CREATED json content");
-
-        } else if parsed_input.action == "update" { 
-            
-            let ptr = Pointer::try_from(parsed_input.location).unwrap();
-            
-            let data_to_insert = serde_json::json!(parsed_input.value);
-            let _ = ptr.assign(&mut parsed_json, data_to_insert);
-            
-            thread::spawn(move || {
-                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
-            });
-
-            return cleaner_output(0, "Successfully UPDATED json content");
-            
-        } else if parsed_input.action == "delete" {
-
-            let _ = parsed_json.remove(&parsed_input.location);
-
-            thread::spawn(move || {
-                maincore::update_content(parsed_input.dbname, serde_json::to_string_pretty(&parsed_json).unwrap().to_string());
-            });
-
-
-            return cleaner_output(0, "Successfully DELETED json content");
-
-        } else {
-            return cleaner_output(1, "PLEASE USE THE FOLLOWING: [read/create/update/delete]");
+        let input = parsed_input.action.as_str();
+        match input {
+            "read"=> return parsed_jso.read(),
+            _=> return "test".to_string()
         }
+
 
     } else {
 
