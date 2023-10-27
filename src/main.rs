@@ -45,7 +45,7 @@ impl JsonDB {
             JsonDB { content: sonic_rs::from_str(target_content).unwrap(), location }
         } else {
             let raw_json = fs::read_to_string(&target).expect("Unable to read file");
-            mutex_map.insert(target.clone(), raw_json.to_owned());
+            mutex_map.insert(target, raw_json.to_owned());
             JsonDB { content: sonic_rs::from_str(&raw_json).unwrap(), location }
         }
     }
@@ -75,7 +75,7 @@ impl JsonDB {
     }
 
     fn update(mut self, val: Value, db: String) -> String {
-        let ptr = Pointer::try_from(self.location.clone()).unwrap();
+        let ptr = Pointer::try_from(self.location).unwrap();
             
         let data_to_insert = serde_json::json!(val);
         let _ = ptr.assign(&mut self.content, data_to_insert).unwrap();
