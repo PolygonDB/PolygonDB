@@ -28,13 +28,13 @@ pub fn webserver(port: u16) {
             Event::Message(client_id, message) => {
 
                 //let mut input = String::new();
-                match message.clone() {
+                match message {
                     Message::Text(text) => {
 
                         let responder = clients.get(&client_id).unwrap();
 
                         let message: Message = Message::Binary(execute(text).into_bytes());
-                        responder.send(message);
+                        responder.send(message);                    
                     }
                     Message::Binary(_) => {}
                 }
