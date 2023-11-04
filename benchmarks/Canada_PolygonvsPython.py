@@ -8,10 +8,10 @@ from polywrapper import *
 poly = PolyClient(connection_url="localhost:8080", dbname="canada")
 
 def Poly_Method():
-    x = poly.read(location="/features")
+    x = poly.read(location="")
 
 def Python_Json_Methd():
-    with open("databases/database.json", "r") as f:
+    with open("databases/canada.json", "r") as f:
         x= json.load(f)
 
 

@@ -4,7 +4,6 @@ use mimalloc_rust::*;
 static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
 
 
-use lazy_static::lazy_static;
 
 use json_value_remove::Remove;
 use jsonptr::Pointer;
@@ -12,17 +11,10 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::{io::{self, BufRead, Write}, path::Path, fs::{self, File}, process::{self}, env, thread};
 
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 mod maincore;
 mod websocket;
 
-lazy_static! {
-    static ref MUTEX_MAP: Mutex<HashMap<String, String>> = {
-        Mutex::new(HashMap::new())
-    };
-}
 
 #[derive(Deserialize)]
 struct Input {
@@ -40,14 +32,11 @@ struct JsonDB {
 
 impl JsonDB {
     fn init(target: String, location: String) -> JsonDB {
-        let mut mutex_map = MUTEX_MAP.lock().unwrap();
-        if let Some(target_content) = mutex_map.get(&target) {
-            JsonDB { content: sonic_rs::from_str(target_content).unwrap(), location }
-        } else {
-            let raw_json = fs::read_to_string(&target).expect("Unable to read file");
-            mutex_map.insert(target, raw_json.to_owned());
-            JsonDB { content: sonic_rs::from_str(&raw_json).unwrap(), location }
-        }
+
+        let raw_json = fs::read_to_string(&target).expect("Unable to read file");
+
+        JsonDB { content: sonic_rs::from_str(&raw_json).unwrap(), location }
+
     }
 
     fn read(self) -> String {
@@ -128,25 +117,7 @@ fn main() {
 
 pub fn execute (data: String) -> String {
 
-    if is_json(&data) { //json input
-        
-        let parsed_input: Input = sonic_rs::from_str(&data).unwrap();
-        if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {return cleaner_output(1, "Database doesn't exist")}
-
-        let parsed_jso = JsonDB::init(format!("databases/{}.json", parsed_input.dbname), parsed_input.location);
-
-        
-
-        match parsed_input.action.as_str() {
-            "read"=> return parsed_jso.read(),
-            "create"=> return parsed_jso.create(parsed_input.value, parsed_input.dbname),
-            "update"=> return parsed_jso.update(parsed_input.value, parsed_input.dbname),
-            "delete"=> return parsed_jso.delete(parsed_input.dbname),
-            _=> return "FAILED.".to_string()
-        }
-
-
-    } else {
+    if !is_json(&data) { //json input
 
         let mut args: Vec<&str> = Vec::new();
 
@@ -178,7 +149,7 @@ pub fn execute (data: String) -> String {
                 }
             }
 
-            cleaner_output(0, format!("{:?}",directory_names).as_str())
+            cleaner_output(0, format!("{:?}",directory_names).as_str());
 
         }  else if args.first().unwrap().to_string() == "BSON" {
             if args.len() <= 1 {
@@ -211,6 +182,20 @@ pub fn execute (data: String) -> String {
         } else {
             return cleaner_output(1, "No Appropriate Function was used");
         }
+    }
+
+    let parsed_input: Input = sonic_rs::from_str(&data).unwrap();
+    if !Path::new(&format!("databases/{}.json", parsed_input.dbname)).exists() {return cleaner_output(1, "Database doesn't exist")}
+
+    let parsed_jso = JsonDB::init(format!("databases/{}.json", parsed_input.dbname), parsed_input.location);
+
+
+    match parsed_input.action.as_str() {
+        "read"=> return parsed_jso.read(),
+        "create"=> return parsed_jso.create(parsed_input.value, parsed_input.dbname),
+        "update"=> return parsed_jso.update(parsed_input.value, parsed_input.dbname),
+        "delete"=> return parsed_jso.delete(parsed_input.dbname),
+        _=> return "FAILED.".to_string()
     }
 }
 

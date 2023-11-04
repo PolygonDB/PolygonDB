@@ -15,6 +15,7 @@ pub fn webserver(port: u16) {
 
     println!("Server is launced on port {}",port);
     let mut clients: HashMap<u64, Responder> = HashMap::new();
+    
 
     loop {
         match event_hub.poll_event() {
@@ -26,20 +27,23 @@ pub fn webserver(port: u16) {
             },
             Event::Message(client_id, message) => {
 
-                let mut input = String::new();
+                //let mut input = String::new();
                 match message.clone() {
                     Message::Text(text) => {
 
-                        input = text;
+                        let responder = clients.get(&client_id).unwrap();
+
+                        let message: Message = Message::Binary(execute(text).into_bytes());
+                        responder.send(message);
                     }
                     Message::Binary(_) => {}
                 }
 
 
-                let responder = clients.get(&client_id).unwrap();
+                //let responder = clients.get(&client_id).unwrap();
 
-                let message: Message = Message::Binary(execute(input).into_bytes());
-                responder.send(message);
+                //let message: Message = Message::Binary(execute(input).into_bytes());
+                //responder.send(message);
             },
         }
     }
